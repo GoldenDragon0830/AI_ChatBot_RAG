@@ -10,7 +10,7 @@ interface MessageInterface {
 
 const ChatWindow: React.FC = () => {
   //const API_URL = "https://pbbrgipvnj.us-east-1.awsapprunner.com/chat";
-  const API_URL = "http://52.221.236.58:80/chat";
+  const API_URL = "https://52.221.236.58:80/chat";
   // const TRAIN_API_URL = "http://54.224.75.56:8080/train";
   // const TRAIN_API_URL = "https://yourapi.com/train"; // Replace with your train API URL
   // const S3_BUCKET = "homebuyer-llm-datasets"; // Replace with your bucket name
