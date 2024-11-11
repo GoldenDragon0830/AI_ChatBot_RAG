@@ -1,13 +1,30 @@
-import React from "react";
-import { Typography, Paper, Box } from "@mui/material";
+import React, { useState } from "react";
+import { Typography, Paper, Box, Dialog,
+  DialogContent,
+  DialogActions,
+  DialogTitle, } from "@mui/material";
+import Badge, { badgeClasses } from '@mui/joy/Badge';
+import Avatar from '@mui/joy/Avatar';
+import PersonIcon from '@mui/icons-material/Person';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
+  
 
 interface ChatMessageProps {
   content: string;
   role: "user" | "assistant";
+  imageUrl?: string;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ content, role }) => {
+const ChatMessage: React.FC<ChatMessageProps> = ({
+  content,
+  role,
+  imageUrl,
+}) => {
   const isRequest = role === "user";
+  const [open, setOpen] = useState(false);
+
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
 
   return (
     <Box
@@ -15,8 +32,40 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ content, role }) => {
         display: "flex",
         justifyContent: isRequest ? "flex-end" : "flex-start",
         mb: 1,
+        flexDirection: "column", // Ensure image and text stack vertically
+        alignItems: isRequest ? "flex-end" : "flex-start", // Alignment for image and text
       }}
     >
+      {imageUrl && (
+        <Box // Image container
+          component="img"
+          src={imageUrl}
+          alt="Chat message visual"
+          sx={{
+            maxWidth: "300px",
+            maxHeight: "200px",
+            borderRadius: 2,
+            mb: 1, // Margin bottom for spacing between image and text
+            boxShadow: 3, // Optional shadow for better visualization
+          }}
+          onClick={handleOpen}
+        />
+      )}
+      <Dialog open={open} onClose={handleClose}>
+        <DialogActions>
+          <DialogTitle style={{ textAlign: "center" }}>{content}</DialogTitle>
+        </DialogActions>
+        <DialogContent>
+          <img src={imageUrl} alt={content} style={{ width: "100%" }} />
+        </DialogContent>
+      </Dialog>
+      <Badge
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        badgeInset="14%"
+        color="success"
+      >
+        { isRequest ? (<PersonIcon sx={{ fontSize: 30 }}/>) : (<SmartToyIcon sx={{ fontSize: 30 }}/>)}
+      </Badge>
       <Paper
         sx={{
           backgroundColor: isRequest ? "#2196f3" : "#e0e0e0",
@@ -26,8 +75,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ content, role }) => {
           maxWidth: "100%",
           borderTopRightRadius: isRequest ? 0 : 4,
           borderBottomLeftRadius: isRequest ? 4 : 0,
-          wordBreak: "break-word",  // Ensures long words break to fit within the container
-          overflowWrap: "break-word", // Allows text to wrap to the next line
+          wordBreak: "break-word",
+          overflowWrap: "break-word",
         }}
         elevation={5}
       >
