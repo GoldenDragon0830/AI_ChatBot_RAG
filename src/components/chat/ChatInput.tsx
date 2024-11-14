@@ -1,5 +1,6 @@
 import { Button, TextField } from "@mui/material";
 import React, { useState } from "react";
+import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 
 interface ChatInputProps {
   onSendMessage: (message: {
