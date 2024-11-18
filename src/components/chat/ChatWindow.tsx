@@ -245,7 +245,7 @@ const ChatWindow: React.FC = () => {
 
     try {
       const response = await fetch(
-        `${API_URL}?prefix=You+are+an+AI+assistant&message=${
+        `${API_URL}?message=${
           message.content
         }&history=${JSON.stringify(messages)}&flag=${flag}`,
         {
@@ -384,12 +384,21 @@ const ChatWindow: React.FC = () => {
 
   const handleSendMessageViaInput = (text: string, flag: string) => {
       setOrderDetailDialogOpen(false)
-      const message: MessageInterface = {
+      const displayMessage: MessageInterface = {
         content: text,
         role: "user"
       };
+    
+      // Message to be sent to the backend
+      const backendMessage: MessageInterface = {
+        content: `I want ${text}`,
+        role: "user"
+      };
+
+      handleSendMessage(backendMessage, KEY_SELECT_PRODUCT, false);
       setFlag(KEY_SELECT_PRODUCT);
-      handleSendMessage(message, KEY_SELECT_PRODUCT);
+
+      setMessages((prevMessage) => [...prevMessage, displayMessage]);
   }
 
   const uniqueChunkData = chunkData.filter(
