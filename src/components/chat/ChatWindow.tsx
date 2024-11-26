@@ -30,11 +30,17 @@ import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
 import CloseIcon from '@mui/icons-material/Close';
+import ArrowRightIcon from '@mui/icons-material/ArrowRight';
+import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
+import ShoppingCartCheckoutIcon from '@mui/icons-material/ShoppingCartCheckout';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import ChangeCircleIcon from '@mui/icons-material/ChangeCircle';
 import LoupeIcon from '@mui/icons-material/Loupe';
+import Snackbar from '@mui/material/Snackbar';
+import { title } from "process";
+import { moveMessagePortToContext } from "worker_threads";
 
 interface MessageInterface {
   content: string;
@@ -42,25 +48,40 @@ interface MessageInterface {
   role: "user" | "assistant";
 }
 
+const KEY_CHAT_CUSTOMER = "CHAT_CUSTOMER";
+const KEY_FINISH_ORDER = "FINISH_ORDER";
 const KEY_SELECT_PRODUCT = "SELECT_PRODUCT";
 const KEY_ASK_AMOUNT = "ASK_AMOUNT";
-const KEY_RETURN_PRICE = "RETURN_PRICE"
 const INITIAL_AMOUNT = 1;
+const GREETING_WORD = "I'm Instacart Order Assistant, What would you like to order today?"
 
 const ChatWindow: React.FC = () => {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const isMediumScreen = useMediaQuery(theme.breakpoints.between("sm", "md"));
   const [showAmountSelector, setShowAmountSelector] = useState(false);
+  const [showContinueSelector, setShowContinueSelector] = useState(false);
   const [orderDetailDialogOpen, setOrderDetailDialogOpen] = useState(false);
   const [totalPrice, setTotalPrice] = useState("");
   const [currentAmount, setCurrentAmount] = useState(INITIAL_AMOUNT);
 
   const API_URL = "http://13.208.253.225:4000/chat";
+  // const API_URL = "http://52.221.236.58:80/chat";
 
-  const [messages, setMessages] = useState<MessageInterface[]>([]);
+  const [messages, setMessages] = useState<MessageInterface[]>([{content: GREETING_WORD, role: "assistant"}]);
+  
   const [chunkData, setChunkData] = useState<
-    { title: string; imageUrl: string }[]
+    { 
+      title: string;
+      image_urls: string;
+      category: string;
+      subtitle: string;
+      single_price: string;
+      additional_price: string;
+      single_quantities: string;
+      additional_quantities: string;
+      details: string;
+    }[]
   >([]);
   const [orderData, setOrderData] = useState<
     { 
@@ -290,32 +311,17 @@ const ChatWindow: React.FC = () => {
             }
             if (data.includes(KEY_ASK_AMOUNT)){
               try {                 
-                const chunkData = JSON.parse(data.split("ASK_AMOUNT:")[1]);
-                setOrderData(chunkData);
+                const cleanData = data.split(`${KEY_ASK_AMOUNT}:`)[1];
+                newMessageContent = cleanData; // Append the cleaned data
                 setShowAmountSelector(true);
               } catch (e){
                 console.error(e)
               }
-            } 
-            if (newMessageContent.includes("@:")){
-              try {
-                const amountIndex = newMessageContent.indexOf("@:") + "@:".length;
-                const endIndex = newMessageContent.indexOf("\n", amountIndex);
-                const amount = newMessageContent.slice(amountIndex, endIndex).trim().slice(2);
-                // amount.replace("@AMOUNT:@AMOUNT:", "");
-                setTotalPrice(amount); 
-                setOrderDetailDialogOpen(true);
-                
-                newMessageContent = "Total Price: "+amount;
-
-              } catch (e){
-                console.error(e);
-              }
             }
+            
             setMessages((prev) => {
               const newMessages = [...prev];
               const lastMessageIndex = newMessages.length - 1;
-
               if (
                 lastMessageIndex >= 0 &&
                 newMessages[lastMessageIndex].role === "assistant"
@@ -325,14 +331,13 @@ const ChatWindow: React.FC = () => {
                   newMessages[lastMessageIndex].content = newMessageContent.split(KEY_ASK_AMOUNT+":")[0] || "";
                 }
               } else {
-                newMessages.push({ content: data, role: "assistant" });
+                newMessages.push({ content: newMessageContent, role: "assistant" });
               }
               return newMessages;
             });
           }
         });
       }
-      
     } catch (error) {
       console.error(
         "Chat Error:",
@@ -364,23 +369,39 @@ const ChatWindow: React.FC = () => {
     // Add logic here to handle what should happen when the current amount is clicked
 
     if (orderData.length > 0) {
+      setShowAmountSelector(false);
       const displayMessage: MessageInterface = {
           content: `I need ${currentAmount}`,
           role: "user",
       };
 
-      const backendMessage: MessageInterface = {
-          content: `I need ${currentAmount} for "${orderData[0].title}"`,
-          role: "user",
-      };
-
-      // Send to backend without showing extended text
-      handleSendMessage(backendMessage, KEY_RETURN_PRICE, false);
-
       // Show only the display message
       setMessages((prevMessages) => [...prevMessages, displayMessage]);
+
+      const regex = /\$(\d+\.\d+)/;
+
+      // Use the regular expression to extract the values
+      const match1 = orderData[0].single_price.match(regex);
+      
+      // Ensure match1 is not null and calculate the total price
+      if (match1) {
+          const single_price = parseFloat(match1[1]);
+          const totalPrice = single_price * currentAmount;
+          const totalPriceText : MessageInterface = {
+            content: `$${totalPrice.toFixed(2)}`,
+            role: "assistant"
+          }
+          // Format totalPrice to two decimal places and set it
+          setMessages((prevMessages) => [...prevMessages, totalPriceText]);
+          setTotalPrice(totalPriceText.content);
+      } else {
+          console.error("Failed to parse single_price from orderData");
+          setTotalPrice(""); // Set a fallback value or handle the error as needed
+      }
+      setOrderDetailDialogOpen(true);
     }
   };
+
 
   const handleSendMessageViaInput = (text: string, flag: string) => {
       setOrderDetailDialogOpen(false)
@@ -418,8 +439,43 @@ const ChatWindow: React.FC = () => {
     setCartData((previousData) => [...previousData, orderData[0]]);
     setCartCount(cartCount + 1);
     setOrderData([]);
-    setOrderDetailDialogOpen(false)
+    setOrderDetailDialogOpen(false);
+    
+    const messageText : MessageInterface = {
+      content: "Add Cart successfully! Would you like to order more products or complete your order?",
+      role: "assistant",
+    };
+    <Snackbar
+      anchorOrigin={{vertical: 'top',horizontal: 'center'}}
+      open={true}
+      autoHideDuration={5000}
+      message="Add Cart successfully!"
+    />
+  
+    setMessages((prevMessages) => [...prevMessages, messageText]);
+    setShowContinueSelector(true);
+
   }
+
+  const handleContinueOrder = async () => {
+    setOrderDetailDialogOpen(false);
+    const displayMessage: MessageInterface = {
+      content: " I want to order again.",
+      role: "user"
+    }
+    handleSendMessage(displayMessage, KEY_CHAT_CUSTOMER, true);
+    setShowContinueSelector(false);
+  }
+  const handleFinishOrder = async () => {
+    setOrderDetailDialogOpen(false);
+    const displayMessage: MessageInterface = {
+      content: "That's all. I want to finish order",
+      role: "user"
+    }
+    handleSendMessage(displayMessage, KEY_FINISH_ORDER, true);
+    setShowContinueSelector(false);
+  }
+
   return (
     <div style={{ padding: "1rem" }}>
       <div
@@ -441,7 +497,7 @@ const ChatWindow: React.FC = () => {
           style={{ padding: "10px" }}
         >
           {uniqueChunkData.map((item, index) => (
-            item.imageUrl == "" ? (
+            item.image_urls == "" ? (
               <AmountItemButton
                 key={index}
                 text={item.title}
@@ -451,8 +507,13 @@ const ChatWindow: React.FC = () => {
               <ItemButton
                 key={index}
                 text={item.title}
-                url={item.imageUrl}
-                onClick={() => handleButtonClick(item.title, item.imageUrl)}
+                url={item.image_urls.split(",")[0]}
+                onClick={() => 
+                  {
+                    setOrderData([item]);
+                    handleButtonClick(item.title, item.image_urls.split(",")[0]);
+                  }
+                }
               />
             )
           ))}
@@ -506,7 +567,23 @@ const ChatWindow: React.FC = () => {
             </Dialog>
           </Box>
         )}
-        <Dialog open={orderDetailDialogOpen} onClose={() => setOrderDetailDialogOpen(false)}>
+        {showContinueSelector && (
+          <Box
+            sx={{
+              display: "flex",
+              mb: 1,
+              maxWidth: "600px",
+              maxHeight: "200px",
+              flexDirection: "column", // Ensure image and text stack vertically
+            }}
+          >
+            <ButtonGroup variant="outlined">
+              <Button variant="outlined" color="secondary" onClick={handleContinueOrder}><ShoppingCartCheckoutIcon /> I want to order again</Button>
+              <Button variant="contained" onClick={handleFinishOrder}><AssignmentTurnedInIcon /> That's all. I want to finish order</Button>
+            </ButtonGroup>
+          </Box>
+        )}
+        <Dialog open={orderDetailDialogOpen}>
           {orderData.length > 0 && (
             <>
               <DialogTitle><p>{orderData[0].title}</p></DialogTitle>
@@ -544,7 +621,7 @@ const ChatWindow: React.FC = () => {
             </Button>
             <Button 
               startIcon={<LoupeIcon />}
-              onClick={() => handleSendMessageViaInput("I want to make new Order", KEY_SELECT_PRODUCT)} 
+              onClick={handleContinueOrder}
               color="primary"
               >
               New Order

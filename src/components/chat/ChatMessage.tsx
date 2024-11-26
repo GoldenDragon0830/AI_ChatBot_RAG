@@ -59,13 +59,18 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           <img src={imageUrl} alt={content} style={{ width: "100%" }} />
         </DialogContent>
       </Dialog>
-      <Badge
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        badgeInset="14%"
-        color="success"
-      >
-        { isRequest ? (<PersonIcon sx={{ fontSize: 30 }}/>) : (<SmartToyIcon sx={{ fontSize: 30 }}/>)}
-      </Badge>
+      <div style={{display: 'flex', alignItems: 'center', }}>
+        <Badge
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          badgeInset="14%"
+          color="success"
+        >
+          { isRequest ? (<PersonIcon sx={{ fontSize: 30 }}/>) : (<div style={{display: 'flex', alignItems: 'center'}}><SmartToyIcon sx={{ fontSize: 30 }}/></div>)}
+        </Badge>
+        {
+          isRequest ? (<p></p>) : (<p style={{paddingLeft: '5px'}}>Assistant</p>)
+        }
+      </div>
       <Paper
         sx={{
           backgroundColor: isRequest ? "#2196f3" : "#e0e0e0",
