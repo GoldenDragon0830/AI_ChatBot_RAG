@@ -11,3 +11,19 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* The entire scrollbar */
+::-webkit-scrollbar {
+  width: 6px;  /* Set the width of the scrollbar */
+}
+
+/* The scrollbar track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1;  /* Optional: Set the background color of the track */
+}
+
+/* The draggable part of the scrollbar */
+::-webkit-scrollbar-thumb {
+  background: #888;  /* Set the color of the scrollbar thumb */
+  border-radius: 10px;  /* Optional: Round the corners for a smoother look */
+}

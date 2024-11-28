@@ -16,6 +16,8 @@ import {
   Badge,
   Drawer,
   ListItemButton,
+  AppBar,
+  Typography
 } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import ImageList from "@mui/material/ImageList";
@@ -30,7 +32,7 @@ import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 import ListItemAvatar from "@mui/material/ListItemAvatar";
 import CloseIcon from "@mui/icons-material/Close";
-import ArrowRightIcon from "@mui/icons-material/ArrowRight";
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import ShoppingCartCheckoutIcon from "@mui/icons-material/ShoppingCartCheckout";
 import ButtonGroup from "@mui/material/ButtonGroup";
@@ -47,6 +49,7 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import MailIcon from "@mui/icons-material/Mail";
 import MenuIcon from "@mui/icons-material/Menu";
 import InboxIcon from "@mui/icons-material/MoveToInbox";
+import Paper from '@mui/material/Paper';
 
 interface MessageInterface {
   content: string;
@@ -119,6 +122,7 @@ const ChatWindow: React.FC = () => {
       single_quantities: string;
       additional_quantities: string;
       details: string;
+      count: number;
     }[]
   >([]);
 
@@ -131,8 +135,39 @@ const ChatWindow: React.FC = () => {
     title: string;
     imageUrl: string;
     price: string;
-  }> = ({ title, imageUrl, price }) => {
+    count: number;
+  }> = ({ title, imageUrl, price, count }) => {
     return (
+      <ListItem
+        secondaryAction={
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <IconButton 
+              size="small" 
+              color="primary"
+              onClick={(e) => {
+                e.stopPropagation();
+                setCartData(prev => prev.map(item => 
+                  item.title === title ? {...item, count: item.count + 1} : item
+                ));
+              }}
+            >
+              <AddIcon fontSize="small" />
+            </IconButton>
+            <Typography>{count}</Typography>
+            <IconButton 
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                setCartData(prev => prev.map(item => 
+                  item.title === title ? {...item, count: Math.max(1, item.count - 1)} : item
+                ));
+              }}
+            >
+              <RemoveIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        }
+      >
       <ListItemButton>
         <ListItemAvatar>
           <Avatar>
@@ -140,7 +175,19 @@ const ChatWindow: React.FC = () => {
           </Avatar>
         </ListItemAvatar>
         <ListItemText primary={title} secondary={price} />
+        <IconButton
+          edge="end"
+          aria-label="delete"
+          onClick={(e) => {
+            e.stopPropagation();
+            setCartData(prev => prev.filter(item => item.title !== title));
+            setCartCount(prev => prev - 1);
+          }}
+        >
+          <DeleteForeverIcon color="secondary" />
+        </IconButton>
       </ListItemButton>
+      </ListItem>
     );
   };
 
@@ -264,6 +311,7 @@ const ChatWindow: React.FC = () => {
   }, [messages]);
 
   const handleButtonClick = (text: string, url: string) => {
+    setShowContinueSelector(false);
     setOrderDetailDialogOpen(false);
     const message: MessageInterface = {
       content: text,
@@ -431,6 +479,7 @@ const ChatWindow: React.FC = () => {
 
   const handleSendMessageViaInput = (text: string, flag: string) => {
     setChunkData([]);
+    setShowContinueSelector(false);
     setOrderDetailDialogOpen(false);
     const displayMessage: MessageInterface = {
       content: text,
@@ -463,8 +512,9 @@ const ChatWindow: React.FC = () => {
   const handleClose = () => setOpen(false);
 
   const handleAddCart = async () => {
-    setCartData((previousData) => [...previousData, orderData[0]]);
     setCartCount(cartCount + 1);
+    setCartData((previousData) => [...previousData, { ...orderData[0], count: currentAmount }]);
+    
     setOrderData([]);
     setOrderDetailDialogOpen(false);
 
@@ -513,7 +563,7 @@ const ChatWindow: React.FC = () => {
           alt="Cart"
           style={{ width: "100px", height: "auto" }}
         />
-        <span>The photos related to conversation will be displyed in the below list.</span>
+        <span>The photos related to conversation will be displayed in the below list.</span>
       </div>
 
       <Divider />
@@ -652,9 +702,9 @@ const ChatWindow: React.FC = () => {
           {loading && (
             <div
               style={{
-                position: "absolute",
+                position: "fixed",
                 top: "50%",
-                left: "50%",
+                left: "62%",
                 transform: "translate(-50%, -50%)",
               }}
             >
@@ -822,7 +872,16 @@ const ChatWindow: React.FC = () => {
           </Fab>
         </Badge>
 
-        <Drawer anchor="right" open={cartOpen} onClose={handleCartClose}>
+        <Drawer 
+          anchor="right"
+          open={cartOpen} 
+          onClose={handleCartClose}
+          sx={{
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: "500px",
+            },
+          }}>
           <div style={{ padding: "16px", textAlign: "center" }}>
             <img
               src="/cart.svg"
@@ -830,16 +889,29 @@ const ChatWindow: React.FC = () => {
               style={{ maxWidth: "100%", height: "200px" }}
             />
           </div>
-          <List>
+          <List sx={{ position: 'relative', overflow: 'auto', marginBottom: '50px'}}>
             {cartData.map((item, index) => (
               <ItemCart
                 key={index}
                 title={item.title}
                 imageUrl={item.image_urls.split(", ")[0]}
                 price={item.single_price}
+                count={item.count}
               />
             ))}
           </List>
+          
+          <AppBar position="absolute" color="primary" sx={{ display: 'flex', top: 'auto', height: '50px', bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
+            <Paper elevation={0} sx={{ bgcolor: 'transparent', color: 'white', padding: 1 }}>
+              <h4>Total Items: {cartData.reduce((sum, item) => sum + item.count, 0)} || 
+               
+              Total Price: ${cartData.reduce((sum, item) => {
+                const priceMatch = item.single_price.match(/\$(\d+\.\d+)/);
+                const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
+                return sum + (price * item.count);
+              }, 0).toFixed(2)}</h4>
+            </Paper>
+          </AppBar>
         </Drawer>
       </Box>
     </Box>

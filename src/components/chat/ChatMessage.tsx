@@ -65,7 +65,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           badgeInset="14%"
           color="success"
         >
-          { isRequest ? (<PersonIcon sx={{ fontSize: 30 }}/>) : (<div style={{display: 'flex', alignItems: 'center'}}><SmartToyIcon sx={{ fontSize: 30 }}/></div>)}
+          { isRequest ? (<PersonIcon fontSize="large" color="primary" />) : (<div style={{display: 'flex', alignItems: 'center'}}><SmartToyIcon color="primary" fontSize="large"/></div>)}
         </Badge>
         {
           isRequest ? (<p></p>) : (<p style={{paddingLeft: '5px'}}>Assistant</p>)
