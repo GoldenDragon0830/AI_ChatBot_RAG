@@ -77,8 +77,8 @@ const ChatWindow: React.FC = () => {
   const [totalPrice, setTotalPrice] = useState("");
   const [currentAmount, setCurrentAmount] = useState(INITIAL_AMOUNT);
 
-  const API_URL = "http://13.208.253.225:4000/chat";
-  // const API_URL = "http://52.221.236.58:80/chat";
+  // const API_URL = "http://13.208.253.225:4000/chat";
+  const API_URL = "http://52.221.236.58:80/chat";
 
   const [messages, setMessages] = useState<MessageInterface[]>([
     { content: GREETING_WORD, role: "assistant" },
