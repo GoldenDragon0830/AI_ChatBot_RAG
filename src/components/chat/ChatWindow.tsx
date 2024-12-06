@@ -31,25 +31,17 @@ import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 import ListItemAvatar from "@mui/material/ListItemAvatar";
-import CloseIcon from "@mui/icons-material/Close";
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
-import ShoppingCartCheckoutIcon from "@mui/icons-material/ShoppingCartCheckout";
+import DoubleArrowTwoToneIcon from '@mui/icons-material/DoubleArrowTwoTone';
 import ButtonGroup from "@mui/material/ButtonGroup";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import ChangeCircleIcon from "@mui/icons-material/ChangeCircle";
 import LoupeIcon from "@mui/icons-material/Loupe";
 import Snackbar from "@mui/material/Snackbar";
-import { title } from "process";
-import { moveMessagePortToContext } from "worker_threads";
-import Toolbar from "@mui/material/Toolbar";
 import Divider from "@mui/material/Divider";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import MailIcon from "@mui/icons-material/Mail";
-import MenuIcon from "@mui/icons-material/Menu";
-import InboxIcon from "@mui/icons-material/MoveToInbox";
 import Paper from '@mui/material/Paper';
+import { Category } from "@mui/icons-material";
 
 interface MessageInterface {
   content: string;
@@ -58,34 +50,36 @@ interface MessageInterface {
 }
 
 const KEY_CHAT_CUSTOMER = "CHAT_CUSTOMER";
-const KEY_FINISH_ORDER = "FINISH_ORDER";
+// const KEY_FINISH_ORDER = "FINISH_ORDER";
 const KEY_SELECT_PRODUCT = "SELECT_PRODUCT";
 const KEY_ASK_AMOUNT = "ASK_AMOUNT";
+const KEY_ANSWER_AMOUNT = "ANSWER_AMOUNT";
 const INITIAL_AMOUNT = 1;
-const GREETING_WORD =
-  "I'm Instacart Order Assistant, What would you like to order today?";
+const GREETING_WORD = "I'm Instacart Order Assistant, What would you like to order today?";
 
-const drawerWidth = 560;
+const drawerWidth = 1200;
 
 const ChatWindow: React.FC = () => {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const isMediumScreen = useMediaQuery(theme.breakpoints.between("sm", "md"));
   const [showAmountSelector, setShowAmountSelector] = useState(false);
-  const [showContinueSelector, setShowContinueSelector] = useState(false);
+  // const [showContinueSelector, setShowContinueSelector] = useState(false);
   const [orderDetailDialogOpen, setOrderDetailDialogOpen] = useState(false);
   const [totalPrice, setTotalPrice] = useState("");
   const [currentAmount, setCurrentAmount] = useState(INITIAL_AMOUNT);
 
   // const API_URL = "http://13.208.253.225:4000/chat";
   const API_URL = "http://52.221.236.58:80/chat";
+  // const API_URL = "http://3.99.185.93:4000/chat";
 
   const [messages, setMessages] = useState<MessageInterface[]>([
     { content: GREETING_WORD, role: "assistant" },
   ]);
 
-  const [chunkData, setChunkData] = useState<
-    {
+  interface ChunkData {
+    keyword: string;
+    data: {
       title: string;
       image_urls: string;
       category: string;
@@ -95,8 +89,10 @@ const ChatWindow: React.FC = () => {
       single_quantities: string;
       additional_quantities: string;
       details: string;
-    }[]
-  >([]);
+    }[];
+  }
+  
+  const [chunkData, setChunkData] = useState<ChunkData[]>([]);
   const [orderData, setOrderData] = useState<
     {
       title: string;
@@ -171,7 +167,7 @@ const ChatWindow: React.FC = () => {
       <ListItemButton>
         <ListItemAvatar>
           <Avatar>
-            <img src={imageUrl} width="100%" />
+            <img src={imageUrl} alt={title} width="100%" />
           </Avatar>
         </ListItemAvatar>
         <ListItemText primary={title} secondary={price} />
@@ -194,8 +190,11 @@ const ChatWindow: React.FC = () => {
   const ItemButton: React.FC<{
     text: string;
     url: string;
+    price: string;
+    quantities: string;
+    subtitle: string;
     onClick: () => void;
-  }> = ({ text, url, onClick }) => {
+  }> = ({ text, url, price, quantities, subtitle, onClick }) => {
     const [open, setOpen] = useState(false);
 
     const handleOpen = () => setOpen(true);
@@ -203,19 +202,27 @@ const ChatWindow: React.FC = () => {
 
     return (
       <ImageListItem key={text} className="image-list-item">
+        <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.7)', padding: '4px 8px', borderRadius: 4 }}>
+          <Typography variant="body2" style={{ color: 'white'  }}>
+            {price.match(/\$(\d+\.\d+)/)?.[0]}
+          </Typography>
+          <Typography variant="caption" style={{ color: 'white', display: 'block', textAlign: 'center' }}>
+            {quantities || "Per item"}
+          </Typography>
+        </div>
         <img src={url} alt={text} loading="lazy" onClick={handleOpen} />
         <div className="overlay">
           <IconButton
             color="primary"
             onClick={handleOpen}
-            style={{ color: "white" }}
+            style={{ color: "white", zIndex: 3 }}
           >
             <VisibilityIcon />
           </IconButton>
           <IconButton
             color="primary"
             onClick={onClick}
-            style={{ color: "white" }}
+            style={{ color: "white", zIndex: 3 }}
           >
             <DoneOutlineIcon />
           </IconButton>
@@ -225,6 +232,11 @@ const ChatWindow: React.FC = () => {
             <div>
               <span>{text}</span>
             </div>
+          }
+          subtitle={
+            <Typography variant="caption" style={{ color: 'white' }}>
+              {subtitle.match(/\b(\d+(?:\.\d+)?)\s*(lb|oz|each|count|fl oz|ct|gal|g|bunch)\b|per lb/g)?.[0]}
+            </Typography>
           }
         />
 
@@ -310,8 +322,24 @@ const ChatWindow: React.FC = () => {
     }
   }, [messages]);
 
+  useEffect(() => {
+    if (orderData.length > 0) {
+      const regex = /\$(\d+\.\d+)/;
+      const match1 = orderData[0].single_price.match(regex);
+  
+      if (match1) {
+        const single_price = parseFloat(match1[1]);
+        const totalPrice = single_price * currentAmount;
+        setTotalPrice(`$${totalPrice.toFixed(2)}`);
+      } else {
+        console.error("Failed to parse single_price from orderData");
+        setTotalPrice("");
+      }
+    }
+  }, [currentAmount, orderData]);
+
   const handleButtonClick = (text: string, url: string) => {
-    setShowContinueSelector(false);
+    // setShowContinueSelector(false);
     setOrderDetailDialogOpen(false);
     const message: MessageInterface = {
       content: text,
@@ -321,7 +349,7 @@ const ChatWindow: React.FC = () => {
     setFlag(KEY_ASK_AMOUNT);
     handleSendMessage(message, KEY_ASK_AMOUNT);
   };
-
+  
   const handleSendMessage = async (
     message: MessageInterface,
     flag: string,
@@ -366,15 +394,20 @@ const ChatWindow: React.FC = () => {
         const lines = buffer.split("\n");
         buffer = lines.pop() || "";
 
+        // eslint-disable-next-line no-loop-func
         lines.forEach((line) => {
-          if (line.startsWith("data: ")) {
+          if (line.startsWith("data: ")){
             const data = line.slice(6);
             newMessageContent += data;
 
             if (data.includes("ChunkData:")) {
               try {
                 const jsonData = JSON.parse(data.split("ChunkData:")[1]);
-                setChunkData(jsonData);
+                const parsedData = Object.entries(jsonData).map(([keyword, dataArray]) => ({
+                  keyword,
+                  data: dataArray as ChunkData['data'],
+                }));
+                setChunkData(parsedData);
               } catch (e) {
                 console.error(e);
               }
@@ -388,7 +421,32 @@ const ChatWindow: React.FC = () => {
                 console.error(e);
               }
             }
+            if (data.includes(KEY_ANSWER_AMOUNT)) {
+              try {
+                const amountString = data.split(`${KEY_ANSWER_AMOUNT}:`)[1];
+                console.log(amountString)
+                const amount = parseInt(amountString, 10);
+                console.log(amount)
+                if (amount <= 0 || amountString.length > 4 || Number.isNaN(amount)) {
+                  // Invalid input detected, prompt the user again
+                  const invalidInputMessage: MessageInterface = {
+                    content: "Please input amount of product correctly.",
+                    role: "assistant",
+                  };
+                  setMessages((prevMessages) => [...prevMessages, invalidInputMessage]);
+                  setShowAmountSelector(true);
+                  return; // Exit early since we're asking for input again
+                }
 
+                handleSetCurrentAmount(amount);
+                // setCurrentAmount(amount);
+                console.log(currentAmount)
+                handleAmountClick(false, amount);
+                return;
+              } catch (e) {
+                console.error(e);
+              }
+            }
             setMessages((prev) => {
               const newMessages = [...prev];
               const lastMessageIndex = newMessages.length - 1;
@@ -440,68 +498,93 @@ const ChatWindow: React.FC = () => {
     }
   };
 
-  const handleAmountClick = () => {
+  const handleSetCurrentAmount = (amount: Number) => {
+    setCurrentAmount(amount.valueOf())
+  }
+
+  const handleAmountClick = (flag: boolean, amount: number) => {
     // Add logic here to handle what should happen when the current amount is clicked
 
     if (orderData.length > 0) {
+      
+      const newAmount = flag ? currentAmount : amount;
+
+    if (flag) {
       setShowAmountSelector(false);
       const displayMessage: MessageInterface = {
-        content: `I need ${currentAmount}`,
+        content: `I need ${newAmount}`,
         role: "user",
       };
-
-      // Show only the display message
       setMessages((prevMessages) => [...prevMessages, displayMessage]);
+    }
 
-      const regex = /\$(\d+\.\d+)/;
+    // Calculate total price
+    const regex = /\$(\d+\.\d+)/;
+    const match1 = orderData[0].single_price.match(regex);
+    if (match1) {
+      const single_price = parseFloat(match1[1]);
+      const totalPrice = single_price * newAmount;
+      
+      // Ensure the total price message is added only once
+      setMessages((prevMessages) => {
+        const lastIndex = prevMessages.length - 1;
+        const lastMessage = prevMessages[lastIndex];
+        
+        // Check if the last message already contains the total price
+        if (lastMessage && lastMessage.content.includes('Total Price:')) {
+          return prevMessages;
+        }
 
-      // Use the regular expression to extract the values
-      const match1 = orderData[0].single_price.match(regex);
-
-      // Ensure match1 is not null and calculate the total price
-      if (match1) {
-        const single_price = parseFloat(match1[1]);
-        const totalPrice = single_price * currentAmount;
         const totalPriceText: MessageInterface = {
-          content: `$${totalPrice.toFixed(2)}`,
+          content: `Total Price: $${totalPrice.toFixed(2)}`,
           role: "assistant",
         };
-        // Format totalPrice to two decimal places and set it
-        setMessages((prevMessages) => [...prevMessages, totalPriceText]);
-        setTotalPrice(totalPriceText.content);
-      } else {
-        console.error("Failed to parse single_price from orderData");
-        setTotalPrice(""); // Set a fallback value or handle the error as needed
-      }
-      setOrderDetailDialogOpen(true);
+        return [...prevMessages, totalPriceText];
+      });
+
+      setTotalPrice(`$${totalPrice.toFixed(2)}`);
+    } else {
+      console.error("Failed to parse single_price from orderData");
+      setTotalPrice("");
+    }
+
+    setCurrentAmount(newAmount);
+    setOrderDetailDialogOpen(true);
     }
   };
 
   const handleSendMessageViaInput = (text: string, flag: string) => {
-    setChunkData([]);
-    setShowContinueSelector(false);
-    setOrderDetailDialogOpen(false);
-    const displayMessage: MessageInterface = {
+    const message: MessageInterface = {
       content: text,
       role: "user",
     };
-
-    // Message to be sent to the backend
-    const backendMessage: MessageInterface = {
-      content: `I want ${text}`,
-      role: "user",
-    };
-
-    handleSendMessage(backendMessage, KEY_SELECT_PRODUCT, false);
-    setFlag(KEY_SELECT_PRODUCT);
-
-    setMessages((prevMessage) => [...prevMessage, displayMessage]);
+    if (flag === KEY_ASK_AMOUNT)
+      handleSendMessage(message, KEY_ANSWER_AMOUNT, true);    
+    else { 
+      setChunkData([]);
+      // setShowContinueSelector(false);
+      setOrderDetailDialogOpen(false);
+      
+      setFlag(KEY_SELECT_PRODUCT);
+      handleSendMessage(message, KEY_SELECT_PRODUCT, true);
+      setFlag(KEY_SELECT_PRODUCT);
+    }
   };
 
-  const uniqueChunkData = chunkData.filter(
-    (item, index, self) =>
-      index === self.findIndex((t) => t.title === item.title)
-  );
+  const uniqueChunkData = chunkData.map(category => {
+    const seenImageUrls = new Set<string>();
+    return {
+      keyword: category.keyword,
+      data: category.data.filter(item => {
+        if (seenImageUrls.has(item.image_urls)) {
+          return false; // Skip this item if its image URL has already been seen
+        }
+        seenImageUrls.add(item.image_urls);
+        return true; // Include this item if its image URL is unique
+      })
+    };
+  }).filter(Category => Category.data.length > 0);
+
   const [open, setOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
 
@@ -517,6 +600,7 @@ const ChatWindow: React.FC = () => {
     
     setOrderData([]);
     setOrderDetailDialogOpen(false);
+    setFlag(KEY_SELECT_PRODUCT);
 
     const messageText: MessageInterface = {
       content:
@@ -531,7 +615,7 @@ const ChatWindow: React.FC = () => {
     />;
 
     setMessages((prevMessages) => [...prevMessages, messageText]);
-    setShowContinueSelector(true);
+    // setShowContinueSelector(true);
   };
 
   const handleContinueOrder = async () => {
@@ -543,17 +627,18 @@ const ChatWindow: React.FC = () => {
     
     setChunkData([]);
     handleSendMessage(displayMessage, KEY_CHAT_CUSTOMER, true);
-    setShowContinueSelector(false);
+    setFlag(KEY_SELECT_PRODUCT);
+    // setShowContinueSelector(false);
   };
-  const handleFinishOrder = async () => {
-    setOrderDetailDialogOpen(false);
-    const displayMessage: MessageInterface = {
-      content: "That's all. I want to finish order",
-      role: "user",
-    };
-    handleSendMessage(displayMessage, KEY_FINISH_ORDER, true);
-    setShowContinueSelector(false);
-  };
+  // const handleFinishOrder = async () => {
+  //   setOrderDetailDialogOpen(false);
+  //   const displayMessage: MessageInterface = {
+  //     content: "That's all. I want to finish order",
+  //     role: "user",
+  //   };
+  //   handleSendMessage(displayMessage, KEY_FINISH_ORDER, true);
+  //   // setShowContinueSelector(false);
+  // };
 
   const drawer = (
     <div>
@@ -567,49 +652,41 @@ const ChatWindow: React.FC = () => {
       </div>
 
       <Divider />
-      <ImageList
-          cols={2}
-          style={{ padding: "10px" }}
-        >
-        {uniqueChunkData.map((item, index) =>
-                item.image_urls == "" ? (
-                  <></>
-                ) : (
-                  <ItemButton
-                    key={index}
-                    text={item.title}
-                    url={item.image_urls.split(",")[0]}
-                    onClick={() => {
-                      setOrderData([item]);
-                      handleButtonClick(
-                        item.title,
-                        item.image_urls.split(",")[0]
-                      );
-                    }}
-                  />
-                )
-              )}
-      </ImageList>
+      {uniqueChunkData.map((category) => (
+        <Box key={category.keyword} sx={{ marginTop: '20px', marginLeft: '10px' }}>
+          <Fab variant="extended" size="medium" color="primary">
+            <DoubleArrowTwoToneIcon sx={{ mr: 1 }} />
+            {category.keyword}
+          </Fab>
+          <ImageList cols={isSmallScreen ? 2 : isMediumScreen ? 4 : 5} style={{ padding: "10px" }}>
+            {category.data.map((item, index) => (
+              item.image_urls === "" ? (
+                <AmountItemButton
+                  key={index}
+                  text={item.title}
+                  onClick={() => handleButtonClick(item.title, "")}
+                />
+              ) : (
+                <ItemButton
+                  key={index}
+                  text={item.title}
+                  url={item.image_urls.split(",")[0]}
+                  price={item.single_price}
+                  quantities={item.single_quantities}
+                  subtitle={item.subtitle}
+                  onClick={() => {
+                    setOrderData([item]);
+                    handleButtonClick(item.title, item.image_urls.split(",")[0]);
+                  }}
+                />
+              )
+            ))}
+          </ImageList>
+        </Box>
+      ))}
     </div>
   );
 
-  const [mobileOpen, setMobileOpen] = React.useState(false);
-  const [isClosing, setIsClosing] = React.useState(false);
-
-  const handleDrawerClose = () => {
-    setIsClosing(true);
-    setMobileOpen(false);
-  };
-
-  const handleDrawerTransitionEnd = () => {
-    setIsClosing(false);
-  };
-
-  const handleDrawerToggle = () => {
-    if (!isClosing) {
-      setMobileOpen(!mobileOpen);
-    }
-  };
   return (
     <Box sx={{ display: "flex" }} style={{ padding: "1rem" }}>
       <Box
@@ -620,9 +697,6 @@ const ChatWindow: React.FC = () => {
         {/* The implementation can be swapped with js to avoid SEO duplication of links. */}
         <Drawer
           variant="temporary"
-          open={mobileOpen}
-          onTransitionEnd={handleDrawerTransitionEnd}
-          onClose={handleDrawerClose}
           ModalProps={{
             keepMounted: true, // Better open performance on mobile.
           }}
@@ -663,7 +737,7 @@ const ChatWindow: React.FC = () => {
             height: "80vh",
             maxHeight: "650px",
             overflowY: "auto",
-            padding: "50px",
+            padding: "20px",
             position: "relative",
           }}
           ref={containerRef}
@@ -704,7 +778,7 @@ const ChatWindow: React.FC = () => {
               style={{
                 position: "fixed",
                 top: "50%",
-                left: "62%",
+                left: "80%",
                 transform: "translate(-50%, -50%)",
               }}
             >
@@ -749,7 +823,7 @@ const ChatWindow: React.FC = () => {
                 >
                   <RemoveIcon />
                 </Button>
-                <Button style={{ width: "150px" }} onClick={handleAmountClick}>
+                <Button>
                   {currentAmount}
                 </Button>
                 <Button
@@ -757,6 +831,9 @@ const ChatWindow: React.FC = () => {
                   onClick={() => setCurrentAmount(currentAmount + 1)}
                 >
                   <AddIcon />
+                </Button>
+                <Button style={{ width: "200px" }} onClick={() =>handleAmountClick(true, 0)}>
+                  <AddShoppingCartIcon />
                 </Button>
               </ButtonGroup>
               <Dialog open={open} onClose={handleClose}>
@@ -775,7 +852,7 @@ const ChatWindow: React.FC = () => {
               </Dialog>
             </Box>
           )}
-          {showContinueSelector && (
+          {/* {showContinueSelector && (
             <Box
               sx={{
                 display: "flex",
@@ -798,7 +875,7 @@ const ChatWindow: React.FC = () => {
                 </Button>
               </ButtonGroup>
             </Box>
-          )}
+          )} */}
           <Dialog open={orderDetailDialogOpen}>
             {orderData.length > 0 && (
               <>
