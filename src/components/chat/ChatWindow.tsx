@@ -407,7 +407,26 @@ const ChatWindow: React.FC = () => {
                   keyword,
                   data: dataArray as ChunkData['data'],
                 }));
-                setChunkData(parsedData);
+                setChunkData(prevChunkData => {
+                  const updatedChunkData = [...prevChunkData];
+                  parsedData.forEach(newCategory => {
+                    const existingCategoryIndex = updatedChunkData.findIndex(
+                      category => category.keyword === newCategory.keyword
+                    );
+            
+                    if (existingCategoryIndex !== -1) {
+                      // Merge data if the category already exists
+                      updatedChunkData[existingCategoryIndex].data = [
+                        ...updatedChunkData[existingCategoryIndex].data,
+                        ...newCategory.data
+                      ];
+                    } else {
+                      // Add new category if it doesn't exist
+                      updatedChunkData.push(newCategory);
+                    }
+                  });
+                  return updatedChunkData;
+                });
               } catch (e) {
                 console.error(e);
               }

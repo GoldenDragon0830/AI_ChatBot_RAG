@@ -33,6 +33,7 @@ PINECONE_ENV = os.getenv("PINECONE_ENV")
 PINECONE_INDEX = os.getenv("PINECONE_INDEX")
 PINECONE_NAMESPACE = os.getenv("PINECONE_NAMESPACE")
 OPENAI_MODEL_NAME = os.getenv("OPENAI_MODEL_NAME")
+PORT = os.getenv("PORT")
 
 # Define constants for flags
 KEY_SELECT_PRODUCT = "SELECT_PRODUCT"
@@ -55,36 +56,37 @@ def get_openai_response(prompt, message):
     )
     return response.choices[0].message.content.strip()
 
-def get_detect_result(message: str, record: str, keywords: str):
+def get_detect_result(record: str, keywords: str):
     """Detect relevant titles from a message and record."""
 
     # Condense the client’s requirement into a single, concise concept. For instance, convert “I want frozen pizza” into “Frozen pizza,” recognizing “frozen” as an adjective and “pizza” as a noun.
     #     When a phrase contains two nouns, such as “corn flakes,” include titles that contain either “corn” or “flakes”. so If record contain any one of noun then include title into array.
     #     Prioritize the semantic relevance of the requirement. Exclude titles that are unrelated to the core request, such as excluding “apple juice” for a request like “I want an apple.”
     summary_prompt = """
-        Task: Create a structured JSON object from a list of titles related to specific keywords. 
+        Task: Create a structured JSON object from a list of titles extracted from the provided chunk data, related to specific keywords.
 
         Instructions:
-        1. Uniqueness and Relevance:
-            Each keyword should have 8 titles minium. the more the better. Only Use keywords that provided, do not use another keywords.
+        1. Data Extraction:
+            Use the 'title' field from the provided chunk data for each document.
+            Ensure all extracted titles are unique and directly sourced from the chunk data.
 
-            Ensure all titles in the output are unique, do not repeat any titles.
-            If the message is a generic greeting or unrelated to ordering, exclude all titles.
-        2. JSON Structure:
+        2. Keyword Relevance:
+            Each keyword should have a minimum of 8 titles. Only use the keywords provided, and ensure each title has some relevance to the keyword. But add as much as you can.
+
+        3. JSON Structure:
             Organize the titles into a JSON object where each keyword is a key with an associated array of titles.
-            Each title must be categorized under one keyword only. If a title is relevant to multiple keywords, assign it to the most appropriate one.
-            Ensure every title has a key, and titles should not be repeated across different keywords.
-        
-        3. Output Format:
+
+        4. Output Format:
             Return the output as a complete JSON object.
             Ensure the JSON is properly formatted and complete, so it can be parsed without errors.
-            Output Example:
+            Example:
 
-            {"keyword1": ["title1", "title2", "title3"],"keyword2": ["title4", "title5"],"keyword3": ["title6"] ...}
-        
+            {"keyword1": ["title1", "title2", "title3", ...]}
+
         Additional Considerations:
             Avoid any trailing commas in the JSON structure.
             Double-check the JSON syntax to ensure there are no missing brackets or incomplete entries.
+            Do not create new titles; use only the 'title' data from the chunk data.
     """
 
     summary_response = openai.chat.completions.create(
@@ -96,7 +98,7 @@ def get_detect_result(message: str, record: str, keywords: str):
             },
             {
                 "role": "user",
-                "content": f'Records : {record}, Message {message}, Keyword: {keywords}'
+                "content": f'Records : {record}, Keyword: {keywords}'
             }
         ],
         max_tokens=1000
@@ -178,9 +180,10 @@ def get_response(message: str, flag: str):
         keywords = get_keyword_array(message)
         print("KEYWORDS: ",keywords)
 
-        top_k = len(keywords) * 15
-        if top_k > 45: 
-            top_k = 45
+        # top_k = len(keywords) * 15
+        # if top_k > 45: 
+        #     top_k = 45
+        top_k = 15
         print("TOP_K", top_k)
 
         chat = ChatOpenAI(
@@ -252,43 +255,57 @@ def get_response(message: str, flag: str):
         ).assign(
             answer=document_chain,
         )
-        stream = conversational_retrieval_chain.stream(
-            {
-                "messages": [
-                    HumanMessage(content=message),
-                ],
-            }
-        )
 
         all_content = ""
         keyword_chunks = {}
 
-        for chunk in stream:
-            for key in chunk:
-                if key == "answer":
-                    all_content += chunk[key]
-                    yield f'data: {chunk[key]}\n\n'
-                elif key == "context":
-                    # Obtain the title list from get_detect_result function
-                    title_list = get_detect_result(message, chunk[key], keywords)
-                    
-                    # Dynamically populate keyword_chunks based on returned title_list keys
-                    keyword_chunks = {keyword: [] for keyword in title_list.keys()}
-                    
-                    # Iterate over the documents in the context chunk
-                    for document in chunk[key]:
-                        text_field = document.page_content
-                        title_match = re.search(r"title: (.+)", text_field)
-                        title_content = title_match.group(1).strip() if title_match else ""
+        answer_sent = False
+
+        for keyword in keywords:
+            
+            stream = conversational_retrieval_chain.stream(
+                {
+                    "messages": [
+                        HumanMessage(content=keyword),
+                    ]
+                },
+            )
+            for chunk in stream:
+                for key in chunk:
+                    if key == "answer":
+                        all_content += chunk[key]
+
+                    elif key == "context":
+                        # Obtain the title list from get_detect_result function
+                        # print(chunk[key])
+                        title_list = get_detect_result(chunk[key], keyword)
+
+                        print(title_list)
+                        # Dynamically populate keyword_chunks based on returned title_list keys
+                        if keyword not in keyword_chunks:
+                            keyword_chunks[keyword] = []
                         
-                        # Check which keywords the title belongs to and assign product data
-                        for keyword, titles in title_list.items():
-                            if title_content in titles:
+                        # Iterate over the documents in the context chunk
+                        for document in chunk[key]:
+                            text_field = document.page_content
+                            title_match = re.search(r"title: (.+)", text_field)
+                            title_content = title_match.group(1).strip() if title_match else ""
+                            
+                            if title_content in title_list.get(keyword, []):
+                                print("------->",title_content)
                                 product_data = parse_product_data(text_field)
                                 keyword_chunks[keyword].append(product_data)
 
-        # Convert the dictionary to a JSON string for the desired format
-        yield f'data: ChunkData:{json.dumps(keyword_chunks)}\n\n'
+            if answer_sent == False:
+                yield f'data: {all_content}\n\n'
+                answer_sent = True
+
+            # Convert the dictionary to a JSON string for the desired format
+            yield f'data: ChunkData:{json.dumps(keyword_chunks)}\n\n'
+        
+        
+        answer_sent = False
+        yield f'data: OPTION_END\n\n'
 
     elif flag == KEY_ASK_AMOUNT:
         PROMPT = """
@@ -337,4 +354,4 @@ def sse_request():
     return Response(stream_with_context(get_response(message, flag)), content_type='text/event-stream')
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=80)
+    app.run(host="0.0.0.0", port=PORT)
