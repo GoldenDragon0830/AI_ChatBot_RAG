@@ -55,7 +55,7 @@ const KEY_SELECT_PRODUCT = "SELECT_PRODUCT";
 const KEY_ASK_AMOUNT = "ASK_AMOUNT";
 const KEY_ANSWER_AMOUNT = "ANSWER_AMOUNT";
 const INITIAL_AMOUNT = 1;
-const GREETING_WORD = "I'm Instacart Order Assistant, What would you like to order today?";
+const GREETING_WORD = "I'm Restaurant Depot Order Assistant, What would you like to order today?";
 
 const drawerWidth = 1200;
 
@@ -70,8 +70,8 @@ const ChatWindow: React.FC = () => {
   const [currentAmount, setCurrentAmount] = useState(INITIAL_AMOUNT);
 
   // const API_URL = "http://13.208.253.225:4000/chat";
-  const API_URL = "http://52.221.236.58:80/chat";
-  // const API_URL = "http://3.99.185.93:4000/chat";
+  // const API_URL = "http://52.221.236.58:80/chat";
+  const API_URL = "http://3.99.185.93:4000/chat";
 
   const [messages, setMessages] = useState<MessageInterface[]>([
     { content: GREETING_WORD, role: "assistant" },
@@ -210,6 +210,18 @@ const ChatWindow: React.FC = () => {
             {quantities || "Per item"}
           </Typography>
         </div>
+        {
+          subtitle == "" ? 
+            (<div></div>)
+            :
+            (
+              <div style={{ position: 'absolute', top: 8, left: 8, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.7)', padding: '4px 8px', borderRadius: 4 }}>
+                <Typography variant="body2" style={{ color: 'white'  }}>
+                  {subtitle.match(/\b(\d+(?:\.\d+)?)\s*(lb|oz|each|count|fl|oz|ct|gal|g|bunch|case)\b|per lb/g)?.[0]}
+                </Typography>
+              </div>
+            )
+          }
         <img src={url} alt={text} loading="lazy" onClick={handleOpen} />
         <div className="overlay">
           <IconButton
@@ -232,11 +244,6 @@ const ChatWindow: React.FC = () => {
             <div>
               <span>{text}</span>
             </div>
-          }
-          subtitle={
-            <Typography variant="caption" style={{ color: 'white' }}>
-              {subtitle.match(/\b(\d+(?:\.\d+)?)\s*(lb|oz|each|count|fl oz|ct|gal|g|bunch)\b|per lb/g)?.[0]}
-            </Typography>
           }
         />
 
@@ -623,7 +630,7 @@ const ChatWindow: React.FC = () => {
 
     const messageText: MessageInterface = {
       content:
-        "Add Cart successfully! Would you like to order more products or complete your order?",
+        "Added to cart successfully!",
       role: "assistant",
     };
     <Snackbar
@@ -661,14 +668,14 @@ const ChatWindow: React.FC = () => {
 
   const drawer = (
     <div>
-      <div style={{ padding: "16px", textAlign: "center", display: "flex", alignItems: "center" }}>
+      {/* <div style={{ padding: "16px", textAlign: "center", display: "flex", alignItems: "center" }}>
         <img
           src="/cart.svg"
           alt="Cart"
           style={{ width: "100px", height: "auto" }}
         />
         <span>The photos related to conversation will be displayed in the below list.</span>
-      </div>
+      </div> */}
 
       <Divider />
       {uniqueChunkData.map((category) => (

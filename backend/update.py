@@ -71,6 +71,7 @@ def get_detect_result(record: str, keywords: str):
             Ensure all extracted titles are unique and directly sourced from the chunk data.
 
         2. Keyword Relevance:
+            Treat each keyword as a single, distinct entity (e.g., "pizza sauce" should be treated as a single keyword).
             Each keyword should have a minimum of 8 titles. Only use the keywords provided, and ensure each title has some relevance to the keyword. But add as much as you can.
 
         3. JSON Structure:
