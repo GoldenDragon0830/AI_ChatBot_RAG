@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import ChatInput from "./ChatInput";
 import ChatMessage from "./ChatMessage";
+import DOMPurify from 'dompurify';
 
 import {
   CircularProgress,
@@ -41,7 +42,6 @@ import LoupeIcon from "@mui/icons-material/Loupe";
 import Snackbar from "@mui/material/Snackbar";
 import Divider from "@mui/material/Divider";
 import Paper from '@mui/material/Paper';
-import { Category } from "@mui/icons-material";
 
 interface MessageInterface {
   content: string;
@@ -55,7 +55,7 @@ const KEY_SELECT_PRODUCT = "SELECT_PRODUCT";
 const KEY_ASK_AMOUNT = "ASK_AMOUNT";
 const KEY_ANSWER_AMOUNT = "ANSWER_AMOUNT";
 const INITIAL_AMOUNT = 1;
-const GREETING_WORD = "I'm Restaurant Depot Order Assistant, What would you like to order today?";
+const GREETING_WORD = "I'm Drip Drop Deals Order Assistant, What would you like to order today?";
 
 const drawerWidth = 1200;
 
@@ -71,7 +71,8 @@ const ChatWindow: React.FC = () => {
 
   // const API_URL = "http://13.208.253.225:4000/chat";
   // const API_URL = "http://52.221.236.58:80/chat";
-  const API_URL = "http://3.99.185.93:4000/chat";
+  // const API_URL = "http://3.99.185.93:4000/chat";
+  const API_URL = process.env.REACT_APP_API_URL;
 
   const [messages, setMessages] = useState<MessageInterface[]>([
     { content: GREETING_WORD, role: "assistant" },
@@ -85,9 +86,7 @@ const ChatWindow: React.FC = () => {
       category: string;
       subtitle: string;
       single_price: string;
-      additional_price: string;
-      single_quantities: string;
-      additional_quantities: string;
+      directions: string;
       details: string;
     }[];
   }
@@ -100,10 +99,8 @@ const ChatWindow: React.FC = () => {
       category: string;
       subtitle: string;
       single_price: string;
-      additional_price: string;
-      single_quantities: string;
-      additional_quantities: string;
       details: string;
+      directions: string;
     }[]
   >([]);
 
@@ -114,10 +111,8 @@ const ChatWindow: React.FC = () => {
       category: string;
       subtitle: string;
       single_price: string;
-      additional_price: string;
-      single_quantities: string;
-      additional_quantities: string;
       details: string;
+      directions: string;
       count: number;
     }[]
   >([]);
@@ -170,7 +165,7 @@ const ChatWindow: React.FC = () => {
             <img src={imageUrl} alt={title} width="100%" />
           </Avatar>
         </ListItemAvatar>
-        <ListItemText primary={title} secondary={price} />
+        <ListItemText primary={title} secondary={"$"+price.match(/\$?(\d+\.\d+)/)?.[1]} />
         <IconButton
           edge="end"
           aria-label="delete"
@@ -191,10 +186,9 @@ const ChatWindow: React.FC = () => {
     text: string;
     url: string;
     price: string;
-    quantities: string;
     subtitle: string;
     onClick: () => void;
-  }> = ({ text, url, price, quantities, subtitle, onClick }) => {
+  }> = ({ text, url, price, subtitle, onClick }) => {
     const [open, setOpen] = useState(false);
 
     const handleOpen = () => setOpen(true);
@@ -204,14 +198,12 @@ const ChatWindow: React.FC = () => {
       <ImageListItem key={text} className="image-list-item">
         <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.7)', padding: '4px 8px', borderRadius: 4 }}>
           <Typography variant="body2" style={{ color: 'white'  }}>
-            {price.match(/\$(\d+\.\d+)/)?.[0]}
-          </Typography>
-          <Typography variant="caption" style={{ color: 'white', display: 'block', textAlign: 'center' }}>
-            {quantities || "Per item"}
+            {"$"+price.match(/\$?(\d+\.\d+)/)?.[1]}
           </Typography>
         </div>
         {
-          subtitle == "" ? 
+          subtitle == "" 
+          || subtitle == null? 
             (<div></div>)
             :
             (
@@ -249,7 +241,9 @@ const ChatWindow: React.FC = () => {
 
         <Dialog open={open} onClose={handleClose}>
           <DialogActions>
-            <DialogTitle style={{ textAlign: "center" }}>{text}</DialogTitle>
+            <DialogTitle style={{ textAlign: "center", whiteSpace: "normal", wordBreak: "break-word", maxWidth: "fit-content" }}>
+              {text}
+            </DialogTitle>
           </DialogActions>
           <DialogContent>
             <img src={url} alt={text} style={{ width: "100%" }} />
@@ -331,11 +325,11 @@ const ChatWindow: React.FC = () => {
 
   useEffect(() => {
     if (orderData.length > 0) {
-      const regex = /\$(\d+\.\d+)/;
-      const match1 = orderData[0].single_price.match(regex);
-  
-      if (match1) {
-        const single_price = parseFloat(match1[1]);
+      const regex = /\$?(\d+\.\d+)/;
+      const match = orderData[0].single_price.match(regex);
+
+      if (match) {
+        const single_price = parseFloat(match[1]);
         const totalPrice = single_price * currentAmount;
         setTotalPrice(`$${totalPrice.toFixed(2)}`);
       } else {
@@ -545,8 +539,9 @@ const ChatWindow: React.FC = () => {
     }
 
     // Calculate total price
-    const regex = /\$(\d+\.\d+)/;
+    const regex = /\$?(\d+\.\d+)/;
     const match1 = orderData[0].single_price.match(regex);
+    console.log(orderData[0].single_price)
     if (match1) {
       const single_price = parseFloat(match1[1]);
       const totalPrice = single_price * newAmount;
@@ -686,26 +681,19 @@ const ChatWindow: React.FC = () => {
           </Fab>
           <ImageList cols={isSmallScreen ? 2 : isMediumScreen ? 4 : 5} style={{ padding: "10px" }}>
             {category.data.map((item, index) => (
-              item.image_urls === "" ? (
-                <AmountItemButton
-                  key={index}
-                  text={item.title}
-                  onClick={() => handleButtonClick(item.title, "")}
-                />
-              ) : (
+              item.image_urls != "" ? (
                 <ItemButton
                   key={index}
                   text={item.title}
                   url={item.image_urls.split(",")[0]}
                   price={item.single_price}
-                  quantities={item.single_quantities}
                   subtitle={item.subtitle}
                   onClick={() => {
                     setOrderData([item]);
                     handleButtonClick(item.title, item.image_urls.split(",")[0]);
                   }}
                 />
-              )
+              ) : null
             ))}
           </ImageList>
         </Box>
@@ -864,7 +852,7 @@ const ChatWindow: React.FC = () => {
               </ButtonGroup>
               <Dialog open={open} onClose={handleClose}>
                 <DialogActions>
-                  <DialogTitle style={{ textAlign: "center" }}>
+                  <DialogTitle style={{ textAlign: "center", whiteSpace: "normal", wordBreak: "break-word", maxWidth: "fit-content" }}>
                     {orderData[0].title}
                   </DialogTitle>
                 </DialogActions>
@@ -917,13 +905,11 @@ const ChatWindow: React.FC = () => {
                   />
                   <p>Category: {orderData[0].category}</p>
                   <p>Subtitle: {orderData[0].subtitle}</p>
-                  <p>Single Price: {orderData[0].single_price}</p>
-                  <p>Additional Price: {orderData[0].additional_price}</p>
-                  <p>Single Quantities: {orderData[0].single_quantities}</p>
-                  <p>
-                    Additional Quantities: {orderData[0].additional_quantities}
-                  </p>
-                  <p>Details: {orderData[0].details}</p>
+                  <p>Single Price: {"$"+orderData[0].single_price.match(/\$?(\d+\.\d+)$/)?.[1]}</p>
+                  <p>Details: </p>
+                  <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(orderData[0].details)}}></div>
+                  <p>Features: </p>
+                  <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(orderData[0].directions)}}></div>
                 </DialogContent>
               </>
             )}
@@ -1009,7 +995,7 @@ const ChatWindow: React.FC = () => {
               <h4>Total Items: {cartData.reduce((sum, item) => sum + item.count, 0)} || 
                
               Total Price: ${cartData.reduce((sum, item) => {
-                const priceMatch = item.single_price.match(/\$(\d+\.\d+)/);
+                const priceMatch = item.single_price.match(/\$?(\d+\.\d+)/);
                 const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
                 return sum + (price * item.count);
               }, 0).toFixed(2)}</h4>

@@ -3,10 +3,8 @@ import { Typography, Paper, Box, Dialog,
   DialogContent,
   DialogActions,
   DialogTitle, } from "@mui/material";
-import Badge, { badgeClasses } from '@mui/joy/Badge';
-import Avatar from '@mui/joy/Avatar';
+import Badge from '@mui/joy/Badge';
 import PersonIcon from '@mui/icons-material/Person';
-import SmartToyIcon from '@mui/icons-material/SmartToy';
   
 
 interface ChatMessageProps {
