@@ -3,10 +3,8 @@ import { Typography, Paper, Box, Dialog,
   DialogContent,
   DialogActions,
   DialogTitle, } from "@mui/material";
-import Badge, { badgeClasses } from '@mui/joy/Badge';
-import Avatar from '@mui/joy/Avatar';
+import Badge from '@mui/joy/Badge';
 import PersonIcon from '@mui/icons-material/Person';
-import SmartToyIcon from '@mui/icons-material/SmartToy';
   
 
 interface ChatMessageProps {
@@ -65,7 +63,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           badgeInset="14%"
           color="success"
         >
-          { isRequest ? (<PersonIcon sx={{ fontSize: 30 }}/>) : (<div style={{display: 'flex', alignItems: 'center'}}><SmartToyIcon sx={{ fontSize: 30 }}/></div>)}
+          { isRequest ? (<PersonIcon fontSize="large" color="primary" />) : (<div style={{display: 'flex', alignItems: 'center'}}><img src="/restaruantlogo.png" alt="logo" style={{width: "40px", height: "40px"}}/></div>)}
         </Badge>
         {
           isRequest ? (<p></p>) : (<p style={{paddingLeft: '5px'}}>Assistant</p>)

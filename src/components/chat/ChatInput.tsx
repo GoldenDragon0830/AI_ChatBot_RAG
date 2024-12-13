@@ -38,8 +38,8 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
       style={{
         position: "fixed",
         bottom: 0,
-        left: 0,
         right: 0,
+        left: "1220px",
         padding: "20px",
       }}
     >
