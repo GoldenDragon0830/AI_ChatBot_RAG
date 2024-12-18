@@ -200,9 +200,59 @@ const ChatWindow: React.FC = () => {
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
 
+    const [itemCount, setItemCount] = useState(1);
+
+    const handleIncrease = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setItemCount(itemCount + 1);
+    };
+
+    const handleDecrease = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setItemCount(Math.max(1, itemCount - 1));
+    };
+
+    const handleAddToCart = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      const itemExists = cartData.some(item => item.title === text);
+      if (itemExists) {
+        setCartData(prev => prev.map(item => 
+          item.title === text ? {...item, count: item.count + itemCount} : item
+        ));
+      } else {
+        setCartData(prev => [...prev, {
+          title: text,
+          image_urls: url,
+          category: '',
+          subtitle: subtitle,
+          single_price: price,
+          additional_price: '',
+          single_quantities: quantities,
+          additional_quantities: '',
+          details: '',
+          count: itemCount
+        }]);
+      }
+      setCartCount(prev => prev + 1);
+      setItemCount(1); // Reset the item count after adding to cart
+    };
+
     return (
       <ImageListItem key={text} className="image-list-item">
-        <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.7)', padding: '4px 8px', borderRadius: 4 }}>
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+          color: 'white',
+          padding: '8px', // Padding for better readability
+          textAlign: 'center',
+          zIndex: 3 // Ensure it's above other elements
+        }}>
+          {text}
+        </div>
+        <div style={{ position: 'absolute', top: 130, right: 8, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.7)', padding: '4px 8px', borderRadius: 4 }}>
           <Typography variant="body2" style={{ color: 'white'  }}>
             {price.match(/\$(\d+\.\d+)/)?.[0]}
           </Typography>
@@ -215,7 +265,7 @@ const ChatWindow: React.FC = () => {
             (<div></div>)
             :
             (
-              <div style={{ position: 'absolute', top: 8, left: 8, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.7)', padding: '4px 8px', borderRadius: 4 }}>
+              <div style={{ position: 'absolute', top: 145, left: 8, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.7)', padding: '4px 8px', borderRadius: 4 }}>
                 <Typography variant="body2" style={{ color: 'white'  }}>
                   {subtitle.match(/\b(\d+(?:\.\d+)?)\s*(lb|oz|each|count|fl|oz|ct|gal|g|bunch|case)\b|per lb/g)?.[0]}
                 </Typography>
@@ -231,18 +281,48 @@ const ChatWindow: React.FC = () => {
           >
             <VisibilityIcon />
           </IconButton>
-          <IconButton
+          {/* <IconButton
             color="primary"
             onClick={onClick}
             style={{ color: "white", zIndex: 3 }}
           >
             <DoneOutlineIcon />
-          </IconButton>
+          </IconButton> */}
         </div>
         <ImageListItemBar
           title={
-            <div>
-              <span>{text}</span>
+            <div
+              style={{
+                height: '25px',
+                display: 'flex',
+                alignItems: 'center', // Vertically center
+                justifyContent: 'space-between', // Space out the elements evenly
+              }}
+            >
+              <ButtonGroup variant="outlined" size="small" style={{ zIndex: 3 }}>
+                <IconButton
+                  style={{ color: 'white', zIndex: 3 }}
+                  onClick={handleDecrease}
+                >
+                  <RemoveIcon fontSize="small" />
+                </IconButton>
+                <span style={{ display: 'flex', alignItems: 'center', color: 'white' }}>
+                  {itemCount}
+                </span>
+                <IconButton
+                  style={{ color: 'white', zIndex: 3 }}
+                  onClick={handleIncrease}
+                >
+                  <AddIcon fontSize="small" />
+                </IconButton>
+              </ButtonGroup>
+              <IconButton
+                color="primary"
+                onClick={handleAddToCart}
+                style={{ color: 'white', width: '40px' }} // Adjust width as needed
+              >
+                <AddShoppingCartIcon />
+              </IconButton>
             </div>
           }
         />
