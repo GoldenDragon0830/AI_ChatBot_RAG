@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import ChatInput from "./ChatInput";
 import ChatMessage from "./ChatMessage";
-import DOMPurify from "dompurify";
 
 import {
   CircularProgress,
@@ -26,9 +25,7 @@ import Avatar from "@mui/material/Avatar";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
-import ListItemAvatar from "@mui/material/ListItemAvatar";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import DoubleArrowTwoToneIcon from "@mui/icons-material/DoubleArrowTwoTone";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
@@ -39,6 +36,16 @@ import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
 import ImageList from "@mui/material/ImageList";
 import ImageListItem from "@mui/material/ImageListItem";
+import Chip from "@mui/material/Chip";
+import DinnerDiningIcon from "@mui/icons-material/DinnerDining";
+import BackspaceIcon from '@mui/icons-material/Backspace';
+
+import Card from "@mui/material/Card";
+import CardHeader from "@mui/material/CardHeader";
+import CardContent from "@mui/material/CardContent";
+import CardActions from "@mui/material/CardActions";
+import { red } from "@mui/material/colors";
+import { Description } from "@mui/icons-material";
 
 interface MessageInterface {
   content: string;
@@ -49,6 +56,8 @@ interface MessageInterface {
 interface ChunkOption {
   type: string;
   value: string;
+  description: string;
+  price: string;
 }
 
 const KEY_CHAT_CUSTOMER = "CHAT_CUSTOMER";
@@ -70,7 +79,12 @@ const ChatWindow: React.FC = () => {
   const [totalPrice, setTotalPrice] = useState("");
   const [currentAmount, setCurrentAmount] = useState(INITIAL_AMOUNT);
 
+  const [selectedChunk, setSelectedChunk] = useState<string | null>("ALL");
+  const [chunkDataHistory, setChunkDataHistory] = useState<ChunkOption[][]>([]);
+  const [nameListData, setNameListData] = useState<ChunkOption[]>([]);
+
   const API_URL = "http://3.99.185.93:4002/chat";
+  const API_GET_FROM_DB_URL = "http://3.99.185.93:4002/get_db_data"
   // const API_URL = process.env.REACT_APP_API_URL;
 
   const [messages, setMessages] = useState<MessageInterface[]>([
@@ -78,26 +92,42 @@ const ChatWindow: React.FC = () => {
   ]);
 
   const initial_data = [
-    {"type":"appetizers"},
-    {"type":"soups"},
-    {"type":"traditional_side_dishes"},
-    {"type":"chinese_dishes"},
-    {"type":"thai_food"},
-    {"type":"chef's_specialities"},
-    {"type":"sushi_appetizers"},
-    {"type":"regular_rolls"},
-    {"type":"vegetable_rolls"},
-    {"type":"tempura_rolls"},
-    {"type":"specialty_rolls"},
-    {"type":"sushi_platters"},
-    {"type":"poke_and_salads"},
-    {"type":"sushi_or_sashimi"},
-    {"type":"others"}
-  ]
+    { type: "appetizers" },
+    { type: "soups" },
+    { type: "traditional_side_dishes" },
+    { type: "chinese_dishes" },
+    { type: "thai_food" },
+    { type: "chef's_specialities" },
+    { type: "sushi_appetizers" },
+    { type: "regular_rolls" },
+    { type: "vegetable_rolls" },
+    { type: "tempura_rolls" },
+    { type: "specialty_rolls" },
+    { type: "sushi_platters" },
+    { type: "poke_and_salads" },
+    { type: "sushi_or_sashimi" },
+    { type: "others" },
+  ];
 
-  const [chunkData, setChunkData] = useState<ChunkOption[]>(
-    initial_data.map(item => ({...item, value: item.type}))
-  );
+  const menuList = [
+    "Appetizers",
+    "Soups",
+    "Traditional_side_dishes",
+    "Chinese_dishes",
+    "Thai_food",
+    "Chef's_specialities",
+    "Sushi_appetizers",
+    "Regular_rolls",
+    "Vegetable_rolls",
+    "Tempura_rolls",
+    "Specialty_rolls",
+    "Sushi_platters",
+    "Poke_and_salads",
+    "Sushi_or_sashimi",
+    "Others",
+  ];
+
+  const [chunkData, setChunkData] = useState<ChunkOption[]>([]);
 
   const [orderData, setOrderData] = useState<
     {
@@ -124,7 +154,10 @@ const ChatWindow: React.FC = () => {
     }[]
   >([]);
 
-  const [oneOrderData, setOneOrderData] = useState("");
+  // const [oneOrderData, setOneOrderData] = useState("");
+
+  const [typeData, setTypeData] = useState("");
+  const [nameData, setNameData] = useState("");
 
   const [cartCount, setCartCount] = useState(0);
   const [flag, setFlag] = useState(KEY_SELECT_PRODUCT);
@@ -170,10 +203,7 @@ const ChatWindow: React.FC = () => {
         }
       >
         <ListItemButton>
-          <ListItemText
-            primary={title}
-            secondary={"$" + price}
-          />
+          <ListItemText primary={title} secondary={"$" + price} />
           <IconButton
             edge="end"
             aria-label="delete"
@@ -186,16 +216,187 @@ const ChatWindow: React.FC = () => {
     );
   };
 
+  
+
   const AmountItemButton: React.FC<{
     text: string;
+    type: string;
+    value: string;
+    price: string;
+    description: string;
     onClick: () => void;
-  }> = ({ text, onClick }) => (
-    <ImageListItem key={text} className="image-list-item">
-      <Button variant="contained" onClick={onClick}>
-        {text}
-      </Button>
-    </ImageListItem>
-  );
+    style?: React.CSSProperties;
+  }> = ({ text, type, value, price, description, onClick }) => {
+    const handleAddCart = () => {
+      if (type === "option_name"){
+        let jsonString = value
+          .replace(/'/g, '"') // Replace all single quotes with double quotes
+          .replace(/None/g, "null"); // Replace None with null
+        const itemData = JSON.parse(jsonString);
+  
+        setCartCount(cartCount + 1);
+        setCartData((previousData) => [
+          ...previousData,
+          { ...itemData, count: currentAmount },
+        ]);
+    
+        setOrderData([]);
+        setOrderDetailDialogOpen(false);
+        setFlag(KEY_SELECT_PRODUCT);
+      }
+    }
+
+    const [amount, setAmount] = useState(0);
+    const handleIncreaseAmount = () => {
+      setAmount(amount + 1);
+    };
+    const handleDecreaseAmount = () => {
+      setAmount(amount === 0 ? 0 : amount - 1);
+    };
+    return (
+      <ImageListItem key={text} className="image-list-item">
+        <Card sx={{ width: 280, margin: "5px" }}>
+            <CardContent
+              className="card-content"
+              sx={{
+                display: "flex",
+                flexDirection: "column", // Stack content vertically
+                justifyContent: "center",
+                alignItems: "center",
+                height: "100px",
+                position: "relative", // To allow the overlay to position properly
+              }}
+              onClick={onClick}
+            >
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "black", // Black text
+                  backgroundColor: "white", // Optional white background
+                  textShadow: `
+                    1px 0 #1aff66,  /* Right shadow */
+                    -1px 0 #1aff66, /* Left shadow */
+                    0 1px #1aff66,  /* Bottom shadow */
+                    0 -1px #1aff66  /* Top shadow */
+                  `,
+                  fontSize: "20px",
+                  marginBottom: "10px", // Slight spacing between text and description
+                }}
+              >
+                {text}
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "black",
+                  fontSize: "14px", // Smaller font size for description
+                }}
+              >
+                {description}
+              </Typography>
+              {price ? (<div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.7)', padding: '4px 8px', borderRadius: 4 }}>
+                <Typography variant="body2" style={{ color: 'white'  }}>
+                  {"$"+price}
+                </Typography>
+              </div>): <></>}
+              <div className="overlay">
+                <IconButton
+                  color="primary"
+                  onClick={onClick}
+                  style={{ color: "white", zIndex: 3 }}
+                ></IconButton>
+              </div>
+            </CardContent>
+          {type === "option_name" ? (
+            <CardActions disableSpacing>
+              <IconButton
+                onClick={handleDecreaseAmount}
+                aria-label="add to favorites"
+              >
+                <RemoveIcon />
+              </IconButton>
+              <IconButton aria-label="add to favorites">{amount}</IconButton>
+              <IconButton onClick={handleIncreaseAmount} aria-label="share">
+                <AddIcon />
+              </IconButton>
+              {amount === 0 ? (
+                <div></div>
+              ) : (
+                <IconButton
+                  aria-label="add to cart"
+                  sx={{ marginLeft: "auto" }}
+                  onClick={handleAddCart}
+                >
+                  <AddShoppingCartIcon />
+                </IconButton>
+              )}
+            </CardActions>
+          ) : (
+            <div></div>
+          )}
+        </Card>
+      </ImageListItem>
+    );
+  };
+
+  const styles = `
+    @keyframes marquee {
+      0% {
+        transform: translateX(100%);
+      }
+      100% {
+        transform: translateX(-100%);
+      }
+    }
+
+    .marquee-container {
+      overflow: hidden;
+      white-space: nowrap;
+      width: 100%;
+    }
+
+    .marquee {
+      display: inline-block;
+      padding-left: 100%;
+      animation: marquee 10s linear infinite;
+    }
+
+    .image-list-item {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-content {
+      position: relative;
+      overflow: hidden; /* Ensure the overlay is confined to the CardContent */
+    }
+
+    .card-content .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.2);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0; /* Initially hidden */
+      transition: opacity 0.3s ease; /* Smooth transition */
+      pointer-events: none; /* Prevent overlay from blocking hover on the content */
+    }
+
+    .card-content:hover .overlay {
+      opacity: 1; /* Show the overlay on hover */
+      pointer-events: auto; /* Enable interaction with the overlay */
+    }  
+  `;
+
+  const styleSheet = document.createElement("style");
+  styleSheet.type = "text/css";
+  styleSheet.innerText = styles;
+  document.head.appendChild(styleSheet);
 
   useEffect(() => {
     if (containerRef.current) {
@@ -216,6 +417,97 @@ const ChatWindow: React.FC = () => {
       }
     }
   }, [currentAmount, orderData]);
+
+  const handleGetResponseFromDB = async (
+    keyword: string,
+    type: string, 
+    name: string
+  ) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_GET_FROM_DB_URL}?keyword=${keyword}&type=${type}&name=${name}`, 
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "text/event-stream",
+          },
+        }
+      );
+      console.log(response)
+      if (!response.ok) throw new Error("Network response was not ok");
+      if (!response.body) throw new Error("Response body is null");
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while(true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        buffer += chunk;
+
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        // eslint-disable-next-line no-loop-func
+        lines.forEach((line) => {
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6).trim();
+            if (data.includes("ChunkData:")) {
+              try {
+                const jsonData = JSON.parse(data.split("ChunkData:")[1]);
+                let firstData = null;
+                if (chunkData.length > 0) {
+                  setChunkDataHistory((prevHistory) => [...prevHistory, chunkData]);
+                }
+                const parsedData: ChunkOption[] = jsonData.map((item: any) => {
+                  const key = Object.keys(item)[0]; // Get the first key of the object
+                  const key_description = Object.keys(item)[1];
+                  const key_price = Object.keys(item)[2];
+                  if (key === "name") {
+                    setChunkData([]);
+                    setNameListData([]);
+                  }
+                  
+                  if (key !== "option_name") {
+                    firstData = { type: "ALL", value: "ALL", description: "" }
+                  }
+                  return {
+                    type: key,
+                    value: item[key],
+                    description: item[key_description],
+                    price: item[key_price]
+                  };
+                });
+                console.log(parsedData)
+                if (jsonData.length > 0 && Object.keys(jsonData[0])[0] === "name") {
+                  // Set nameListData if the key is "name"
+                  const updatedData = jsonData.length > 1 
+                    ? (firstData ? [firstData, ...parsedData] : parsedData)
+                    : parsedData;
+                  setNameListData(updatedData);
+                } else {
+                  // Add firstData only if jsonData's count is greater than 1
+            
+                  // Set chunkData if the key is not "name"
+                  setChunkData(parsedData);
+                }
+              } catch (e) {
+                console.error(e);
+              }
+            }
+          }
+        });
+      }
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const handleSendMessage = async (
     message: MessageInterface,
@@ -269,18 +561,45 @@ const ChatWindow: React.FC = () => {
             if (data.includes("ChunkData:")) {
               try {
                 const jsonData = JSON.parse(data.split("ChunkData:")[1]);
+                let firstData = null;
+                if (chunkData.length > 0) {
+                  setChunkDataHistory((prevHistory) => [...prevHistory, chunkData]);
+                }
+                
                 const parsedData: ChunkOption[] = jsonData.map((item: any) => {
                   const key = Object.keys(item)[0]; // Get the first key of the object
+                  const key_description = Object.keys(item)[1];
+                  const key_price = Object.keys(item)[2];
                   if (key === "name") {
+                    setNameListData([]);
+                  } else {
                     setChunkData([]);
-                    setOneOrderData("")
                   }
+            
+                  if (key !== "option_name") {
+                    firstData = { type: "ALL", value: "ALL", description: "" }
+                  }
+
                   return {
                     type: key,
                     value: item[key],
+                    description: item[key_description],
+                    price: item[key_price]
                   };
                 });
-                setChunkData(parsedData);
+                
+                if (jsonData.length > 0 && Object.keys(jsonData[0])[0] === "name") {
+                  // Set nameListData if the key is "name"
+                  const updatedData = jsonData.length > 1 
+                    ? (firstData ? [firstData, ...parsedData] : parsedData)
+                    : parsedData;
+                  setNameListData(updatedData);
+                } else {
+                  // Add firstData only if jsonData's count is greater than 1
+            
+                  // Set chunkData if the key is not "name"
+                  setChunkData(parsedData);
+                }
               } catch (e) {
                 console.error(e);
               }
@@ -288,9 +607,12 @@ const ChatWindow: React.FC = () => {
             if (data.includes("TYPE:")) {
               try {
                 const detectData = data.split("TYPE:")[1];
-                setOneOrderData((prev) => (prev ? `${prev}, ${detectData.split("@")[0]}: ${detectData.split("@")[1]}` : `${detectData.split("@")[0]}: ${detectData.split("@")[1]}`));
-              } catch (e){
-                console.error(e)
+                if(detectData.split("@")[0] === "type")
+                  setTypeData(detectData.split("@")[1])
+                else if (detectData.split("@")[0] === "name")
+                  setNameData(detectData.split("@")[1])
+              } catch (e) {
+                console.error(e);
               }
             }
             if (data.includes(KEY_ASK_AMOUNT)) {
@@ -330,7 +652,7 @@ const ChatWindow: React.FC = () => {
                 console.error(e);
               }
             }
-            
+
             setMessages((prev) => {
               const newMessages = [...prev];
               const lastMessageIndex = newMessages.length - 1;
@@ -340,7 +662,7 @@ const ChatWindow: React.FC = () => {
               ) {
                 newMessages[lastMessageIndex].content =
                   newMessageContent.split("ChunkData:")[0] || "";
-                newMessages[lastMessageIndex].content = 
+                newMessages[lastMessageIndex].content =
                   newMessageContent.split("TYPE:")[0] || "";
                 if (data.includes(KEY_ASK_AMOUNT)) {
                   newMessages[lastMessageIndex].content =
@@ -436,9 +758,9 @@ const ChatWindow: React.FC = () => {
       role: "user",
     };
     const backMessage: MessageInterface = {
-      content: "I want to order " + oneOrderData + text,
-      role: "user"
-    }
+      content: "I want to order " + text,
+      role: "user",
+    };
     if (flag === KEY_ASK_AMOUNT)
       handleSendMessage(message, KEY_ANSWER_AMOUNT, true);
     else {
@@ -447,7 +769,7 @@ const ChatWindow: React.FC = () => {
       setFlag(KEY_SELECT_PRODUCT);
       handleSendMessage(backMessage, KEY_SELECT_PRODUCT, false);
       setFlag(KEY_SELECT_PRODUCT);
-      setMessages((prevMessage) => [...prevMessage, message])
+      setMessages((prevMessage) => [...prevMessage, message]);
     }
   };
 
@@ -486,6 +808,7 @@ const ChatWindow: React.FC = () => {
   };
 
   const handleContinueOrder = async () => {
+    // setOneOrderData("");
     setOrderDetailDialogOpen(false);
     const displayMessage: MessageInterface = {
       content: " I want to order again.",
@@ -497,72 +820,237 @@ const ChatWindow: React.FC = () => {
     setFlag(KEY_SELECT_PRODUCT);
   };
 
-  const getItemText = (item: ChunkOption) : string  => {
-    if (item.type === "option_name") {
-      let jsonString = item.value
-        .replace(/'/g, '"')  // Replace all single quotes with double quotes
-        .replace(/None/g, 'null');  // Replace None with null
-      const itemData = JSON.parse(jsonString);
-      return itemData.option_name
-    } else {
-      return item.value
+  const getItemText = (item: ChunkOption): string => {
+    if (!item?.value) {
+      return "";
     }
+  
+    if (item.type === "option_name") {
+      const regex = /'option_name': '([^']*)'/;
+      const match = typeof item.value === "string" ? item.value.match(regex) : null;
+      return match?.[1] || "";
+    }
+  
+    return item.value;
+  };
+
+  const [detailDialog, setDetailDialog] = useState(false);
+  const [selectedItemData, setSelectedItemData] = useState<any>(null);
+  const [selectedChip, setSelectedChip] = useState<string | null>(null);
+  const [selectedNameChip, setSelectedNameChip] = useState<string | null>("ALL");
+  
+  const handleBackButton = () => {
+    if (chunkDataHistory.length > 0) {
+      // Pop the last chunkData from the history stack and set it to chunkData
+      const previousChunkData = chunkDataHistory[chunkDataHistory.length - 1];
+      setChunkData(previousChunkData);
+  
+      // Update the chunkDataHistory stack by removing the last entry
+      setChunkDataHistory((prevHistory) => prevHistory.slice(0, -1));
+    }
+  };
+
+  const handleDetailDialogOpen = () => {
+    setDetailDialog(true);
   }
+
+  const handleDetailDialogClose = () => {
+    setDetailDialog(false);
+  }
+
+  useEffect(() => {
+    setSelectedChunk("ALL");
+    handleGetResponseFromDB("all_option_keyword", typeData, nameData);
+  }, [nameListData])
 
   const drawer = (
     <div>
       <Divider />
-      {chunkData.length > 0 && (
-        <Box sx={{ marginTop: "20px", marginLeft: "10px" }}>
-          <Fab variant="extended" size="medium" color="primary">
-            <DoubleArrowTwoToneIcon sx={{ mr: 1 }} />
-            Options
-          </Fab>
-          <ImageList
-            cols={isSmallScreen ? 2 : isMediumScreen ? 4 : 5}
-            style={{ padding: "10px" }}
+      <Paper
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          flexWrap: "wrap",
+          listStyle: "none",
+          p: 0.5,
+          m: 0,
+        }}
+      >
+        {menuList.map((title, index) => {
+          return (
+            <Chip
+              sx={{
+                margin: "5px",
+              }}
+              label={title}
+              clickable
+              color="primary"
+              icon={<DinnerDiningIcon />}
+              variant={selectedChip === title ? "filled" : "outlined"} // Change variant when selected
+              key={index}
+              onClick={() => {
+                setSelectedChip(title); // Set the selected chip
+                setTypeData(title); // set one type data
+                setNameData("")
+                setSelectedChunk("ALL");
+                const userMessage: MessageInterface = {
+                  content: title, // Send the text of the item as the user's message
+                  role: "user",
+                };
+                const backMessage: MessageInterface = {
+                  content: "I want to find new type." + "type: " + title, // Send the text of the item as the user's message
+                  role: "user",
+                };
+                handleSendMessage(backMessage, flag, false);
+                setMessages((prevMessage) => [...prevMessage, userMessage]);
+              }}
+            />
+          )
+        })}
+      </Paper>
+      <Button 
+          color="primary" 
+          variant="outlined" 
+          startIcon={<BackspaceIcon />} 
+          sx={{
+            marginTop: "20px", 
+            marginLeft: "20px"
+          }} 
+          onClick={handleBackButton}
+          disabled={chunkDataHistory.length === 0}
           >
-            {chunkData.map((item, index) => (
-              <AmountItemButton
-                key={index}
-                text={getItemText(item)}
-                onClick={() => {
-                  // Handle option selection logic here
-                  if (item.type === "option_name"){
-                    let jsonString = item.value
-                      .replace(/'/g, '"')  // Replace all single quotes with double quotes
-                      .replace(/None/g, 'null');  // Replace None with null
-                    const itemData = JSON.parse(jsonString);
-                    console.log(itemData);
+            Back
+        </Button>
+        <Box
+          sx={{
+            display: "flex", // Use flexbox for layout
+            flexDirection: "column", // Stack items vertically
+            marginTop: "20px", // Space above the button
+            marginLeft: "20px", // Align with the parent container
+          }}
+        >
+          <Paper
+            sx={{
+              display: "flex",
+              flexWrap: "nowrap", // Prevent wrapping to ensure chips stay in one line
+              overflowX: "auto", // Enable horizontal scrolling
+              listStyle: "none",
+              p: 0.5,
+              m: 0,
+              maxWidth: "100%", // Ensure it doesn't overflow its container
+            }}
+          >
+            {nameListData.map((item, index) => {
+              return (
+                <Chip
+                  sx={{
+                    margin: "5px",
+                  }}
+                  label={item.value}
+                  clickable
+                  color="primary"
+                  variant={selectedNameChip === item.value ? "filled" : "outlined"} // Change variant when selected
+                  key={index}
+                  onClick={() => {
+                    console.log(item.value, typeData)
+                    if (item.value === "ALL") {
+                      // console.log(oneOrderData)
+                      // setSelectedNameChip(item.value);
+                      setSelectedChunk("ALL");
+                      handleGetResponseFromDB("all_option_keyword", typeData, nameData);
+                    } else {
+                      setSelectedNameChip(item.value);
+                      setSelectedChunk(item.value)
+                      const userMessage: MessageInterface = {
+                        content: item.value, // Send the text of the item as the user's message
+                        role: "user",
+                      };
+                      const backMessage: MessageInterface = {
+                        content: "I want to find new type:" + item.value, // Send the text of the item as the user's message
+                        role: "user",
+                      };
+                      handleSendMessage(backMessage, flag, false);
+                      setMessages((prevMessage) => [...prevMessage, userMessage]);
+                    }
+                  }}
+                />
+              );
+            })}
+          </Paper>
+        </Box>
+      {chunkData.length > 0 && (
+        <Box sx={{ marginLeft: "10px" }}>
+          <ImageList cols={4} style={{ padding: "8px" }}>
+            {chunkData.map((item, index) => {
+              const isSelected = selectedChunk === item.value; // Check if the name is selected
+              return (
+                <AmountItemButton
+                  key={index}
+                  text={getItemText(item)}
+                  type={item.type}
+                  value={item.value}
+                  price={item.price}
+                  description={item.description}
+                  style={{
+                    border: isSelected ? "2px solid #1976d2" : "none", // Highlight selected border
+                    backgroundColor: isSelected ? "#e3f2fd" : "transparent", // Highlight selected background
+                  }}
+                  onClick={() => {
+                    if (item.type === "option_name") {
+                      let jsonString = item.value
+                        .replace(/'/g, '"') // Replace all single quotes with double quotes
+                        .replace(/None/g, "null"); // Replace None with null
+                      const itemData = JSON.parse(jsonString);
+                      console.log(itemData);
+                      setSelectedItemData(itemData)
 
-                    setFlag(KEY_ASK_AMOUNT);
-                    setOrderData([itemData])
-                    const userMessage: MessageInterface = {
-                      content: itemData.option_name,
-                      role: "user"
+                      handleDetailDialogOpen()
+
+                    } else {
+                      setSelectedChunk(item.value);
+                      if (item.type === "name") {
+                        setNameData(item.value);
+                      }
+                      const userMessage: MessageInterface = {
+                        content: item.value, // Send the text of the item as the user's message
+                        role: "user",
+                      };
+                      const backMessage: MessageInterface = {
+                        content: "type:" + typeData + "," + "name:" + nameData + "," + item.value, // Send the text of the item as the user's message
+                        role: "user",
+                      };
+                      handleSendMessage(backMessage, flag, false);
+                      setMessages((prevMessage) => [...prevMessage, userMessage]);
                     }
-                    const backMessage: MessageInterface = {
-                      content: itemData.name + "=>" + itemData.option_keyword + "=>" + itemData.option_name + ": " + `$${itemData.price}`,
-                      role: "user",
-                    }
-                    handleSendMessage(backMessage, KEY_ASK_AMOUNT, false)
-                    setMessages((prevMessage) => [...prevMessage, userMessage])
-                  } else {
-                    setOneOrderData((prev) => (prev ? `${prev}, ${item.type}: ${item.value}` : `${item.type}: ${item.value}`));
-                    const userMessage: MessageInterface = {
-                      content: item.value, // Send the text of the item as the user's message
-                      role: "user",
-                    };
-                    const backMessage: MessageInterface = {
-                      content: oneOrderData ? oneOrderData + "," + item.type + ": " + item.value : item.type + ": " + item.value, // Send the text of the item as the user's message
-                      role: "user"
-                    }
-                    handleSendMessage(backMessage, flag, false);
-                    setMessages((prevMessage) => [...prevMessage, userMessage])
-                  }
-                }}
-              />
-            ))}
+                  }}
+                />
+              )
+            })}
+            <Dialog open={detailDialog} onClose={handleDetailDialogClose}>
+                <DialogTitle
+                  style={{
+                    textAlign: "center",
+                    whiteSpace: "normal",
+                    wordBreak: "break-word",
+                    maxWidth: "fit-content",
+                  }}
+                >
+                  Details
+                </DialogTitle>
+              <DialogContent>
+                {selectedItemData ? (
+                 <div>
+                    <p>Type: {selectedItemData.type}</p>
+                    <p>Name: {selectedItemData.name}</p>
+                    <p>Price: {selectedItemData.price}</p>
+                    <p>Option Price: {selectedItemData.option_price}</p>
+                    <p>Option: {selectedItemData.option_keyword}</p>
+                    <p>Option Name: {selectedItemData.option_name}</p>
+                    <p>Description: {selectedItemData.description}</p>                  
+                 </div> 
+                ):(<div></div>)}
+              </DialogContent>
+            </Dialog>
           </ImageList>
         </Box>
       )}
@@ -653,7 +1141,7 @@ const ChatWindow: React.FC = () => {
                 flexDirection: "column",
               }}
             >
-              <Button variant="contained" sx={{ margin: "10px"}}>
+              <Button variant="contained" sx={{ margin: "10px" }}>
                 {orderData[0].name + orderData[0].option_name}
               </Button>
               <ButtonGroup variant="outlined">
