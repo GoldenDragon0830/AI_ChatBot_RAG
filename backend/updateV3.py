@@ -90,6 +90,7 @@ def get_detect_result(record: str, keywords: str):
             Output:
                 Provide all detected fields and their corresponding values from the dataset in the format {["field", "value"], ["field", "value"], ...}.
                 Ensure that each “value” is an exact entry from the dataset records or the most similar entry for the "type" field.
+                Each keyword must appear only once in the output. If a keyword matches multiple fields (e.g., both "name" and "option_keyword"), include only the first match based on this priority order: "type", "name", "option_keyword".
                 Return only the resulting field and value pairs without additional explanations or text.
         Guidelines:
             Prioritize precision by ensuring the returned values are directly sourced from the dataset.
@@ -98,6 +99,7 @@ def get_detect_result(record: str, keywords: str):
             The output should be concise and formatted for seamless integration into system processes.
             Include all matching field and value sets to provide a comprehensive result.
             Ensure there is at least one array in the output, prioritizing the "type" field if necessary.
+            Disallow duplicate keywords in the output. Each keyword must correspond to only one field, following the priority order: "type" > "name" > "option_keyword".
     """
 
     summary_response = openai.chat.completions.create(
@@ -184,6 +186,31 @@ def parse_product_data(page_content):
             key, value = line.split(': ', 1)
             product_data[key.strip()] = value.strip()
     return product_data
+
+def get_db_response(keyword: str, type: str, name: str):
+    results_data = {}
+    column_names = ["no","type", "name", "price", "description", "option_keyword", "option_name", "option_price"]
+
+    # Define the query based on the keyword
+    if keyword == "all_option_keyword":
+        query = f'SELECT DISTINCT option_keyword, description FROM csv WHERE type="{type}"'
+    elif keyword == "all_option_name":
+        query = f'SELECT DISTINCT *, description, price FROM csv WHERE type="{type}" AND name="{name}"'
+    else:
+        return results_data  # Return empty if keyword doesn't match valid cases
+
+    # Execute the query
+    print("QUERY: ",query)
+    cursor.execute(query)
+    results = cursor.fetchall()
+
+    # Process results based on the keyword
+    if keyword == "all_option_keyword":
+        results_data = [{"option_keyword" : row[0], "description": row[1]} for row in results]
+    elif keyword == "all_option_name":   
+        results_data = [{"option_name": f'{dict(zip(column_names, row))}', "description": row[8], "price": row[3]} for row in results]
+
+    yield f'data: ChunkData:{json.dumps(results_data)}\n\n'
 
 def get_response(message: str, flag: str):
     """Generate a response based on the message and flag."""
@@ -309,16 +336,16 @@ def get_response(message: str, flag: str):
 
                         field_type, field_value = item
                         if field_type == "type":
-                            where_clauses.append(f"type='{field_value}'")
+                            where_clauses.append(f'type="{field_value}"')
                             detect_type = "type"
                             detect_value = field_value
                         elif field_type == "name":
-                            where_clauses.append(f"name='{field_value}'")
+                            where_clauses.append(f'name="{field_value}"')
                             has_name = True
                             detect_type = "name"
                             detect_value = field_value
                         elif field_type == "option_keyword":
-                            where_clauses.append(f"option_keyword='{field_value}'")
+                            where_clauses.append(f'option_keyword="{field_value}"')
                             has_option_keyword = True
                             detect_type = "option_keyword"
                             detect_value = field_value
@@ -330,12 +357,13 @@ def get_response(message: str, flag: str):
                     else:
                         result_key = "name"
                         
+                    result_key2 = "description"
 
                     where_clauses = " AND ".join(where_clauses)
                     if result_key == "option_name":
-                        query = f"SELECT DISTINCT * FROM csv WHERE {where_clauses}"
+                        query = f"SELECT DISTINCT *, {result_key2}  FROM csv WHERE {where_clauses}"
                     else:
-                        query = f"SELECT DISTINCT {result_key} FROM csv WHERE {where_clauses}"
+                        query = f"SELECT DISTINCT {result_key}, {result_key2}, price FROM csv WHERE {where_clauses}"
 
                     print(query)
 
@@ -343,13 +371,13 @@ def get_response(message: str, flag: str):
                     results = cursor.fetchall()
                     print(results)
 
-                    column_names = ["id", "category", "name", "price", "discount", "size", "option_name", "stock"]
+                    column_names = ["no","type", "name", "price", "description", "option_keyword", "option_name", "option_price"]
 
                     # Format results for streaming
                     if result_key == "option_name":
-                        results_data = [{result_key: f'{dict(zip(column_names, row))}'} for row in results]
+                        results_data = [{result_key: f'{dict(zip(column_names, row))}', result_key2: row[8], "price": row[3]} for row in results]
                     else:
-                        results_data = [{result_key : row[0]} for row in results]
+                        results_data = [{result_key : row[0], result_key2: row[1]} for row in results]
 
                     print("Query Results:", results_data)
 
@@ -408,6 +436,13 @@ def sse_request():
     message = request.args.get('message', '')
     flag = request.args.get('flag', '')
     return Response(stream_with_context(get_response(message, flag)), content_type='text/event-stream')
+
+@app.route("/get_db_data")
+def get_db_data():
+    keyword = request.args.get('keyword', '')
+    type = request.args.get('type', '')
+    name = request.args.get('name', '')
+    return Response(stream_with_context(get_db_response(keyword, type, name)), content_type='text/event-stream')
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=PORT)
