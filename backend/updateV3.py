@@ -49,7 +49,7 @@ app = Flask(__name__)
 app.config["CORS_HEADERS"] = "Content-Type"
 mysql = MySQL()
 app.config['MYSQL_DATABASE_USER'] = 'root'
-app.config['MYSQL_DATABASE_PASSWORD'] = ''
+app.config['MYSQL_DATABASE_PASSWORD'] = 'rootROOT123!@#'
 app.config['MYSQL_DATABASE_DB'] = 'csv'
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 mysql.init_app(app)
@@ -190,12 +190,14 @@ def parse_product_data(page_content):
 def get_db_response(keyword: str, type: str, name: str):
     results_data = {}
     column_names = ["no","type", "name", "price", "description", "option_keyword", "option_name", "option_price"]
-
     # Define the query based on the keyword
     if keyword == "all_option_keyword":
-        query = f'SELECT DISTINCT option_keyword, description FROM csv WHERE type="{type}"'
+        if type == "":
+            query = f'SELECT DISTINCT name, description, price, type FROM csv'
+        else:
+            query = f'SELECT DISTINCT name, description, price FROM csv WHERE type="{type}"'
     elif keyword == "all_option_name":
-        query = f'SELECT DISTINCT *, description, price FROM csv WHERE type="{type}" AND name="{name}"'
+        query = f'SELECT DISTINCT * FROM csv WHERE type="{type}" AND name="{name}"'
     else:
         return results_data  # Return empty if keyword doesn't match valid cases
 
@@ -206,9 +208,9 @@ def get_db_response(keyword: str, type: str, name: str):
 
     # Process results based on the keyword
     if keyword == "all_option_keyword":
-        results_data = [{"option_keyword" : row[0], "description": row[1]} for row in results]
+        results_data = [{"name": row[0], "description": row[1], "price": row[2], "type": row[3]} for row in results]
     elif keyword == "all_option_name":   
-        results_data = [{"option_name": f'{dict(zip(column_names, row))}', "description": row[8], "price": row[3]} for row in results]
+        results_data = [{"option_name": f'{dict(zip(column_names, row))}', "description": row[4], "price": row[7], "type": row[5]} for row in results]
 
     yield f'data: ChunkData:{json.dumps(results_data)}\n\n'
 
@@ -361,7 +363,7 @@ def get_response(message: str, flag: str):
 
                     where_clauses = " AND ".join(where_clauses)
                     if result_key == "option_name":
-                        query = f"SELECT DISTINCT *, {result_key2}  FROM csv WHERE {where_clauses}"
+                        query = f"SELECT DISTINCT *, {result_key2} FROM csv WHERE {where_clauses}"
                     else:
                         query = f"SELECT DISTINCT {result_key}, {result_key2}, price FROM csv WHERE {where_clauses}"
 
@@ -375,9 +377,9 @@ def get_response(message: str, flag: str):
 
                     # Format results for streaming
                     if result_key == "option_name":
-                        results_data = [{result_key: f'{dict(zip(column_names, row))}', result_key2: row[8], "price": row[3]} for row in results]
+                        results_data = [{result_key: f'{dict(zip(column_names, row))}', result_key2: row[8], "price": row[7]} for row in results]
                     else:
-                        results_data = [{result_key : row[0], result_key2: row[1]} for row in results]
+                        results_data = [{result_key : row[0], result_key2: row[1], "price": row[2]} for row in results]
 
                     print("Query Results:", results_data)
 

@@ -63,7 +63,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           badgeInset="14%"
           color="success"
         >
-          { isRequest ? (<PersonIcon fontSize="large" color="primary" />) : (<div style={{display: 'flex', alignItems: 'center'}}><img src="/westsidewok.png" alt="logo" style={{width: "30px", height: "40px"}}/></div>)}
+          { isRequest ? (<PersonIcon fontSize="large" color="success" />) : (<div style={{display: 'flex', alignItems: 'center'}}><img src="/westsidewok.png" alt="logo" style={{width: "30px", height: "40px"}}/></div>)}
         </Badge>
         {
           isRequest ? (<p></p>) : (<p style={{paddingLeft: '5px'}}>Assistant</p>)
@@ -71,7 +71,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       </div>
       <Paper
         sx={{
-          backgroundColor: isRequest ? "#2196f3" : "#e0e0e0",
+          backgroundColor: isRequest ? "#009900" : "#e0e0e0",
           color: isRequest ? "#fff" : "#000",
           padding: 2,
           borderRadius: 2,
