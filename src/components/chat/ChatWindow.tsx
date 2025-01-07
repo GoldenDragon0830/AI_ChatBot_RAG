@@ -823,7 +823,7 @@ const ChatWindow: React.FC = () => {
       role: "user",
     };
     const backMessage: MessageInterface = {
-      content: "I want to order type: " + typeData + ", " + "name: " + nameData + ", " + text,
+      content: "I want to order type: " + typeData + ", " + "name: " + nameData + ", " + text,  //content: "I want to order" + typeData ? `type: ${typeData}` : "" + nameData ? `name: ${nameData}` : ""  + `, ${text}`,
       role: "user",
     };
     if (flag === KEY_ASK_AMOUNT)
@@ -1188,9 +1188,13 @@ const ChatWindow: React.FC = () => {
                       onClick={() => {
                         if (item.type === "option_name") {
                           let jsonString = item.value
-                            .replace(/'/g, '"') // Replace all single quotes with double quotes
-                            .replace(/None/g, "null"); // Replace None with null
+                          .replace(/'/g, '"') // Naively replace all single quotes with double quotes
+                          .replace(/(\bNone\b)/g, "null"); // Replace Python-style None with null
+                          // Add additional validation for keys (ensure double quotes around keys)
+                          jsonString = jsonString.replace(/"(\w+)":/g, (match, p1) => `"${p1}":`);
+                          // Parse JSON string
                           const itemData = JSON.parse(jsonString);
+                          // Set the parsed data
                           setSelectedItemData(itemData);
     
                           handleDetailDialogOpen();
@@ -1218,37 +1222,41 @@ const ChatWindow: React.FC = () => {
                     />
                   );
                 })}
-                <Dialog open={detailDialog} onClose={handleDetailDialogClose}>
-                  <DialogTitle
-                    style={{
-                      textAlign: "center",
-                      whiteSpace: "normal",
-                      wordBreak: "break-word",
-                      maxWidth: "fit-content",
-                    }}
-                  >
-                    Details
-                  </DialogTitle>
-                  <DialogContent>
-                    {selectedItemData ? (
-                      <div>
-                        <p>Type: {selectedItemData.type}</p>
-                        <p>Name: {selectedItemData.name}</p>
-                        <p>Price: {selectedItemData.price}</p>
-                        <p>Option Price: {selectedItemData.option_price}</p>
-                        <p>Option: {selectedItemData.option_keyword}</p>
-                        <p>Option Name: {selectedItemData.option_name}</p>
-                        <p>Description: {selectedItemData.description}</p>
-                      </div>
-                    ) : (
-                      <div></div>
-                    )}
-                  </DialogContent>
-                </Dialog>
               </ImageList>
           </Box>
         ))
       }
+      <Dialog
+        fullWidth
+        open={detailDialog} 
+        onClose={handleDetailDialogClose}
+        >
+        <DialogTitle
+          style={{
+            textAlign: "center",
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+            maxWidth: "fit-content",
+          }}
+        >
+          Details
+        </DialogTitle>
+        <DialogContent>
+          {selectedItemData ? (
+            <div>
+              <p>Type: {selectedItemData.type}</p>
+              <p>Name: {selectedItemData.name}</p>
+              <p>Price: {selectedItemData.price}</p>
+              <p>Option Price: {selectedItemData.option_price}</p>
+              <p>Option: {selectedItemData.option_keyword}</p>
+              <p>Option Name: {selectedItemData.option_name}</p>
+              <p>Description: {selectedItemData.description}</p>
+            </div>
+          ) : (
+            <div></div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 
