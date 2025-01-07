@@ -46,6 +46,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
       <TextField
         label="Enter your message"
         variant="outlined"
+        color="success"
         style={{ marginBottom: "20px" }}
         fullWidth
         value={message.content}
@@ -54,7 +55,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
       />
       <Button
         variant="contained"
-        color="primary"
+        color="success"
         disabled={message.content.length === 0}
         onClick={handleSendMessage}
         fullWidth

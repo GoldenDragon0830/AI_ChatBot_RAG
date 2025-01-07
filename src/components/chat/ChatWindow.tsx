@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import ChatInput from "./ChatInput";
 import ChatMessage from "./ChatMessage";
-import DOMPurify from 'dompurify';
 
 import {
   CircularProgress,
@@ -18,22 +17,16 @@ import {
   Drawer,
   ListItemButton,
   AppBar,
-  Typography
+  Typography,
+  Checkbox
 } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
-import ImageList from "@mui/material/ImageList";
-import ImageListItem from "@mui/material/ImageListItem";
-import ImageListItemBar from "@mui/material/ImageListItemBar";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import DoneOutlineIcon from "@mui/icons-material/DoneOutline";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import Avatar from "@mui/material/Avatar";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
-import ListItemAvatar from "@mui/material/ListItemAvatar";
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import DoubleArrowTwoToneIcon from '@mui/icons-material/DoubleArrowTwoTone';
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
@@ -41,7 +34,21 @@ import ChangeCircleIcon from "@mui/icons-material/ChangeCircle";
 import LoupeIcon from "@mui/icons-material/Loupe";
 import Snackbar from "@mui/material/Snackbar";
 import Divider from "@mui/material/Divider";
-import Paper from '@mui/material/Paper';
+import Paper from "@mui/material/Paper";
+import ImageList from "@mui/material/ImageList";
+import ImageListItem from "@mui/material/ImageListItem";
+import Chip from "@mui/material/Chip";
+import DinnerDiningIcon from "@mui/icons-material/DinnerDining";
+import BackspaceIcon from "@mui/icons-material/Backspace";
+
+import Card from "@mui/material/Card";
+import CardHeader from "@mui/material/CardHeader";
+import CardContent from "@mui/material/CardContent";
+import CardActions from "@mui/material/CardActions";
+import { green, red } from "@mui/material/colors";
+import { CheckBox, Description, LocalDining } from "@mui/icons-material";
+
+const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
 
 interface MessageInterface {
   content: string;
@@ -49,13 +56,21 @@ interface MessageInterface {
   role: "user" | "assistant";
 }
 
+interface ChunkOption {
+  type: string;
+  value: string;
+  description: string;
+  price: string;
+  keyword: string;
+}
+
 const KEY_CHAT_CUSTOMER = "CHAT_CUSTOMER";
-// const KEY_FINISH_ORDER = "FINISH_ORDER";
 const KEY_SELECT_PRODUCT = "SELECT_PRODUCT";
 const KEY_ASK_AMOUNT = "ASK_AMOUNT";
 const KEY_ANSWER_AMOUNT = "ANSWER_AMOUNT";
 const INITIAL_AMOUNT = 1;
-const GREETING_WORD = "I'm Drip Drop Deals Order Assistant, What would you like to order today?";
+const GREETING_WORD =
+  "I'm West Side Wok Order Assistant, What would you like to order today?";
 
 const drawerWidth = 1200;
 
@@ -64,58 +79,90 @@ const ChatWindow: React.FC = () => {
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const isMediumScreen = useMediaQuery(theme.breakpoints.between("sm", "md"));
   const [showAmountSelector, setShowAmountSelector] = useState(false);
-  // const [showContinueSelector, setShowContinueSelector] = useState(false);
   const [orderDetailDialogOpen, setOrderDetailDialogOpen] = useState(false);
   const [totalPrice, setTotalPrice] = useState("");
   const [currentAmount, setCurrentAmount] = useState(INITIAL_AMOUNT);
 
-  // const API_URL = "http://13.208.253.225:4000/chat";
-  // const API_URL = "http://52.221.236.58:80/chat";
-  // const API_URL = "http://3.99.185.93:4000/chat";
-  const API_URL = process.env.REACT_APP_API_URL;
+  const [selectedChunk, setSelectedChunk] = useState<string | null>("ALL");
+  const [chunkDataHistory, setChunkDataHistory] = useState<ChunkOption[][]>([]);
+  const [nameListData, setNameListData] = useState<ChunkOption[]>([]);
+
+  const API_URL = "http://3.99.185.93:4002/chat";
+  const API_GET_FROM_DB_URL = "http://3.99.185.93:4002/get_db_data";
+  // const API_URL = process.env.REACT_APP_API_URL;
 
   const [messages, setMessages] = useState<MessageInterface[]>([
     { content: GREETING_WORD, role: "assistant" },
   ]);
 
-  interface ChunkData {
-    keyword: string;
-    data: {
-      title: string;
-      image_urls: string;
-      category: string;
-      subtitle: string;
-      single_price: string;
-      directions: string;
-      details: string;
-    }[];
-  }
-  
-  const [chunkData, setChunkData] = useState<ChunkData[]>([]);
+  const initial_data = [
+    { type: "appetizers" },
+    { type: "soups" },
+    { type: "traditional_side_dishes" },
+    { type: "chinese_dishes" },
+    { type: "thai_food" },
+    { type: "chef's_specialities" },
+    { type: "sushi_appetizers" },
+    { type: "regular_rolls" },
+    { type: "vegetable_rolls" },
+    { type: "tempura_rolls" },
+    { type: "specialty_rolls" },
+    { type: "sushi_platters" },
+    { type: "poke_and_salads" },
+    { type: "sushi_or_sashimi" },
+    { type: "others" },
+  ];
+
+  const menuList = [
+    "ALL",
+    "Appetizers",
+    "Soups",
+    "Traditional_side_dishes",
+    "Chinese_dishes",
+    "Thai_food",
+    "Chef's_specialities",
+    "sushi_appetizers",
+    "Regular_rolls",
+    "Vegetable_rolls",
+    "Tempura_rolls",
+    "Specialty_rolls",
+    "Sushi_platters",
+    "Poke_and_salads",
+    "Sushi_or_sashimi",
+    "Others",
+  ];
+
+  const [chunkData, setChunkData] = useState<ChunkOption[]>([]);
+
   const [orderData, setOrderData] = useState<
     {
-      title: string;
-      image_urls: string;
-      category: string;
-      subtitle: string;
-      single_price: string;
-      details: string;
-      directions: string;
+      type: string;
+      name: string;
+      description: string;
+      price: string;
+      option_keyword: string;
+      option_name: string;
+      option_price: string;
     }[]
   >([]);
 
   const [cartData, setCartData] = useState<
     {
-      title: string;
-      image_urls: string;
-      category: string;
-      subtitle: string;
-      single_price: string;
-      details: string;
-      directions: string;
+      type: string;
+      name: string;
+      description: string;
+      price: string;
+      option_keyword: string;
+      option_name: string;
+      option_price: string;
       count: number;
     }[]
   >([]);
+
+  // const [oneOrderData, setOneOrderData] = useState("");
+
+  const [typeData, setTypeData] = useState("");
+  const [nameData, setNameData] = useState("");
 
   const [cartCount, setCartCount] = useState(0);
   const [flag, setFlag] = useState(KEY_SELECT_PRODUCT);
@@ -124,34 +171,64 @@ const ChatWindow: React.FC = () => {
 
   const ItemCart: React.FC<{
     title: string;
-    imageUrl: string;
     price: string;
     count: number;
-  }> = ({ title, imageUrl, price, count }) => {
+  }> = ({ title, price, count }) => {
+    const handleIncrement = () => {
+      setCartData((prevData) =>
+        prevData.map((item) =>
+          item.name + item.option_name === title
+            ? { ...item, count: item.count + 1 }
+            : item
+        )
+      );
+      setCartCount((prevCount) => prevCount + 1);
+    };
+
+    const handleDecrement = () => {
+      setCartData((prevData) =>
+        prevData.map((item) =>
+          item.name + item.option_name === title && item.count > 1
+            ? { ...item, count: item.count - 1 }
+            : item
+        )
+      );
+      setCartCount((prevCount) => (count > 1 ? prevCount - 1 : prevCount));
+    };
+
+    const handleRemove = () => {
+      setCartData((prevData) =>
+        prevData.filter((item) => item.name + item.option_name !== title)
+      );
+      setCartCount((prevCount) => prevCount - count);
+    };
+
     return (
       <ListItem
         secondaryAction={
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <IconButton 
-              size="small" 
-              color="primary"
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <IconButton
+              size="small"
+              color="success"
               onClick={(e) => {
                 e.stopPropagation();
-                setCartData(prev => prev.map(item => 
-                  item.title === title ? {...item, count: item.count + 1} : item
-                ));
+                handleIncrement();
               }}
             >
               <AddIcon fontSize="small" />
             </IconButton>
             <Typography>{count}</Typography>
-            <IconButton 
+            <IconButton
               size="small"
               onClick={(e) => {
                 e.stopPropagation();
-                setCartData(prev => prev.map(item => 
-                  item.title === title ? {...item, count: Math.max(1, item.count - 1)} : item
-                ));
+                handleDecrement();
               }}
             >
               <RemoveIcon fontSize="small" />
@@ -159,110 +236,149 @@ const ChatWindow: React.FC = () => {
           </Box>
         }
       >
-      <ListItemButton>
-        <ListItemAvatar>
-          <Avatar>
-            <img src={imageUrl} alt={title} width="100%" />
-          </Avatar>
-        </ListItemAvatar>
-        <ListItemText primary={title} secondary={"$"+price.match(/\$?(\d+\.\d+)/)?.[1]} />
-        <IconButton
-          edge="end"
-          aria-label="delete"
-          onClick={(e) => {
-            e.stopPropagation();
-            setCartData(prev => prev.filter(item => item.title !== title));
-            setCartCount(prev => prev - 1);
-          }}
-        >
-          <DeleteForeverIcon color="secondary" />
-        </IconButton>
-      </ListItemButton>
+        <ListItemButton>
+          <ListItemText primary={title} secondary={"$" + price} />
+          <IconButton
+            edge="end"
+            aria-label="delete"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRemove();
+            }}
+          >
+            <DeleteForeverIcon color="error" />
+          </IconButton>
+        </ListItemButton>
       </ListItem>
     );
   };
 
-  const ItemButton: React.FC<{
-    text: string;
-    url: string;
-    price: string;
-    subtitle: string;
-    onClick: () => void;
-  }> = ({ text, url, price, subtitle, onClick }) => {
-    const [open, setOpen] = useState(false);
-
-    const handleOpen = () => setOpen(true);
-    const handleClose = () => setOpen(false);
-
-    return (
-      <ImageListItem key={text} className="image-list-item">
-        <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.7)', padding: '4px 8px', borderRadius: 4 }}>
-          <Typography variant="body2" style={{ color: 'white'  }}>
-            {"$"+price.match(/\$?(\d+\.\d+)/)?.[1]}
-          </Typography>
-        </div>
-        {
-          subtitle == "" 
-          || subtitle == null? 
-            (<div></div>)
-            :
-            (
-              <div style={{ position: 'absolute', top: 8, left: 8, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.7)', padding: '4px 8px', borderRadius: 4 }}>
-                <Typography variant="body2" style={{ color: 'white'  }}>
-                  {subtitle.match(/\b(\d+(?:\.\d+)?)\s*(lb|oz|each|count|fl|oz|ct|gal|g|bunch|case)\b|per lb/g)?.[0]}
-                </Typography>
-              </div>
-            )
-          }
-        <img src={url} alt={text} loading="lazy" onClick={handleOpen} />
-        <div className="overlay">
-          <IconButton
-            color="primary"
-            onClick={handleOpen}
-            style={{ color: "white", zIndex: 3 }}
-          >
-            <VisibilityIcon />
-          </IconButton>
-          <IconButton
-            color="primary"
-            onClick={onClick}
-            style={{ color: "white", zIndex: 3 }}
-          >
-            <DoneOutlineIcon />
-          </IconButton>
-        </div>
-        <ImageListItemBar
-          title={
-            <div>
-              <span>{text}</span>
-            </div>
-          }
-        />
-
-        <Dialog open={open} onClose={handleClose}>
-          <DialogActions>
-            <DialogTitle style={{ textAlign: "center", whiteSpace: "normal", wordBreak: "break-word", maxWidth: "fit-content" }}>
-              {text}
-            </DialogTitle>
-          </DialogActions>
-          <DialogContent>
-            <img src={url} alt={text} style={{ width: "100%" }} />
-          </DialogContent>
-        </Dialog>
-      </ImageListItem>
-    );
-  };
+  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+  const [chunkTotalPrice, setChunkTotalPrice] = useState(0);
 
   const AmountItemButton: React.FC<{
     text: string;
+    type: string;
+    value: string;
+    price: string;
+    description: string;
     onClick: () => void;
-  }> = ({ text, onClick }) => (
-    <ImageListItem key={text} className="image-list-item">
-      <Button variant="contained" onClick={onClick}>
-        {text}
-      </Button>
-    </ImageListItem>
-  );
+    style?: React.CSSProperties;
+  }> = ({ text, type, value, price, description, onClick }) => {
+    return (
+      <ImageListItem key={text} className="image-list-item">
+        <Card sx={{ width: 280, margin: "5px" }}>
+          <CardContent
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "flex-start",
+              alignItems: "flex-start",
+              height: "auto",
+              position: "relative",
+              transition: "transform 0.3s ease-in-out",
+                "&:hover": {
+                  transform: "scale(1.05)",
+                },
+            }}
+            onClick={onClick}
+          >
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: "bold", // Bold text
+                color: "green",
+                fontSize: "20px",
+                marginBottom: "5px", // Slight spacing between title and description
+                overflow: "hidden",
+                display: "-webkit-box",
+                WebkitLineClamp: 1,
+                WebkitBoxOrient: "vertical",
+              }}
+            >
+              {text}
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "gray", // Gray color for description
+                fontSize: "14px",
+                marginBottom: "10px", // Slight spacing between description and price
+                height: "40px",
+                overflow: "hidden",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+              }}
+            >
+              {description}
+            </Typography>
+          </CardContent>
+         
+            <CardActions disableSpacing >
+                <Typography variant="body2" style={{ color: "green", marginLeft: "10px" }}>
+                  {"$" + price}
+                </Typography>
+                 {type === "option_name" ? (
+              <Checkbox
+                sx={{
+                  marginLeft: "auto",
+                  height: "20px",
+                }}
+                checked={selectedOptions.includes(value)} // Check if the option is selected
+                onChange={(event) => {
+                  const isChecked = event.target.checked; // Whether the checkbox is checked or not
+                  const optionPrice = parseFloat(price); // Parse the price of the current item
+
+                  setSelectedOptions((prevOptions) => {
+                    if (description === "Size") {
+                      // Special case: Size options (allow only one selection)
+                      const otherOptions = prevOptions.filter(
+                        (opt) => !chunkData.find((data) => data.value === opt && data.description === "Size")
+                      );
+
+                      const currentlySelectedSize = prevOptions.find((opt) =>
+                        chunkData.some((data) => data.value === opt && data.description === "Size")
+                      );
+
+                      if (isChecked) {
+                        // If a new size is selected, replace the current size
+                        if (currentlySelectedSize) {
+                          const currentSizePrice = parseFloat(
+                            chunkData.find((data) => data.value === currentlySelectedSize)?.price || "0"
+                          );
+                          setChunkTotalPrice((prevTotal) => prevTotal - currentSizePrice);
+                        }
+                        setChunkTotalPrice((prevTotal) => prevTotal + optionPrice);
+                        return [...otherOptions, value];
+                      } else {
+                        // If the size is deselected, just remove it
+                        setChunkTotalPrice((prevTotal) => prevTotal - optionPrice);
+                        return otherOptions;
+                      }
+                    } else {
+                      // General case: Multi-selection for non-Size options
+                      if (isChecked) {
+                        // Add the selected option price
+                        setChunkTotalPrice((prevTotal) => prevTotal + optionPrice);
+                        return [...prevOptions, value];
+                      } else {
+                        // Remove the deselected option price
+                        setChunkTotalPrice((prevTotal) => prevTotal - optionPrice);
+                        return prevOptions.filter((opt) => opt !== value);
+                      }
+                    }
+                  });
+                }}
+              />
+          ) : (
+            <div></div>
+          )}
+            </CardActions>
+        </Card>
+      </ImageListItem>
+    );
+  };
 
   const styles = `
     @keyframes marquee {
@@ -291,7 +407,13 @@ const ChatWindow: React.FC = () => {
       overflow: hidden;
     }
 
-    .overlay {
+    .card-content {
+      opacity: 0.3
+      position: relative;
+      overflow: hidden; /* Ensure the overlay is confined to the CardContent */
+    }
+
+    .card-content .overlay {
       position: absolute;
       top: 0;
       left: 0;
@@ -302,15 +424,16 @@ const ChatWindow: React.FC = () => {
       display: flex;
       align-items: center;
       justify-content: center;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      pointer-events: none; /* Prevents overlay from blocking hover on the image */
+      opacity: 0; /* Initially hidden */
+      transition: opacity 0.3s ease; /* Smooth transition */
+      pointer-events: none; /* Prevent overlay from blocking hover on the content */
     }
 
-    .image-list-item:hover .overlay {
-      opacity: 1;
-      pointer-events: auto; /* Allows clicking on the overlay */
-    }`;
+    .card-content:hover .overlay {
+      opacity: 0.3; /* Show the overlay on hover */
+      pointer-events: auto; /* Enable interaction with the overlay */
+    }  
+  `;
 
   const styleSheet = document.createElement("style");
   styleSheet.type = "text/css";
@@ -325,12 +448,10 @@ const ChatWindow: React.FC = () => {
 
   useEffect(() => {
     if (orderData.length > 0) {
-      const regex = /\$?(\d+\.\d+)/;
-      const match = orderData[0].single_price.match(regex);
+      const singlePrice = parseFloat(orderData[0].price);
 
-      if (match) {
-        const single_price = parseFloat(match[1]);
-        const totalPrice = single_price * currentAmount;
+      if (!isNaN(singlePrice)) {
+        const totalPrice = singlePrice * currentAmount;
         setTotalPrice(`$${totalPrice.toFixed(2)}`);
       } else {
         console.error("Failed to parse single_price from orderData");
@@ -339,18 +460,111 @@ const ChatWindow: React.FC = () => {
     }
   }, [currentAmount, orderData]);
 
-  const handleButtonClick = (text: string, url: string) => {
-    // setShowContinueSelector(false);
-    setOrderDetailDialogOpen(false);
-    const message: MessageInterface = {
-      content: text,
-      role: "user",
-      imageUrl: url, // Include the image URL
-    };
-    setFlag(KEY_ASK_AMOUNT);
-    handleSendMessage(message, KEY_ASK_AMOUNT);
+  const handleGetResponseFromDB = async (
+    keyword: string,
+    type: string,
+    name: string
+  ) => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `${API_GET_FROM_DB_URL}?keyword=${keyword}&type=${type}&name=${name}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "text/event-stream",
+          },
+        }
+      );
+      if (!response.ok) throw new Error("Network response was not ok");
+      if (!response.body) throw new Error("Response body is null");
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        buffer += chunk;
+
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        // eslint-disable-next-line no-loop-func
+        lines.forEach((line) => {
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6).trim();
+            if (data.includes("ChunkData:")) {
+              try {
+                const jsonData = JSON.parse(data.split("ChunkData:")[1]);
+                let firstData = null;
+                if (chunkData.length > 0) {
+                  setChunkDataHistory((prevHistory) => [
+                    ...prevHistory,
+                    chunkData,
+                  ]);
+                }
+
+                const parsedData: ChunkOption[] = jsonData.map((item: any) => {
+                  const key = Object.keys(item)[0]; // Get the first key of the object
+                  const key_description = Object.keys(item)[1];
+                  const key_price = Object.keys(item)[2];
+                  const key_type = Object.keys(item)[3];
+
+                  if (key === "name") {
+                    setNameListData([]);
+                  }
+                  return {
+                    type: key,
+                    value: item[key],
+                    description: item[key_description],
+                    price: item[key_price],
+                    keyword: item[key_type]
+                  };
+                });
+
+                if (
+                  jsonData.length > 0 &&
+                  Object.keys(jsonData[0])[0] === "name"
+                ) {
+                  // Set nameListData if the key is "name"
+                  setChunkData(parsedData);
+                } else if (Object.keys(jsonData[0])[0] === "option_keyword") {
+                  firstData = {
+                    type: "ALL",
+                    value: "ALL",
+                    description: "",
+                    price: "",
+                    keyword: ""
+                  };
+                  const updatedData =
+                    jsonData.length > 1
+                      ? firstData
+                        ? [firstData, ...parsedData]
+                        : parsedData
+                      : parsedData;
+                  setNameListData(updatedData);
+                } else {
+                  setChunkData(parsedData);
+                }
+              } catch (e) {
+                console.error(e);
+              }
+            }
+          }
+        });
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
-  
+
   const handleSendMessage = async (
     message: MessageInterface,
     flag: string,
@@ -397,37 +611,71 @@ const ChatWindow: React.FC = () => {
 
         // eslint-disable-next-line no-loop-func
         lines.forEach((line) => {
-          if (line.startsWith("data: ")){
-            const data = line.slice(6);
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6).trim();
             newMessageContent += data;
-
             if (data.includes("ChunkData:")) {
               try {
                 const jsonData = JSON.parse(data.split("ChunkData:")[1]);
-                const parsedData = Object.entries(jsonData).map(([keyword, dataArray]) => ({
-                  keyword,
-                  data: dataArray as ChunkData['data'],
-                }));
-                setChunkData(prevChunkData => {
-                  const updatedChunkData = [...prevChunkData];
-                  parsedData.forEach(newCategory => {
-                    const existingCategoryIndex = updatedChunkData.findIndex(
-                      category => category.keyword === newCategory.keyword
-                    );
-            
-                    if (existingCategoryIndex !== -1) {
-                      // Merge data if the category already exists
-                      updatedChunkData[existingCategoryIndex].data = [
-                        ...updatedChunkData[existingCategoryIndex].data,
-                        ...newCategory.data
-                      ];
-                    } else {
-                      // Add new category if it doesn't exist
-                      updatedChunkData.push(newCategory);
-                    }
-                  });
-                  return updatedChunkData;
+                let firstData = null;
+                if (chunkData.length > 0) {
+                  setChunkDataHistory((prevHistory) => [
+                    ...prevHistory,
+                    chunkData,
+                  ]);
+                }
+
+                const parsedData: ChunkOption[] = jsonData.map((item: any) => {
+                  const key = Object.keys(item)[0]; // Get the first key of the object
+                  const key_description = Object.keys(item)[1];
+                  const key_price = Object.keys(item)[2];
+                  if (key === "name") {
+                    setNameListData([]);
+                  }
+
+                  return {
+                    type: key,
+                    value: item[key],
+                    description: item[key_description],
+                    price: item[key_price]
+                  };
                 });
+
+                if (
+                  jsonData.length > 0 &&
+                  Object.keys(jsonData[0])[0] === "name"
+                ) {
+                  // Set nameListData if the key is "name"
+                  setChunkData(parsedData);
+                } else if (Object.keys(jsonData[0])[0] === "option_keyword") {
+                  firstData = {
+                    type: "ALL",
+                    value: "ALL",
+                    description: "",
+                    price: "",
+                    keyword: ""
+                  };
+                  const updatedData =
+                    jsonData.length > 1
+                      ? firstData
+                        ? [firstData, ...parsedData]
+                        : parsedData
+                      : parsedData;
+                  setNameListData(updatedData);
+                } else {
+                  setChunkData(parsedData);
+                }
+              } catch (e) {
+                console.error(e);
+              }
+            }
+            if (data.includes("TYPE:")) {
+              try {
+                const detectData = data.split("TYPE:")[1];
+                if (detectData.split("@")[0] === "type") {
+                  setTypeData(detectData.split("@")[1]);
+                } else if (detectData.split("@")[0] === "name")
+                  setNameData(detectData.split("@")[1]);
               } catch (e) {
                 console.error(e);
               }
@@ -435,7 +683,7 @@ const ChatWindow: React.FC = () => {
             if (data.includes(KEY_ASK_AMOUNT)) {
               try {
                 const cleanData = data.split(`${KEY_ASK_AMOUNT}:`)[1];
-                newMessageContent = cleanData; // Append the cleaned data
+                newMessageContent = cleanData;
                 setShowAmountSelector(true);
               } catch (e) {
                 console.error(e);
@@ -444,29 +692,32 @@ const ChatWindow: React.FC = () => {
             if (data.includes(KEY_ANSWER_AMOUNT)) {
               try {
                 const amountString = data.split(`${KEY_ANSWER_AMOUNT}:`)[1];
-                console.log(amountString)
                 const amount = parseInt(amountString, 10);
-                console.log(amount)
-                if (amount <= 0 || amountString.length > 4 || Number.isNaN(amount)) {
-                  // Invalid input detected, prompt the user again
+                if (
+                  amount <= 0 ||
+                  amountString.length > 4 ||
+                  Number.isNaN(amount)
+                ) {
                   const invalidInputMessage: MessageInterface = {
                     content: "Please input amount of product correctly.",
                     role: "assistant",
                   };
-                  setMessages((prevMessages) => [...prevMessages, invalidInputMessage]);
+                  setMessages((prevMessages) => [
+                    ...prevMessages,
+                    invalidInputMessage,
+                  ]);
                   setShowAmountSelector(true);
-                  return; // Exit early since we're asking for input again
+                  return;
                 }
 
                 handleSetCurrentAmount(amount);
-                // setCurrentAmount(amount);
-                console.log(currentAmount)
                 handleAmountClick(false, amount);
                 return;
               } catch (e) {
                 console.error(e);
               }
             }
+
             setMessages((prev) => {
               const newMessages = [...prev];
               const lastMessageIndex = newMessages.length - 1;
@@ -476,6 +727,8 @@ const ChatWindow: React.FC = () => {
               ) {
                 newMessages[lastMessageIndex].content =
                   newMessageContent.split("ChunkData:")[0] || "";
+                newMessages[lastMessageIndex].content =
+                  newMessageContent.split("TYPE:")[0] || "";
                 if (data.includes(KEY_ASK_AMOUNT)) {
                   newMessages[lastMessageIndex].content =
                     newMessageContent.split(KEY_ASK_AMOUNT + ":")[0] || "";
@@ -518,59 +771,49 @@ const ChatWindow: React.FC = () => {
     }
   };
 
-  const handleSetCurrentAmount = (amount: Number) => {
-    setCurrentAmount(amount.valueOf())
-  }
+  const handleSetCurrentAmount = (amount: number) => {
+    setCurrentAmount(amount);
+  };
 
   const handleAmountClick = (flag: boolean, amount: number) => {
-    // Add logic here to handle what should happen when the current amount is clicked
-
     if (orderData.length > 0) {
-      
       const newAmount = flag ? currentAmount : amount;
 
-    if (flag) {
-      setShowAmountSelector(false);
-      const displayMessage: MessageInterface = {
-        content: `I need ${newAmount}`,
-        role: "user",
-      };
-      setMessages((prevMessages) => [...prevMessages, displayMessage]);
-    }
-
-    // Calculate total price
-    const regex = /\$?(\d+\.\d+)/;
-    const match1 = orderData[0].single_price.match(regex);
-    console.log(orderData[0].single_price)
-    if (match1) {
-      const single_price = parseFloat(match1[1]);
-      const totalPrice = single_price * newAmount;
-      
-      // Ensure the total price message is added only once
-      setMessages((prevMessages) => {
-        const lastIndex = prevMessages.length - 1;
-        const lastMessage = prevMessages[lastIndex];
-        
-        // Check if the last message already contains the total price
-        if (lastMessage && lastMessage.content.includes('Total Price:')) {
-          return prevMessages;
-        }
-
-        const totalPriceText: MessageInterface = {
-          content: `Total Price: $${totalPrice.toFixed(2)}`,
-          role: "assistant",
+      if (flag) {
+        setShowAmountSelector(false);
+        const displayMessage: MessageInterface = {
+          content: `I need ${newAmount}`,
+          role: "user",
         };
-        return [...prevMessages, totalPriceText];
-      });
+        setMessages((prevMessages) => [...prevMessages, displayMessage]);
+      }
 
-      setTotalPrice(`$${totalPrice.toFixed(2)}`);
-    } else {
-      console.error("Failed to parse single_price from orderData");
-      setTotalPrice("");
-    }
+      const singlePrice = parseFloat(orderData[0].price); // Directly access the price
+      const totalPrice = singlePrice * newAmount; // Calculate the total price
+      if (!isNaN(singlePrice)) {
+        setMessages((prevMessages) => {
+          const lastIndex = prevMessages.length - 1;
+          const lastMessage = prevMessages[lastIndex];
 
-    setCurrentAmount(newAmount);
-    setOrderDetailDialogOpen(true);
+          if (lastMessage && lastMessage.content.includes("Total Price:")) {
+            return prevMessages;
+          }
+
+          const totalPriceText: MessageInterface = {
+            content: `Total Price: $${totalPrice.toFixed(2)}`,
+            role: "assistant",
+          };
+          return [...prevMessages, totalPriceText];
+        });
+
+        setTotalPrice(`$${totalPrice.toFixed(2)}`);
+      } else {
+        console.error("Failed to parse single_price from orderData");
+        setTotalPrice("");
+      }
+
+      setCurrentAmount(newAmount);
+      setOrderDetailDialogOpen(true);
     }
   };
 
@@ -579,32 +822,21 @@ const ChatWindow: React.FC = () => {
       content: text,
       role: "user",
     };
+    const backMessage: MessageInterface = {
+      content: "I want to order type: " + typeData + ", " + "name: " + nameData + ", " + text,  //content: "I want to order" + typeData ? `type: ${typeData}` : "" + nameData ? `name: ${nameData}` : ""  + `, ${text}`,
+      role: "user",
+    };
     if (flag === KEY_ASK_AMOUNT)
-      handleSendMessage(message, KEY_ANSWER_AMOUNT, true);    
-    else { 
-      setChunkData([]);
-      // setShowContinueSelector(false);
+      handleSendMessage(message, KEY_ANSWER_AMOUNT, true);
+    else {
+      // setChunkData([]);
       setOrderDetailDialogOpen(false);
-      
       setFlag(KEY_SELECT_PRODUCT);
-      handleSendMessage(message, KEY_SELECT_PRODUCT, true);
+      handleSendMessage(backMessage, KEY_SELECT_PRODUCT, false);
       setFlag(KEY_SELECT_PRODUCT);
+      setMessages((prevMessage) => [...prevMessage, message]);
     }
   };
-
-  const uniqueChunkData = chunkData.map(category => {
-    const seenImageUrls = new Set<string>();
-    return {
-      keyword: category.keyword,
-      data: category.data.filter(item => {
-        if (seenImageUrls.has(item.image_urls)) {
-          return false; // Skip this item if its image URL has already been seen
-        }
-        seenImageUrls.add(item.image_urls);
-        return true; // Include this item if its image URL is unique
-      })
-    };
-  }).filter(Category => Category.data.length > 0);
 
   const [open, setOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
@@ -617,15 +849,17 @@ const ChatWindow: React.FC = () => {
 
   const handleAddCart = async () => {
     setCartCount(cartCount + 1);
-    setCartData((previousData) => [...previousData, { ...orderData[0], count: currentAmount }]);
-    
+    setCartData((previousData) => [
+      ...previousData,
+      { ...orderData[0], count: currentAmount },
+    ]);
+
     setOrderData([]);
     setOrderDetailDialogOpen(false);
     setFlag(KEY_SELECT_PRODUCT);
 
     const messageText: MessageInterface = {
-      content:
-        "Added to cart successfully!",
+      content: "Added to cart successfully!",
       role: "assistant",
     };
     <Snackbar
@@ -636,68 +870,393 @@ const ChatWindow: React.FC = () => {
     />;
 
     setMessages((prevMessages) => [...prevMessages, messageText]);
-    // setShowContinueSelector(true);
   };
 
   const handleContinueOrder = async () => {
+    // setOneOrderData("");
     setOrderDetailDialogOpen(false);
     const displayMessage: MessageInterface = {
       content: " I want to order again.",
       role: "user",
     };
-    
+
     setChunkData([]);
     handleSendMessage(displayMessage, KEY_CHAT_CUSTOMER, true);
     setFlag(KEY_SELECT_PRODUCT);
-    // setShowContinueSelector(false);
   };
-  // const handleFinishOrder = async () => {
-  //   setOrderDetailDialogOpen(false);
-  //   const displayMessage: MessageInterface = {
-  //     content: "That's all. I want to finish order",
-  //     role: "user",
-  //   };
-  //   handleSendMessage(displayMessage, KEY_FINISH_ORDER, true);
-  //   // setShowContinueSelector(false);
-  // };
+
+  const getItemText = (item: ChunkOption): string => {
+    if (!item?.value) {
+      return "";
+    }
+    if (item.type === "option_name") {
+      const regex = /'option_name': '([^']*)'/;
+      const match =
+        typeof item.value === "string" ? item.value.match(regex) : null;
+      return match?.[1] || "";
+    }
+
+    return item.value;
+  };
+
+  const getItemPrice = (item: ChunkOption): string => {
+    if (!item?.value) {
+      return "";
+    }
+
+    console.log(item.value)
+
+    if (item.type === "option_name") {
+      const regex = /'price':\s*([\d.]+)/;
+      const match =
+        typeof item.value === "string" ? item.value.match(regex) : null;
+      console.log(match?.[1])
+      return match?.[1] || "";
+    }
+
+    return item.value;
+  };
+
+  const [detailDialog, setDetailDialog] = useState(false);
+  const [selectedItemData, setSelectedItemData] = useState<any>(null);
+  const [selectedChip, setSelectedChip] = useState<string | null>("ALL");
+  const [selectedNameChip, setSelectedNameChip] = useState<string | null>(
+    "ALL"
+  );
+
+  const handleBackButton = () => {
+    if (chunkDataHistory.length > 0) {
+      // Pop the last chunkData from the history stack and set it to chunkData
+      const previousChunkData = chunkDataHistory[chunkDataHistory.length - 1];
+      setChunkData(previousChunkData);
+
+      // Update the chunkDataHistory stack by removing the last entry
+      setChunkDataHistory((prevHistory) => prevHistory.slice(0, -1));
+    }
+  };
+
+  const handleDetailDialogOpen = () => {
+    setDetailDialog(true);
+  };
+
+  const handleDetailDialogClose = () => {
+    setDetailDialog(false);
+  };
+
+  useEffect(() => {
+    if (nameListData.length !== 0) {
+      setSelectedNameChip("ALL");
+
+      handleGetResponseFromDB("all_option_name", typeData, nameData);
+    }
+    // setSelectedNameChip("ALL")
+    // setSelectedChunk("ALL");
+    // handleGetResponseFromDB("all_option_name", typeData, nameData);
+  }, [nameListData]);
+
+  const groupedData: Record<string, ChunkOption[]> = chunkData.reduce(
+    (acc: Record<string, ChunkOption[]>, item) => {
+      const groupKey = (selectedChip === "ALL" || selectedNameChip === "ALL") ? item.keyword : "";
+      if (!acc[groupKey]) {
+        acc[groupKey] = [];
+      }
+      acc[groupKey].push(item);
+      return acc;
+    },
+    {}
+  );
 
   const drawer = (
     <div>
-      {/* <div style={{ padding: "16px", textAlign: "center", display: "flex", alignItems: "center" }}>
-        <img
-          src="/cart.svg"
-          alt="Cart"
-          style={{ width: "100px", height: "auto" }}
-        />
-        <span>The photos related to conversation will be displayed in the below list.</span>
-      </div> */}
-
       <Divider />
-      {uniqueChunkData.map((category) => (
-        <Box key={category.keyword} sx={{ marginTop: '20px', marginLeft: '10px' }}>
-          <Fab variant="extended" size="medium" color="primary">
-            <DoubleArrowTwoToneIcon sx={{ mr: 1 }} />
-            {category.keyword}
-          </Fab>
-          <ImageList cols={isSmallScreen ? 2 : isMediumScreen ? 4 : 5} style={{ padding: "10px" }}>
-            {category.data.map((item, index) => (
-              item.image_urls != "" ? (
-                <ItemButton
-                  key={index}
-                  text={item.title}
-                  url={item.image_urls.split(",")[0]}
-                  price={item.single_price}
-                  subtitle={item.subtitle}
-                  onClick={() => {
-                    setOrderData([item]);
-                    handleButtonClick(item.title, item.image_urls.split(",")[0]);
-                  }}
-                />
-              ) : null
-            ))}
-          </ImageList>
-        </Box>
-      ))}
+      <Paper
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          flexWrap: "wrap",
+          listStyle: "none",
+          p: 0.5,
+          m: 0,
+        }}
+      >
+        {menuList.map((title, index) => {
+          return (
+            <Chip
+              sx={{
+                margin: "5px",
+              }}
+              label={title}
+              clickable
+              color="success"
+              icon={<DinnerDiningIcon />}
+              variant={selectedChip === title ? "filled" : "outlined"} // Change variant when selected
+              key={index}
+              onClick={() => {
+                if (title === "ALL") {
+                  setSelectedChip(title); // Set the selected chip
+                  setTypeData(title); // set one type data
+                  setNameData("");
+                  setSelectedChunk("ALL");
+                  handleGetResponseFromDB("all_option_keyword", "", "");
+                } else {
+                  setSelectedChip(title); // Set the selected chip
+                  setTypeData(title); // set one type data
+                  setNameData("");
+                  const userMessage: MessageInterface = {
+                    content: title, // Send the text of the item as the user's message
+                    role: "user",
+                  };
+                  const backMessage: MessageInterface = {
+                    content: "I want to find new type." + "type: " + title, // Send the text of the item as the user's message
+                    role: "user",
+                  };
+                  handleSendMessage(backMessage, flag, false);
+                  setMessages((prevMessage) => [...prevMessage, userMessage]);
+                }
+              }}
+            />
+          );
+        })}
+      </Paper>
+      <Box
+        sx={{
+          display: "flex", // Use flexbox for layout
+          flexDirection: "vertically", // Stack items vertically
+          marginTop: "20px", // Space above the button
+          marginLeft: "20px", // Align with the parent container
+        }}
+      >
+        <Paper
+          sx={{
+            display: "flex",
+            flexWrap: "nowrap", // Prevent wrapping to ensure chips stay in one line
+            overflowX: "auto", // Enable horizontal scrolling
+            listStyle: "none",
+            p: 0.5,
+            m: 0,
+            padding: "10px",
+            width: "1200px", // Ensure it doesn't overflow its container
+          }}
+        >
+          <Button
+            color="success"
+            variant="outlined"
+            startIcon={<BackspaceIcon />}
+            sx={{
+              marginRight: "20px",
+              width: "100px"
+            }}
+            onClick={handleBackButton}
+            disabled={chunkDataHistory.length === 0}
+          >
+            Back
+          </Button>
+          {nameListData.map((item, index) => {
+            return (
+              <Chip
+                sx={{
+                  margin: "5px",
+                }}
+                label={item.value}
+                clickable
+                color="success"
+                variant={
+                  selectedNameChip === item.value ? "filled" : "outlined"
+                } // Change variant when selected
+                key={index}
+                onClick={() => {
+                  if (item.value === "ALL") {
+                    setSelectedNameChip(item.value);
+                    // setSelectedChunk("ALL");
+                    handleGetResponseFromDB(
+                      "all_option_name",
+                      typeData,
+                      nameData
+                    );
+                  } else {
+                    setSelectedNameChip(item.value);
+                    // setSelectedChunk(item.value)
+                    const userMessage: MessageInterface = {
+                      content: item.value, // Send the text of the item as the user's message
+                      role: "user",
+                    };
+                    const backMessage: MessageInterface = {
+                      content:
+                        `type: ${typeData} + name: ${nameData} + ` + item.value, // Send the text of the item as the user's message
+                      role: "user",
+                    };
+                    handleSendMessage(backMessage, flag, false);
+                    setMessages((prevMessage) => [...prevMessage, userMessage]);
+                  }
+                }}
+              />
+            );
+          })}
+        </Paper>
+        <Typography
+          sx={{
+            textAlign: "center",
+            backgroundColor: "#f5f5f5",
+            padding: "10px",
+            borderRadius: "5px",
+            color: "green",
+
+          }}
+        >
+          <Button 
+            variant="outlined" 
+            color="success" 
+            startIcon={<AddShoppingCartIcon />}
+            disabled={selectedOptions.length === 0} // Disable button if nothing is selected
+            onClick={() => {
+              const itemsToAdd = chunkData.filter(item => selectedOptions.includes(item.value));
+
+              setCartData((prevCartData) => {
+                const updatedCartData = [...prevCartData];
+          
+                itemsToAdd.forEach(itemToAdd => {
+                  const existingItemIndex = updatedCartData.findIndex(
+                    (cartItem) => cartItem.name === itemToAdd.value
+                  );
+          
+                  if (existingItemIndex !== -1) {
+                    // If the item already exists in the cart, update its count
+                    updatedCartData[existingItemIndex] = {
+                      ...updatedCartData[existingItemIndex],
+                      count: updatedCartData[existingItemIndex].count + currentAmount,
+                    };
+                  } else {
+                    // If the item is new, add it to the cart
+                    updatedCartData.push({
+                      type: itemToAdd.type,
+                      name: typeData + ", " + nameData + ", " + getItemText(itemToAdd),
+                      description: itemToAdd.description,
+                      price: `${parseFloat(getItemPrice(itemToAdd)) + parseFloat(itemToAdd.price)}`,
+                      option_keyword: itemToAdd.keyword,
+                      option_name: "", // Provide default values if necessary
+                      option_price: "",
+                      count: currentAmount,
+                    });
+                  }
+                });
+          
+                return updatedCartData; // Return the updated cart data
+              });
+              setCartCount(cartCount + selectedOptions.length)
+              setSelectedOptions([]);
+              setChunkTotalPrice(0);
+            }}
+          >
+            ${chunkTotalPrice.toFixed(2)}
+          </Button>
+        </Typography>
+      </Box>
+      {
+        Object.entries(groupedData).map(([groupKey, groupItems]) => (
+          <Box key={groupKey} sx={{ marginBottom: "20px" }}>
+            {(groupKey !== "undefined") ? (
+              <Typography
+                variant="h6"
+                sx={{
+                  marginBottom: "10px",
+                  backgroundColor: "#f5f5f5",
+                  padding: "10px",
+                  borderRadius: "5px",
+                }}
+              >
+                <Chip icon={<LocalDining />} label={groupKey} size="medium" variant="outlined" color="success"></Chip>
+              </Typography>
+            ) : (
+              <div></div>
+            )}
+            <ImageList cols={4} style={{ padding: "8px" }}>
+              {
+                groupItems.map((item, index) => {
+                  const isSelected = selectedChunk === item.value; // Check if the name is selected
+                  return (
+                    <AmountItemButton
+                      key={index}
+                      text={getItemText(item)}
+                      type={item.type}
+                      value={item.value}
+                      price={item.price}
+                      description={item.description}
+                      style={{
+                        border: isSelected ? "2px solid #1976d2" : "none", // Highlight selected border
+                        backgroundColor: isSelected ? "#e3f2fd" : "transparent", // Highlight selected background
+                      }}
+                      onClick={() => {
+                        if (item.type === "option_name") {
+                          let jsonString = item.value
+                          .replace(/'/g, '"') // Naively replace all single quotes with double quotes
+                          .replace(/(\bNone\b)/g, "null"); // Replace Python-style None with null
+                          // Add additional validation for keys (ensure double quotes around keys)
+                          jsonString = jsonString.replace(/"(\w+)":/g, (match, p1) => `"${p1}":`);
+                          // Parse JSON string
+                          const itemData = JSON.parse(jsonString);
+                          // Set the parsed data
+                          setSelectedItemData(itemData);
+    
+                          handleDetailDialogOpen();
+                        } else {
+                          setSelectedChunk(item.value);
+                          if (item.type === "name") {
+                            setNameData(item.value);
+                          }
+                          const userMessage: MessageInterface = {
+                            content: item.value, // Send the text of the item as the user's message
+                            role: "user",
+                          };
+                          const backMessage: MessageInterface = {
+                            content:
+                              "type:" + typeData + "," + "name:" + item.value, // Send the text of the item as the user's message
+                            role: "user",
+                          };
+                          handleSendMessage(backMessage, flag, false);
+                          setMessages((prevMessage) => [
+                            ...prevMessage,
+                            userMessage,
+                          ]);
+                        }
+                      }}
+                    />
+                  );
+                })}
+              </ImageList>
+          </Box>
+        ))
+      }
+      <Dialog
+        fullWidth
+        open={detailDialog} 
+        onClose={handleDetailDialogClose}
+        >
+        <DialogTitle
+          style={{
+            textAlign: "center",
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+            maxWidth: "fit-content",
+          }}
+        >
+          Details
+        </DialogTitle>
+        <DialogContent>
+          {selectedItemData ? (
+            <div>
+              <p>Type: {selectedItemData.type}</p>
+              <p>Name: {selectedItemData.name}</p>
+              <p>Price: {selectedItemData.price}</p>
+              <p>Option Price: {selectedItemData.option_price}</p>
+              <p>Option: {selectedItemData.option_keyword}</p>
+              <p>Option Name: {selectedItemData.option_name}</p>
+              <p>Description: {selectedItemData.description}</p>
+            </div>
+          ) : (
+            <div></div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 
@@ -708,11 +1267,10 @@ const ChatWindow: React.FC = () => {
         sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
         aria-label="mailbox folders"
       >
-        {/* The implementation can be swapped with js to avoid SEO duplication of links. */}
         <Drawer
           variant="temporary"
           ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
+            keepMounted: true,
           }}
           sx={{
             display: { xs: "block", sm: "none" },
@@ -759,34 +1317,6 @@ const ChatWindow: React.FC = () => {
           {messages.map((message, index) => (
             <ChatMessage key={index} {...message} />
           ))}
-          {/* <Grid container spacing={2} style={{ marginTop: "20px" }}> */}
-          {/* <ImageList
-            cols={isSmallScreen ? 2 : isMediumScreen ? 4 : 6}
-            style={{ padding: "10px" }}
-          >
-            {uniqueChunkData.map((item, index) =>
-              item.image_urls == "" ? (
-                <AmountItemButton
-                  key={index}
-                  text={item.title}
-                  onClick={() => handleButtonClick(item.title, "")}
-                />
-              ) : (
-                <ItemButton
-                  key={index}
-                  text={item.title}
-                  url={item.image_urls.split(",")[0]}
-                  onClick={() => {
-                    setOrderData([item]);
-                    handleButtonClick(
-                      item.title,
-                      item.image_urls.split(",")[0]
-                    );
-                  }}
-                />
-              )
-            )}
-          </ImageList> */}
           {loading && (
             <div
               style={{
@@ -811,20 +1341,12 @@ const ChatWindow: React.FC = () => {
                 mb: 1,
                 maxWidth: "200px",
                 maxHeight: "200px",
-                flexDirection: "column", // Ensure image and text stack vertically
+                flexDirection: "column",
               }}
             >
-              <Box // Image container
-                component="img"
-                src={orderData[0].image_urls.split(", ")[0]}
-                alt="Chat message visual"
-                sx={{
-                  borderRadius: 2,
-                  mb: 1, // Margin bottom for spacing between image and text
-                  boxShadow: 3, // Optional shadow for better visualization
-                }}
-                onClick={handleOpen}
-              />
+              <Button variant="contained" sx={{ margin: "10px" }}>
+                {orderData[0].name + orderData[0].option_name}
+              </Button>
               <ButtonGroup variant="outlined">
                 <Button
                   variant="outlined"
@@ -837,79 +1359,45 @@ const ChatWindow: React.FC = () => {
                 >
                   <RemoveIcon />
                 </Button>
-                <Button>
-                  {currentAmount}
-                </Button>
+                <Button>{currentAmount}</Button>
                 <Button
                   variant="contained"
                   onClick={() => setCurrentAmount(currentAmount + 1)}
                 >
                   <AddIcon />
                 </Button>
-                <Button style={{ width: "200px" }} onClick={() =>handleAmountClick(true, 0)}>
+                <Button
+                  style={{ width: "200px" }}
+                  onClick={() => handleAmountClick(true, 0)}
+                >
                   <AddShoppingCartIcon />
                 </Button>
               </ButtonGroup>
               <Dialog open={open} onClose={handleClose}>
                 <DialogActions>
-                  <DialogTitle style={{ textAlign: "center", whiteSpace: "normal", wordBreak: "break-word", maxWidth: "fit-content" }}>
-                    {orderData[0].title}
+                  <DialogTitle
+                    style={{
+                      textAlign: "center",
+                      whiteSpace: "normal",
+                      wordBreak: "break-word",
+                      maxWidth: "fit-content",
+                    }}
+                  >
+                    {orderData[0].name + orderData[0].option_name}
                   </DialogTitle>
                 </DialogActions>
-                <DialogContent>
-                  <img
-                    src={orderData[0].image_urls.split(", ")[0]}
-                    alt={orderData[0].title}
-                    style={{ width: "100%" }}
-                  />
-                </DialogContent>
+                <DialogContent></DialogContent>
               </Dialog>
             </Box>
           )}
-          {/* {showContinueSelector && (
-            <Box
-              sx={{
-                display: "flex",
-                mb: 1,
-                maxWidth: "600px",
-                maxHeight: "200px",
-                flexDirection: "column", // Ensure image and text stack vertically
-              }}
-            >
-              <ButtonGroup variant="outlined">
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  onClick={handleContinueOrder}
-                >
-                  <ShoppingCartCheckoutIcon /> I want to order again
-                </Button>
-                <Button variant="contained" onClick={handleFinishOrder}>
-                  <AssignmentTurnedInIcon /> That's all. I want to finish order
-                </Button>
-              </ButtonGroup>
-            </Box>
-          )} */}
           <Dialog open={orderDetailDialogOpen}>
             {orderData.length > 0 && (
               <>
                 <DialogTitle>
-                  <p>{orderData[0].title}</p>
+                  <p>{orderData[0].name + orderData[0].option_name}</p>
                 </DialogTitle>
                 <DialogContent>
                   <p>Total Price: {totalPrice}</p>
-                  <img
-                    src={orderData[0].image_urls.split(", ")[0]}
-                    alt={orderData[0].title}
-                    style={{ width: "100%" }}
-                  />
-                  <p>Category: {orderData[0].category}</p>
-                  <p>Subtitle: {orderData[0].subtitle}</p>
-                  <p>Single Price: {"$"+orderData[0].single_price.match(/\$?(\d+\.\d+)$/)?.[1]}</p>
-                  <p>Details: </p>
-                  <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(orderData[0].details)}}></div>
-                  <p>Features: </p>
-                  <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(orderData[0].directions)}}></div>
                 </DialogContent>
               </>
             )}
@@ -927,20 +1415,14 @@ const ChatWindow: React.FC = () => {
               <Button
                 startIcon={<ChangeCircleIcon />}
                 variant="contained"
-                onClick={() =>
-                  handleButtonClick(
-                    orderData[0].title,
-                    orderData[0].image_urls.split(", ")[0]
-                  )
-                }
-                color="primary"
+                color="success"
               >
                 Change Amount
               </Button>
               <Button
                 startIcon={<LoupeIcon />}
                 onClick={handleContinueOrder}
-                color="primary"
+                color="success"
               >
                 New Order
               </Button>
@@ -953,24 +1435,25 @@ const ChatWindow: React.FC = () => {
           style={{
             position: "fixed",
             bottom: "150px",
-            right: "70px",
+            right: "50px",
           }}
         >
-          <Fab color="primary" aria-label="add" onClick={handleCartOpen}>
+          <Fab color="success" aria-label="add" onClick={handleCartOpen}>
             <AddShoppingCartIcon />
           </Fab>
         </Badge>
 
-        <Drawer 
+        <Drawer
           anchor="right"
-          open={cartOpen} 
+          open={cartOpen}
           onClose={handleCartClose}
           sx={{
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: "500px",
             },
-          }}>
+          }}
+        >
           <div style={{ padding: "16px", textAlign: "center" }}>
             <img
               src="/cart.svg"
@@ -978,27 +1461,51 @@ const ChatWindow: React.FC = () => {
               style={{ maxWidth: "100%", height: "200px" }}
             />
           </div>
-          <List sx={{ position: 'relative', overflow: 'auto', marginBottom: '50px'}}>
+          <List
+            sx={{
+              position: "relative",
+              overflow: "auto",
+              marginBottom: "50px",
+            }}
+          >
             {cartData.map((item, index) => (
               <ItemCart
                 key={index}
-                title={item.title}
-                imageUrl={item.image_urls.split(", ")[0]}
-                price={item.single_price}
+                title={item.name + item.option_name}
+                price={item.price}
                 count={item.count}
               />
             ))}
           </List>
-          
-          <AppBar position="absolute" color="primary" sx={{ display: 'flex', top: 'auto', height: '50px', bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
-            <Paper elevation={0} sx={{ bgcolor: 'transparent', color: 'white', padding: 1 }}>
-              <h4>Total Items: {cartData.reduce((sum, item) => sum + item.count, 0)} || 
-               
-              Total Price: ${cartData.reduce((sum, item) => {
-                const priceMatch = item.single_price.match(/\$?(\d+\.\d+)/);
-                const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
-                return sum + (price * item.count);
-              }, 0).toFixed(2)}</h4>
+
+          <AppBar
+            position="absolute"
+            color="success"
+            sx={{
+              display: "flex",
+              top: "auto",
+              height: "50px",
+              bottom: 0,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Paper
+              elevation={0}
+              sx={{ bgcolor: "transparent", color: "white", padding: 1 }}
+            >
+              <h4>
+                Total Items:{" "}
+                {cartData.reduce((sum, item) => sum + item.count, 0)} || Total
+                Price: $
+                {cartData
+                  .reduce((sum, item) => {
+                    const priceMatch = item.price;
+                    const price = priceMatch ? parseFloat(priceMatch) : 0;
+                    return sum + price * item.count;
+                  }, 0)
+                  .toFixed(2)}
+              </h4>
             </Paper>
           </AppBar>
         </Drawer>
