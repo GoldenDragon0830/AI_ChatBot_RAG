@@ -18,7 +18,7 @@ import {
   ListItemButton,
   AppBar,
   Typography,
-  Checkbox
+  Checkbox,
 } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
@@ -48,7 +48,7 @@ import CardActions from "@mui/material/CardActions";
 import { green, red } from "@mui/material/colors";
 import { CheckBox, Description, LocalDining } from "@mui/icons-material";
 
-const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
+const label = { inputProps: { "aria-label": "Checkbox demo" } };
 
 interface MessageInterface {
   content: string;
@@ -68,6 +68,7 @@ const KEY_CHAT_CUSTOMER = "CHAT_CUSTOMER";
 const KEY_SELECT_PRODUCT = "SELECT_PRODUCT";
 const KEY_ASK_AMOUNT = "ASK_AMOUNT";
 const KEY_ANSWER_AMOUNT = "ANSWER_AMOUNT";
+const KEY_ADD_CART = "ADD_CART";
 const INITIAL_AMOUNT = 1;
 const GREETING_WORD =
   "I'm West Side Wok Order Assistant, What would you like to order today?";
@@ -89,6 +90,8 @@ const ChatWindow: React.FC = () => {
 
   const API_URL = "http://3.99.185.93:4002/chat";
   const API_GET_FROM_DB_URL = "http://3.99.185.93:4002/get_db_data";
+  const API_CHAT_VIA_INPUT_URL = "http://3.99.185.93:4002/chat_via_input";
+
   // const API_URL = process.env.REACT_APP_API_URL;
 
   const [messages, setMessages] = useState<MessageInterface[]>([
@@ -159,7 +162,7 @@ const ChatWindow: React.FC = () => {
     }[]
   >([]);
 
-  // const [oneOrderData, setOneOrderData] = useState("");
+  const [oneOrderData, setOneOrderData] = useState("");
 
   const [typeData, setTypeData] = useState("");
   const [nameData, setNameData] = useState("");
@@ -277,9 +280,9 @@ const ChatWindow: React.FC = () => {
               height: "auto",
               position: "relative",
               transition: "transform 0.3s ease-in-out",
-                "&:hover": {
-                  transform: "scale(1.05)",
-                },
+              "&:hover": {
+                transform: "scale(1.05)",
+              },
             }}
             onClick={onClick}
           >
@@ -296,7 +299,20 @@ const ChatWindow: React.FC = () => {
                 WebkitBoxOrient: "vertical",
               }}
             >
-              {text}
+              {text}{" "}
+              {type === "option_name" ? (
+                <span
+                  style={{
+                    fontSize: "14px", // Smaller font size
+                    fontWeight: "normal", // Optional: Remove bold for smaller text
+                    // Optional: Change color for distinction
+                  }}
+                >
+                  ({getItemName(value)})
+                </span>
+              ) : (
+                ""
+              )}
             </Typography>
             <Typography
               variant="body2"
@@ -314,12 +330,14 @@ const ChatWindow: React.FC = () => {
               {description}
             </Typography>
           </CardContent>
-         
-            <CardActions disableSpacing >
-                <Typography variant="body2" style={{ color: "green", marginLeft: "10px" }}>
-                  {"$" + price}
-                </Typography>
-                 {type === "option_name" ? (
+          <CardActions disableSpacing>
+            <Typography
+              variant="body2"
+              style={{ color: "green", marginLeft: "10px" }}
+            >
+              {"$" + price}
+            </Typography>
+            {type === "option_name" ? (
               <Checkbox
                 sx={{
                   marginLeft: "auto",
@@ -329,52 +347,81 @@ const ChatWindow: React.FC = () => {
                 onChange={(event) => {
                   const isChecked = event.target.checked; // Whether the checkbox is checked or not
                   const optionPrice = parseFloat(price); // Parse the price of the current item
+                  const mainPrice = parseFloat(getItemPriceFromTest(value));
 
+                  console.log(mainPrice);
                   setSelectedOptions((prevOptions) => {
                     if (description === "Size") {
                       // Special case: Size options (allow only one selection)
                       const otherOptions = prevOptions.filter(
-                        (opt) => !chunkData.find((data) => data.value === opt && data.description === "Size")
+                        (opt) =>
+                          !chunkData.find(
+                            (data) =>
+                              data.value === opt && data.description === "Size"
+                          )
                       );
 
                       const currentlySelectedSize = prevOptions.find((opt) =>
-                        chunkData.some((data) => data.value === opt && data.description === "Size")
+                        chunkData.some(
+                          (data) =>
+                            data.value === opt && data.description === "Size"
+                        )
                       );
 
                       if (isChecked) {
                         // If a new size is selected, replace the current size
                         if (currentlySelectedSize) {
                           const currentSizePrice = parseFloat(
-                            chunkData.find((data) => data.value === currentlySelectedSize)?.price || "0"
+                            chunkData.find(
+                              (data) => data.value === currentlySelectedSize
+                            )?.price || "0"
                           );
-                          setChunkTotalPrice((prevTotal) => prevTotal - currentSizePrice);
+                          setChunkTotalPrice((prevTotal) =>
+                            prevTotal === 0
+                              ? mainPrice + prevTotal - currentSizePrice
+                              : prevTotal - currentSizePrice
+                          );
                         }
-                        setChunkTotalPrice((prevTotal) => prevTotal + optionPrice);
+                        setChunkTotalPrice((prevTotal) =>
+                          prevTotal === 0
+                            ? mainPrice + prevTotal + optionPrice
+                            : prevTotal + optionPrice
+                        );
                         return [...otherOptions, value];
                       } else {
                         // If the size is deselected, just remove it
-                        setChunkTotalPrice((prevTotal) => prevTotal - optionPrice);
+                        setChunkTotalPrice((prevTotal) =>
+                          prevTotal === 0
+                            ? mainPrice + prevTotal - optionPrice
+                            : prevTotal - optionPrice
+                        );
                         return otherOptions;
                       }
                     } else {
                       // General case: Multi-selection for non-Size options
                       if (isChecked) {
                         // Add the selected option price
-                        setChunkTotalPrice((prevTotal) => prevTotal + optionPrice);
+                        setChunkTotalPrice((prevTotal) =>
+                          prevTotal === 0
+                            ? mainPrice + prevTotal + optionPrice
+                            : prevTotal + optionPrice
+                        );
                         return [...prevOptions, value];
                       } else {
                         // Remove the deselected option price
-                        setChunkTotalPrice((prevTotal) => prevTotal - optionPrice);
+                        setChunkTotalPrice(
+                          (prevTotal) => prevTotal - optionPrice
+                        );
                         return prevOptions.filter((opt) => opt !== value);
                       }
                     }
                   });
                 }}
               />
-          ) : (
-            <div></div>
-          )}
-            </CardActions>
+            ) : (
+              <div></div>
+            )}
+          </CardActions>
         </Card>
       </ImageListItem>
     );
@@ -482,6 +529,7 @@ const ChatWindow: React.FC = () => {
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
+      let newMessageContent = "";
       let buffer = "";
 
       while (true) {
@@ -523,7 +571,7 @@ const ChatWindow: React.FC = () => {
                     value: item[key],
                     description: item[key_description],
                     price: item[key_price],
-                    keyword: item[key_type]
+                    keyword: item[key_type],
                   };
                 });
 
@@ -539,7 +587,7 @@ const ChatWindow: React.FC = () => {
                     value: "ALL",
                     description: "",
                     price: "",
-                    keyword: ""
+                    keyword: "",
                   };
                   const updatedData =
                     jsonData.length > 1
@@ -547,13 +595,42 @@ const ChatWindow: React.FC = () => {
                         ? [firstData, ...parsedData]
                         : parsedData
                       : parsedData;
+                  console.log(updatedData)
                   setNameListData(updatedData);
+                } else if (Object.keys(jsonData[0])[0] === "option_name") {
+                  if (parsedData.length === 1) {
+                    console.log(parsedData);
+
+                    setSelectedOptions((prevOptions) => [
+                      ...prevOptions,
+                      parsedData[0].value,
+                    ]);
+                  }
+                  setChunkData(parsedData);
                 } else {
                   setChunkData(parsedData);
                 }
               } catch (e) {
                 console.error(e);
               }
+            } else {
+              newMessageContent += data;
+              setMessages((prev) => {
+                const newMessages = [...prev];
+                const lastMessageIndex = newMessages.length - 1;
+                if (
+                    lastMessageIndex >= 0 &&
+                    newMessages[lastMessageIndex].role === "assistant"
+                ) {
+                    newMessages[lastMessageIndex].content = newMessageContent;
+                } else {
+                    newMessages.push({
+                        content: newMessageContent,
+                        role: "assistant",
+                    });
+                }
+                return newMessages;
+              });
             }
           }
         });
@@ -568,7 +645,8 @@ const ChatWindow: React.FC = () => {
   const handleSendMessage = async (
     message: MessageInterface,
     flag: string,
-    showInChat: boolean = true
+    showInChat: boolean = true,
+    isInput: boolean = false
   ) => {
     setCurrentAmount(1);
     setShowAmountSelector(false);
@@ -579,9 +657,9 @@ const ChatWindow: React.FC = () => {
 
     try {
       const response = await fetch(
-        `${API_URL}?message=${message.content}&history=${JSON.stringify(
-          messages
-        )}&flag=${flag}`,
+        `${isInput ? API_CHAT_VIA_INPUT_URL : API_URL}?message=${
+          message.content
+        }&history=${JSON.stringify(messages)}&flag=${flag}`,
         {
           method: "GET",
           headers: {
@@ -617,6 +695,7 @@ const ChatWindow: React.FC = () => {
             if (data.includes("ChunkData:")) {
               try {
                 const jsonData = JSON.parse(data.split("ChunkData:")[1]);
+                console.log(jsonData);
                 let firstData = null;
                 if (chunkData.length > 0) {
                   setChunkDataHistory((prevHistory) => [
@@ -637,7 +716,7 @@ const ChatWindow: React.FC = () => {
                     type: key,
                     value: item[key],
                     description: item[key_description],
-                    price: item[key_price]
+                    price: item[key_price],
                   };
                 });
 
@@ -653,7 +732,7 @@ const ChatWindow: React.FC = () => {
                     value: "ALL",
                     description: "",
                     price: "",
-                    keyword: ""
+                    keyword: "",
                   };
                   const updatedData =
                     jsonData.length > 1
@@ -668,8 +747,7 @@ const ChatWindow: React.FC = () => {
               } catch (e) {
                 console.error(e);
               }
-            }
-            if (data.includes("TYPE:")) {
+            } else if (data.includes("TYPE:")) {
               try {
                 const detectData = data.split("TYPE:")[1];
                 if (detectData.split("@")[0] === "type") {
@@ -679,8 +757,7 @@ const ChatWindow: React.FC = () => {
               } catch (e) {
                 console.error(e);
               }
-            }
-            if (data.includes(KEY_ASK_AMOUNT)) {
+            } else if (data.includes(KEY_ASK_AMOUNT)) {
               try {
                 const cleanData = data.split(`${KEY_ASK_AMOUNT}:`)[1];
                 newMessageContent = cleanData;
@@ -688,8 +765,7 @@ const ChatWindow: React.FC = () => {
               } catch (e) {
                 console.error(e);
               }
-            }
-            if (data.includes(KEY_ANSWER_AMOUNT)) {
+            } else if (data.includes(KEY_ANSWER_AMOUNT)) {
               try {
                 const amountString = data.split(`${KEY_ANSWER_AMOUNT}:`)[1];
                 const amount = parseInt(amountString, 10);
@@ -716,31 +792,81 @@ const ChatWindow: React.FC = () => {
               } catch (e) {
                 console.error(e);
               }
-            }
+            } else if (data.includes(KEY_ADD_CART)) {
+              try {
+                setOneOrderData("");
+                const cartDataString = data.split(`${KEY_ADD_CART}:`)[1]; // Extract the cart data string
+                console.log(cartDataString);
 
-            setMessages((prev) => {
-              const newMessages = [...prev];
-              const lastMessageIndex = newMessages.length - 1;
-              if (
-                lastMessageIndex >= 0 &&
-                newMessages[lastMessageIndex].role === "assistant"
-              ) {
-                newMessages[lastMessageIndex].content =
-                  newMessageContent.split("ChunkData:")[0] || "";
-                newMessages[lastMessageIndex].content =
-                  newMessageContent.split("TYPE:")[0] || "";
-                if (data.includes(KEY_ASK_AMOUNT)) {
-                  newMessages[lastMessageIndex].content =
-                    newMessageContent.split(KEY_ASK_AMOUNT + ":")[0] || "";
-                }
-              } else {
-                newMessages.push({
-                  content: newMessageContent,
-                  role: "assistant",
-                });
+                // Use regex to extract specific fields from the string
+                const typeMatch = cartDataString.match(/'type':\s*'([^']+)'/);
+                const nameMatch = cartDataString.match(/'name':\s*'([^']+)'/);
+                const descriptionMatch = cartDataString.match(
+                  /'description':\s*'([^']*)'/
+                );
+                const priceMatch = cartDataString.match(/'price':\s*'([^']+)'/);
+                const optionKeywordMatch = cartDataString.match(
+                  /'option_keyword':\s*'([^']+)'/
+                );
+                const optionNameMatch = cartDataString.match(
+                  /'option_name':\s*'([^']+)'/
+                );
+                const optionPriceMatch = cartDataString.match(
+                  /'option_price':\s*'([^']+)'/
+                );
+
+                // Construct the object manually
+                const parsedCartData = {
+                  type: typeMatch ? typeMatch[1] : "",
+                  name: nameMatch ? nameMatch[1] : "",
+                  description: descriptionMatch ? descriptionMatch[1] : "",
+                  price: priceMatch ? priceMatch[1] : "",
+                  option_keyword: optionKeywordMatch
+                    ? optionKeywordMatch[1]
+                    : "",
+                  option_name: optionNameMatch ? optionNameMatch[1] : "",
+                  option_price: optionPriceMatch ? optionPriceMatch[1] : "",
+                };
+
+                // Update the cartData state
+                setCartCount(cartCount + 1);
+                setCartData((prevCartData) => [
+                  ...prevCartData,
+                  {
+                    ...parsedCartData,
+                    count: 1, // Default count for new cart items
+                  },
+                ]);
+
+                console.log("Cart updated:", parsedCartData);
+              } catch (e) {
+                console.error(e);
               }
-              return newMessages;
-            });
+            } else {
+              setMessages((prev) => {
+                const newMessages = [...prev];
+                const lastMessageIndex = newMessages.length - 1;
+                if (
+                  lastMessageIndex >= 0 &&
+                  newMessages[lastMessageIndex].role === "assistant"
+                ) {
+                  newMessages[lastMessageIndex].content =
+                    newMessageContent.split("ChunkData:")[0] || "";
+                  newMessages[lastMessageIndex].content =
+                    newMessageContent.split("TYPE:")[0] || "";
+                  if (data.includes(KEY_ASK_AMOUNT)) {
+                    newMessages[lastMessageIndex].content =
+                      newMessageContent.split(KEY_ASK_AMOUNT + ":")[0] || "";
+                  }
+                } else {
+                  newMessages.push({
+                    content: newMessageContent,
+                    role: "assistant",
+                  });
+                }
+                return newMessages;
+              });
+            }
           }
         });
       }
@@ -822,17 +948,18 @@ const ChatWindow: React.FC = () => {
       content: text,
       role: "user",
     };
+    setOneOrderData((prev) => prev + text);
     const backMessage: MessageInterface = {
-      content: "I want to order type: " + typeData + ", " + "name: " + nameData + ", " + text,  //content: "I want to order" + typeData ? `type: ${typeData}` : "" + nameData ? `name: ${nameData}` : ""  + `, ${text}`,
+      content: `I want to order ${oneOrderData}, ${text}`, //content: "I want to order" + typeData ? `type: ${typeData}` : "" + nameData ? `name: ${nameData}` : ""  + `, ${text}`,
       role: "user",
     };
     if (flag === KEY_ASK_AMOUNT)
-      handleSendMessage(message, KEY_ANSWER_AMOUNT, true);
+      handleSendMessage(message, KEY_ANSWER_AMOUNT, true, true);
     else {
       // setChunkData([]);
       setOrderDetailDialogOpen(false);
       setFlag(KEY_SELECT_PRODUCT);
-      handleSendMessage(backMessage, KEY_SELECT_PRODUCT, false);
+      handleSendMessage(backMessage, KEY_SELECT_PRODUCT, false, true);
       setFlag(KEY_SELECT_PRODUCT);
       setMessages((prevMessage) => [...prevMessage, message]);
     }
@@ -885,6 +1012,17 @@ const ChatWindow: React.FC = () => {
     setFlag(KEY_SELECT_PRODUCT);
   };
 
+  const getItemName = (item: string): string => {
+    const match = item.match(/'name':\s*'([^']*)'/);
+
+    if (match) {
+      const name = match[1];
+      return name;
+    } else {
+      return "";
+    }
+  };
+
   const getItemText = (item: ChunkOption): string => {
     if (!item?.value) {
       return "";
@@ -899,18 +1037,27 @@ const ChatWindow: React.FC = () => {
     return item.value;
   };
 
+  const getItemPriceFromTest = (item: string): string => {
+    const match = item.match(/'price':\s*([\d.]+)/);
+
+    if (match) {
+      const price = match[1];
+      return price;
+    } else {
+      return "0";
+    }
+  };
+
   const getItemPrice = (item: ChunkOption): string => {
     if (!item?.value) {
       return "";
     }
 
-    console.log(item.value)
-
     if (item.type === "option_name") {
       const regex = /'price':\s*([\d.]+)/;
       const match =
         typeof item.value === "string" ? item.value.match(regex) : null;
-      console.log(match?.[1])
+      console.log(match?.[1]);
       return match?.[1] || "";
     }
 
@@ -956,7 +1103,10 @@ const ChatWindow: React.FC = () => {
 
   const groupedData: Record<string, ChunkOption[]> = chunkData.reduce(
     (acc: Record<string, ChunkOption[]>, item) => {
-      const groupKey = (selectedChip === "ALL" || selectedNameChip === "ALL") ? item.keyword : "";
+      const groupKey =
+        selectedChip === "ALL" || selectedNameChip === "ALL"
+          ? item.keyword
+          : "";
       if (!acc[groupKey]) {
         acc[groupKey] = [];
       }
@@ -1010,7 +1160,7 @@ const ChatWindow: React.FC = () => {
                     content: "I want to find new type." + "type: " + title, // Send the text of the item as the user's message
                     role: "user",
                   };
-                  handleSendMessage(backMessage, flag, false);
+                  handleSendMessage(backMessage, flag, false, false);
                   setMessages((prevMessage) => [...prevMessage, userMessage]);
                 }
               }}
@@ -1044,7 +1194,7 @@ const ChatWindow: React.FC = () => {
             startIcon={<BackspaceIcon />}
             sx={{
               marginRight: "20px",
-              width: "100px"
+              width: "100px",
             }}
             onClick={handleBackButton}
             disabled={chunkDataHistory.length === 0}
@@ -1085,7 +1235,7 @@ const ChatWindow: React.FC = () => {
                         `type: ${typeData} + name: ${nameData} + ` + item.value, // Send the text of the item as the user's message
                       role: "user",
                     };
-                    handleSendMessage(backMessage, flag, false);
+                    handleSendMessage(backMessage, flag, false, false);
                     setMessages((prevMessage) => [...prevMessage, userMessage]);
                   }
                 }}
@@ -1100,38 +1250,49 @@ const ChatWindow: React.FC = () => {
             padding: "10px",
             borderRadius: "5px",
             color: "green",
-
           }}
         >
-          <Button 
-            variant="outlined" 
-            color="success" 
+          <Button
+            variant="outlined"
+            color="success"
             startIcon={<AddShoppingCartIcon />}
             disabled={selectedOptions.length === 0} // Disable button if nothing is selected
             onClick={() => {
-              const itemsToAdd = chunkData.filter(item => selectedOptions.includes(item.value));
+              const itemsToAdd = chunkData.filter((item) =>
+                selectedOptions.includes(item.value)
+              );
 
               setCartData((prevCartData) => {
                 const updatedCartData = [...prevCartData];
-          
-                itemsToAdd.forEach(itemToAdd => {
+
+                itemsToAdd.forEach((itemToAdd) => {
                   const existingItemIndex = updatedCartData.findIndex(
                     (cartItem) => cartItem.name === itemToAdd.value
                   );
-          
+
                   if (existingItemIndex !== -1) {
                     // If the item already exists in the cart, update its count
                     updatedCartData[existingItemIndex] = {
                       ...updatedCartData[existingItemIndex],
-                      count: updatedCartData[existingItemIndex].count + currentAmount,
+                      count:
+                        updatedCartData[existingItemIndex].count +
+                        currentAmount,
                     };
                   } else {
                     // If the item is new, add it to the cart
                     updatedCartData.push({
                       type: itemToAdd.type,
-                      name: typeData + ", " + nameData + ", " + getItemText(itemToAdd),
+                      name:
+                        typeData +
+                        ", " +
+                        nameData +
+                        ", " +
+                        getItemText(itemToAdd),
                       description: itemToAdd.description,
-                      price: `${parseFloat(getItemPrice(itemToAdd)) + parseFloat(itemToAdd.price)}`,
+                      price: `${
+                        parseFloat(getItemPrice(itemToAdd)) +
+                        parseFloat(itemToAdd.price)
+                      }`,
                       option_keyword: itemToAdd.keyword,
                       option_name: "", // Provide default values if necessary
                       option_price: "",
@@ -1139,10 +1300,10 @@ const ChatWindow: React.FC = () => {
                     });
                   }
                 });
-          
+
                 return updatedCartData; // Return the updated cart data
               });
-              setCartCount(cartCount + selectedOptions.length)
+              setCartCount(cartCount + selectedOptions.length);
               setSelectedOptions([]);
               setChunkTotalPrice(0);
             }}
@@ -1151,86 +1312,88 @@ const ChatWindow: React.FC = () => {
           </Button>
         </Typography>
       </Box>
-      {
-        Object.entries(groupedData).map(([groupKey, groupItems]) => (
-          <Box key={groupKey} sx={{ marginBottom: "20px" }}>
-            {(groupKey !== "undefined") ? (
-              <Typography
-                variant="h6"
-                sx={{
-                  marginBottom: "10px",
-                  backgroundColor: "#f5f5f5",
-                  padding: "10px",
-                  borderRadius: "5px",
-                }}
-              >
-                <Chip icon={<LocalDining />} label={groupKey} size="medium" variant="outlined" color="success"></Chip>
-              </Typography>
-            ) : (
-              <div></div>
-            )}
-            <ImageList cols={4} style={{ padding: "8px" }}>
-              {
-                groupItems.map((item, index) => {
-                  const isSelected = selectedChunk === item.value; // Check if the name is selected
-                  return (
-                    <AmountItemButton
-                      key={index}
-                      text={getItemText(item)}
-                      type={item.type}
-                      value={item.value}
-                      price={item.price}
-                      description={item.description}
-                      style={{
-                        border: isSelected ? "2px solid #1976d2" : "none", // Highlight selected border
-                        backgroundColor: isSelected ? "#e3f2fd" : "transparent", // Highlight selected background
-                      }}
-                      onClick={() => {
-                        if (item.type === "option_name") {
-                          let jsonString = item.value
-                          .replace(/'/g, '"') // Naively replace all single quotes with double quotes
-                          .replace(/(\bNone\b)/g, "null"); // Replace Python-style None with null
-                          // Add additional validation for keys (ensure double quotes around keys)
-                          jsonString = jsonString.replace(/"(\w+)":/g, (match, p1) => `"${p1}":`);
-                          // Parse JSON string
-                          const itemData = JSON.parse(jsonString);
-                          // Set the parsed data
-                          setSelectedItemData(itemData);
-    
-                          handleDetailDialogOpen();
-                        } else {
-                          setSelectedChunk(item.value);
-                          if (item.type === "name") {
-                            setNameData(item.value);
-                          }
-                          const userMessage: MessageInterface = {
-                            content: item.value, // Send the text of the item as the user's message
-                            role: "user",
-                          };
-                          const backMessage: MessageInterface = {
-                            content:
-                              "type:" + typeData + "," + "name:" + item.value, // Send the text of the item as the user's message
-                            role: "user",
-                          };
-                          handleSendMessage(backMessage, flag, false);
-                          setMessages((prevMessage) => [
-                            ...prevMessage,
-                            userMessage,
-                          ]);
-                        }
-                      }}
-                    />
-                  );
-                })}
-              </ImageList>
-          </Box>
-        ))
-      }
-      <Dialog
-        fullWidth
-        open={detailDialog} 
-        onClose={handleDetailDialogClose}
-        >
+      {Object.entries(groupedData).map(([groupKey, groupItems]) => (
+        <Box key={groupKey} sx={{ marginBottom: "20px" }}>
+          {groupKey !== "undefined" ? (
+            <Typography
+              variant="h6"
+              sx={{
+                marginBottom: "10px",
+                backgroundColor: "#f5f5f5",
+                padding: "10px",
+                borderRadius: "5px",
+              }}
+            >
+              <Chip
+                icon={<LocalDining />}
+                label={groupKey}
+                size="medium"
+                variant="outlined"
+                color="success"
+              ></Chip>
+            </Typography>
+          ) : (
+            <div></div>
+          )}
+          <ImageList cols={4} style={{ padding: "8px" }}>
+            {groupItems.map((item, index) => {
+              const isSelected = selectedChunk === item.value; // Check if the name is selected
+              return (
+                <AmountItemButton
+                  key={index}
+                  text={getItemText(item)}
+                  type={item.type}
+                  value={item.value}
+                  price={item.price}
+                  description={item.description}
+                  style={{
+                    border: isSelected ? "2px solid #1976d2" : "none", // Highlight selected border
+                    backgroundColor: isSelected ? "#e3f2fd" : "transparent", // Highlight selected background
+                  }}
+                  onClick={() => {
+                    if (item.type === "option_name") {
+                      let jsonString = item.value
+                        .replace(/'/g, '"') // Naively replace all single quotes with double quotes
+                        .replace(/(\bNone\b)/g, "null"); // Replace Python-style None with null
+                      // Add additional validation for keys (ensure double quotes around keys)
+                      jsonString = jsonString.replace(
+                        /"(\w+)":/g,
+                        (match, p1) => `"${p1}":`
+                      );
+                      // Parse JSON string
+                      const itemData = JSON.parse(jsonString);
+                      // Set the parsed data
+                      setSelectedItemData(itemData);
+
+                      handleDetailDialogOpen();
+                    } else {
+                      setSelectedChunk(item.value);
+                      if (item.type === "name") {
+                        setNameData(item.value);
+                      }
+                      const userMessage: MessageInterface = {
+                        content: item.value, // Send the text of the item as the user's message
+                        role: "user",
+                      };
+                      const backMessage: MessageInterface = {
+                        content:
+                          "type:" + typeData + "," + "name:" + item.value, // Send the text of the item as the user's message
+                        role: "user",
+                      };
+                      handleSendMessage(backMessage, flag, false, false);
+                      setMessages((prevMessage) => [
+                        ...prevMessage,
+                        userMessage,
+                      ]);
+                    }
+                  }}
+                />
+              );
+            })}
+          </ImageList>
+        </Box>
+      ))}
+      <Dialog fullWidth open={detailDialog} onClose={handleDetailDialogClose}>
         <DialogTitle
           style={{
             textAlign: "center",
