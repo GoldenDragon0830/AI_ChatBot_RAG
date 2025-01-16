@@ -42,6 +42,8 @@ import LoupeIcon from "@mui/icons-material/Loupe";
 import Snackbar from "@mui/material/Snackbar";
 import Divider from "@mui/material/Divider";
 import Paper from '@mui/material/Paper';
+import LinkIcon from '@mui/icons-material/Link';
+import { Details } from "@mui/icons-material";
 
 interface MessageInterface {
   content: string;
@@ -187,8 +189,10 @@ const ChatWindow: React.FC = () => {
     url: string;
     price: string;
     subtitle: string;
+    details: string;
+    features: string;
     onClick: () => void;
-  }> = ({ text, url, price, subtitle, onClick }) => {
+  }> = ({ text, url, price, subtitle, details, features, onClick }) => {
     const [open, setOpen] = useState(false);
 
     const handleOpen = () => setOpen(true);
@@ -216,6 +220,12 @@ const ChatWindow: React.FC = () => {
           }
         <img src={url} alt={text} loading="lazy" onClick={handleOpen} />
         <div className="overlay">
+          <IconButton
+            color="primary"
+            style={{ color: "white", zIndex: 3 }}
+          >
+            <LinkIcon />
+          </IconButton>
           <IconButton
             color="primary"
             onClick={handleOpen}
@@ -247,7 +257,13 @@ const ChatWindow: React.FC = () => {
           </DialogActions>
           <DialogContent>
             <img src={url} alt={text} style={{ width: "100%" }} />
+            <p>Single Price: {price}</p>
+            <p>Details: </p>
+            <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(details)}}></div>
+            <p>Features: </p>
+            <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(features)}}></div>
           </DialogContent>
+
         </Dialog>
       </ImageListItem>
     );
@@ -688,6 +704,8 @@ const ChatWindow: React.FC = () => {
                   url={item.image_urls.split(",")[0]}
                   price={item.single_price}
                   subtitle={item.subtitle}
+                  details={item.details}
+                  features={item.directions}
                   onClick={() => {
                     setOrderData([item]);
                     handleButtonClick(item.title, item.image_urls.split(",")[0]);
