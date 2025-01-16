@@ -44,6 +44,7 @@ import Divider from "@mui/material/Divider";
 import Paper from '@mui/material/Paper';
 import LinkIcon from '@mui/icons-material/Link';
 import { Details } from "@mui/icons-material";
+import { title } from "process";
 
 interface MessageInterface {
   content: string;
@@ -187,16 +188,76 @@ const ChatWindow: React.FC = () => {
   const ItemButton: React.FC<{
     text: string;
     url: string;
+    category: string;
     price: string;
     subtitle: string;
     details: string;
     features: string;
     onClick: () => void;
-  }> = ({ text, url, price, subtitle, details, features, onClick }) => {
+  }> = ({ text, url, price, category, subtitle, details, features, onClick }) => {
     const [open, setOpen] = useState(false);
 
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
+
+    const [itemCount, setItemCount] = useState(1);
+
+    const handleIncrease = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setItemCount(itemCount + 1);
+    };
+
+    const handleDecrease = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setItemCount(Math.max(1, itemCount - 1));
+    };
+
+    const handleAddToCart = (e: React.MouseEvent) => {
+
+      setCurrentAmount(itemCount);
+
+      setCartCount(cartCount + 1);
+      setCartData(
+        (previousData) => [...previousData, { 
+          ...{
+            "title": text,
+            "image_urls": url,
+            "category": category,
+            "single_price": price,
+            "subtitle": subtitle,
+            "details": details,
+            "directions": features
+          }, count: currentAmount }]
+        );
+    
+      setOrderData([]);
+      setItemCount(1); // Reset the item count after adding to cart
+    };
+
+    const handleLinkClick = () => {
+      const itemData = {
+        title: text,
+        image_urls: url,
+        category: category,
+        single_price: price,
+        subtitle: subtitle,
+        details: details,
+        directions: features,
+      };
+      sessionStorage.setItem("itemData", JSON.stringify(itemData));
+          // Open a new tab with only the title in the URL
+      const newTabUrl = `${window.location.origin}/details/${text}`;
+
+      // Open a new tab with the dynamic URL
+      const newTab = window.open(newTabUrl, "_blank");
+
+      // Send the itemData to the new tab using postMessage
+      if (newTab) {
+        newTab.onload = () => {
+          newTab.postMessage(window.location.origin); // Pass data to the new tab
+        };
+      }
+    }
 
     return (
       <ImageListItem key={text} className="image-list-item">
@@ -223,6 +284,7 @@ const ChatWindow: React.FC = () => {
           <IconButton
             color="primary"
             style={{ color: "white", zIndex: 3 }}
+            onClick={handleLinkClick}
           >
             <LinkIcon />
           </IconButton>
@@ -233,18 +295,53 @@ const ChatWindow: React.FC = () => {
           >
             <VisibilityIcon />
           </IconButton>
-          <IconButton
+          {/* <IconButton
             color="primary"
             onClick={onClick}
             style={{ color: "white", zIndex: 3 }}
           >
             <DoneOutlineIcon />
-          </IconButton>
+          </IconButton> */}
         </div>
         <ImageListItemBar
+          className="image-list-item-bar"
           title={
-            <div>
-              <span>{text}</span>
+            <div className="item-bar-title">
+              <span className="item-text">{text}</span>
+              <div
+                className="item-button"
+                style={{
+                  height: '25px',
+                  display: 'flex',
+                  alignItems: 'center', // Vertically center
+                  justifyContent: 'space-between', // Space out the elements evenly
+                }}
+              >
+                <ButtonGroup variant="outlined" size="small" style={{ zIndex: 3 }}>
+                  <IconButton
+                    style={{ color: 'white', zIndex: 3 }}
+                    onClick={handleDecrease}
+                  >
+                    <RemoveIcon fontSize="small" />
+                  </IconButton>
+                  <span style={{ display: 'flex', alignItems: 'center', color: 'white' }}>
+                    {itemCount}
+                  </span>
+                  <IconButton
+                    style={{ color: 'white', zIndex: 3 }}
+                    onClick={handleIncrease}
+                  >
+                    <AddIcon fontSize="small" />
+                  </IconButton>
+                </ButtonGroup>
+                <IconButton
+                  color="primary"
+                  onClick={handleAddToCart}
+                  style={{ color: 'white', width: '40px' }} // Adjust width as needed
+                >
+                  <AddShoppingCartIcon />
+                </IconButton>
+              </div>
             </div>
           }
         />
@@ -305,6 +402,29 @@ const ChatWindow: React.FC = () => {
     .image-list-item {
       position: relative;
       overflow: hidden;
+    }
+
+    /* Hide text and show the button on hover */
+    .image-list-item:hover .item-text {
+      display: none; /* Hide the text inside ImageListItemBar on hover */
+    }
+    .image-list-item .item-text,
+    .image-list-item .item-button {
+      transition: opacity 0.3s ease, transform 0.3s ease; /* Smooth fade and movement */
+    }
+
+    .image-list-item:hover .item-button {
+      display: inline-block; /* Show the button instead */
+    }
+
+    .item-button {
+      display: none; /* Button is initially hidden */
+    }
+
+    .item-bar-title {
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .overlay {
@@ -702,6 +822,7 @@ const ChatWindow: React.FC = () => {
                   key={index}
                   text={item.title}
                   url={item.image_urls.split(",")[0]}
+                  category={item.category}
                   price={item.single_price}
                   subtitle={item.subtitle}
                   details={item.details}
