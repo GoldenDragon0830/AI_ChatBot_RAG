@@ -657,7 +657,6 @@ def get_response(message: str, flag: str):
 
         # Convert the dictionary to a JSON string for the desired format
         # yield f'data: ChunkData:{json.dumps(keyword_chunks)}\n\n'
-        
         yield f'data: {all_content}\n\n'
 
         yield f'data: TYPE:{detect_type}@{detect_value}\n\n'        

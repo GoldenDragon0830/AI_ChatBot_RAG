@@ -87,6 +87,12 @@ const ChatWindow: React.FC = () => {
   const [selectedChunk, setSelectedChunk] = useState<string | null>("ALL");
   const [chunkDataHistory, setChunkDataHistory] = useState<ChunkOption[][]>([]);
   const [nameListData, setNameListData] = useState<ChunkOption[]>([]);
+  const [selectedOptionListData, setSelectedOptionListData] = useState<string[]>([]);
+
+  // const [showSpecialOptions, setShowSpecialOptions] = useState(false);
+  // const [specialOptions, setSpecialOptions] = useState<string[]>([]);
+  // const [selectedSpecialOption, setSelectedSpecialOption] = useState("Pint"); // Default to "Pint"
+  // const [specialItemCount, setSpecialItemCount] = useState(1);
 
   const API_URL = "http://3.99.185.93:4002/chat";
   const API_GET_FROM_DB_URL = "http://3.99.185.93:4002/get_db_data";
@@ -168,6 +174,9 @@ const ChatWindow: React.FC = () => {
   const [nameData, setNameData] = useState("");
 
   const [cartCount, setCartCount] = useState(0);
+
+  const [selectedItemCount, setSelectedItemCount] = useState(1);
+
   const [flag, setFlag] = useState(KEY_SELECT_PRODUCT);
   const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -221,7 +230,9 @@ const ChatWindow: React.FC = () => {
               color="success"
               onClick={(e) => {
                 e.stopPropagation();
-                handleIncrement();
+                setCartData(prev => prev.map(item => 
+                  item.option_name === title ? {...item, count: item.count + 1} : item
+                ));
               }}
             >
               <AddIcon fontSize="small" />
@@ -231,7 +242,9 @@ const ChatWindow: React.FC = () => {
               size="small"
               onClick={(e) => {
                 e.stopPropagation();
-                handleDecrement();
+                setCartData(prev => prev.map(item => 
+                  item.option_name === title ? {...item, count: Math.max(1, item.count - 1)} : item
+                ));
               }}
             >
               <RemoveIcon fontSize="small" />
@@ -256,8 +269,97 @@ const ChatWindow: React.FC = () => {
     );
   };
 
+  // const handleAddSpecialOptionToCart = () => {
+  //   const specialCartItem = {
+  //     type: "Special Option",
+  //     name: selectedSpecialOption,
+  //     description: "",
+  //     price: "0", // Set the appropriate price if available
+  //     option_keyword: "",
+  //     option_name: selectedSpecialOption,
+  //     option_price: "",
+  //     count: specialItemCount,
+  //   };
+  
+  //   setCartData((prevCartData) => {
+  //     const existingItem = prevCartData.find(
+  //       (item) => item.option_name === selectedSpecialOption
+  //     );
+  
+  //     if (existingItem) {
+  //       // Update count if item already exists
+  //       return prevCartData.map((item) =>
+  //         item.option_name === selectedSpecialOption
+  //           ? { ...item, count: item.count + specialItemCount }
+  //           : item
+  //       );
+  //     } else {
+  //       // Add new item to cart
+  //       return [...prevCartData, specialCartItem];
+  //     }
+  //   });
+  
+  //   setCartCount((prevCount) => prevCount + specialItemCount);
+  //   setShowSpecialOptions(false); // Hide the special options selector after adding to cart
+  // };
+
+
+  // const SpecialOptionsSelector: React.FC<{
+  //   options: string[];
+  //   selectedOption: string;
+  //   setSelectedOption: (option: string) => void;
+  //   itemCount: number;
+  //   setItemCount: (count: number) => void;
+  // }> = ({ options, selectedOption, setSelectedOption, itemCount, setItemCount }) => {
+  //   const handleIncrease = () => {
+  //     setItemCount(itemCount + 1);
+  //   };
+  
+  //   const handleDecrease = () => {
+  //     setItemCount(Math.max(1, itemCount - 1));
+  //   };
+  
+  //   return (
+  //     <Box
+  //       sx={{
+  //         display: "flex",
+  //         flexDirection: "column",
+  //         alignItems: "center",
+  //         marginTop: "10px",
+  //       }}
+  //     >
+  //       <Box sx={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+  //         {options.map((option) => (
+  //           <Button
+  //             key={option}
+  //             variant={selectedOption === option ? "contained" : "outlined"}
+  //             color="success"
+  //             onClick={() => setSelectedOption(option)}
+  //             sx={{
+  //               textTransform: "capitalize",
+  //               fontWeight: selectedOption === option ? "bold" : "normal",
+  //             }}
+  //           >
+  //             {option}
+  //           </Button>
+  //         ))}
+  //       </Box>
+  //       <Box sx={{ display: "flex", alignItems: "center", gap: "10px" }}>
+  //         <IconButton onClick={handleDecrease}>
+  //           <RemoveIcon />
+  //         </IconButton>
+  //         <Typography>
+  //           {selectedOption} X {itemCount}
+  //         </Typography>
+  //         <IconButton onClick={handleIncrease}>
+  //           <AddIcon />
+  //         </IconButton>
+  //       </Box>
+  //     </Box>
+  //   );
+  // };
+
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
-  const [chunkTotalPrice, setChunkTotalPrice] = useState(0);
 
   const AmountItemButton: React.FC<{
     text: string;
@@ -268,9 +370,48 @@ const ChatWindow: React.FC = () => {
     onClick: () => void;
     style?: React.CSSProperties;
   }> = ({ text, type, value, price, description, onClick }) => {
+    const [itemCount, setItemCount] = useState(1);
+    const handleIncrease = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setItemCount(itemCount + 1);
+    };
+    const handleDecrease = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setItemCount(Math.max(1, itemCount - 1));
+    };
+
+    const handleOnClick = () => {
+      setSelectedItemCount(itemCount);
+      onClick();
+    }
+
     return (
       <ImageListItem key={text} className="image-list-item">
-        <Card sx={{ width: 280, margin: "5px" }}>
+        <Card
+          sx={{ 
+            width: 280, 
+            margin: "5px",
+            cursor: "pointer", // Change cursor to pointer to indicate clickable
+            backgroundColor: selectedOptionListData.includes(text) ? "grey.400" : "inherit",
+            transition: "background-color 0.3s ease-in-out", // Smooth transition for background color
+          }}
+          onClick={() => {
+            // Toggle selection on click
+            if ( type === "option_name" ){
+              setSelectedOptionListData((prevOptions) => {
+                if (prevOptions.includes(text)) {
+                  // Remove the title (text) from the selectedOptionListData if already selected
+                  return prevOptions.filter((option) => option !== text);
+                } else {
+                  // Add the title (text) to the selectedOptionListData if not selected
+                  return [...prevOptions, text];
+                }
+              });
+            } else {
+              onClick()              
+            }
+          }}
+        >
           <CardContent
             sx={{
               display: "flex",
@@ -284,7 +425,6 @@ const ChatWindow: React.FC = () => {
                 transform: "scale(1.05)",
               },
             }}
-            onClick={onClick}
           >
             <Typography
               variant="body2"
@@ -299,128 +439,54 @@ const ChatWindow: React.FC = () => {
                 WebkitBoxOrient: "vertical",
               }}
             >
-              {text}{" "}
-              {type === "option_name" ? (
-                <span
-                  style={{
-                    fontSize: "14px", // Smaller font size
-                    fontWeight: "normal", // Optional: Remove bold for smaller text
-                    // Optional: Change color for distinction
-                  }}
-                >
-                  ({getItemName(value)})
-                </span>
-              ) : (
-                ""
-              )}
+              {text}
             </Typography>
-            <Typography
-              variant="body2"
-              sx={{
-                color: "gray", // Gray color for description
-                fontSize: "14px",
-                marginBottom: "10px", // Slight spacing between description and price
-                height: "40px",
-                overflow: "hidden",
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-              }}
-            >
-              {description}
-            </Typography>
+            {type !== "option_name" ? (
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "gray", // Gray color for description
+                  fontSize: "14px",
+                  marginBottom: "10px", // Slight spacing between description and price
+                  height: "40px",
+                  overflow: "hidden",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                }}
+              >
+                {description}
+              </Typography>
+            ) : null}
           </CardContent>
-          <CardActions disableSpacing>
+          <CardActions sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} disableSpacing>
             <Typography
               variant="body2"
               style={{ color: "green", marginLeft: "10px" }}
             >
               {"$" + price}
             </Typography>
-            {type === "option_name" ? (
-              <Checkbox
-                sx={{
-                  marginLeft: "auto",
-                  height: "20px",
-                }}
-                checked={selectedOptions.includes(value)} // Check if the option is selected
-                onChange={(event) => {
-                  const isChecked = event.target.checked; // Whether the checkbox is checked or not
-                  const optionPrice = parseFloat(price); // Parse the price of the current item
-                  const mainPrice = parseFloat(getItemPriceFromTest(value));
-
-                  console.log(mainPrice);
-                  setSelectedOptions((prevOptions) => {
-                    if (description === "Size") {
-                      // Special case: Size options (allow only one selection)
-                      const otherOptions = prevOptions.filter(
-                        (opt) =>
-                          !chunkData.find(
-                            (data) =>
-                              data.value === opt && data.description === "Size"
-                          )
-                      );
-
-                      const currentlySelectedSize = prevOptions.find((opt) =>
-                        chunkData.some(
-                          (data) =>
-                            data.value === opt && data.description === "Size"
-                        )
-                      );
-
-                      if (isChecked) {
-                        // If a new size is selected, replace the current size
-                        if (currentlySelectedSize) {
-                          const currentSizePrice = parseFloat(
-                            chunkData.find(
-                              (data) => data.value === currentlySelectedSize
-                            )?.price || "0"
-                          );
-                          setChunkTotalPrice((prevTotal) =>
-                            prevTotal === 0
-                              ? mainPrice + prevTotal - currentSizePrice
-                              : prevTotal - currentSizePrice
-                          );
-                        }
-                        setChunkTotalPrice((prevTotal) =>
-                          prevTotal === 0
-                            ? mainPrice + prevTotal + optionPrice
-                            : prevTotal + optionPrice
-                        );
-                        return [...otherOptions, value];
-                      } else {
-                        // If the size is deselected, just remove it
-                        setChunkTotalPrice((prevTotal) =>
-                          prevTotal === 0
-                            ? mainPrice + prevTotal - optionPrice
-                            : prevTotal - optionPrice
-                        );
-                        return otherOptions;
-                      }
-                    } else {
-                      // General case: Multi-selection for non-Size options
-                      if (isChecked) {
-                        // Add the selected option price
-                        setChunkTotalPrice((prevTotal) =>
-                          prevTotal === 0
-                            ? mainPrice + prevTotal + optionPrice
-                            : prevTotal + optionPrice
-                        );
-                        return [...prevOptions, value];
-                      } else {
-                        // Remove the deselected option price
-                        setChunkTotalPrice(
-                          (prevTotal) => prevTotal - optionPrice
-                        );
-                        return prevOptions.filter((opt) => opt !== value);
-                      }
-                    }
-                  });
-                }}
-              />
-            ) : (
-              <div></div>
-            )}
+            {type === "name" ? (
+              <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <IconButton size="small" onClick={handleDecrease}>
+                  <RemoveIcon fontSize="small" />
+                </IconButton>
+                <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                  <Typography>{itemCount}</Typography>
+                  <IconButton size="small" onClick={handleIncrease}>
+                    <AddIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+                <IconButton 
+                  size="small"
+                  color="success"
+                  sx={{ marginLeft: '10px' }}
+                  onClick={handleOnClick}
+                >
+                  <AddShoppingCartIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            ) : null}
           </CardActions>
         </Card>
       </ImageListItem>
@@ -608,7 +674,7 @@ const ChatWindow: React.FC = () => {
                     const descriptionMatch = cartDataString.match(
                       /'description':\s*'([^']*)'/
                     );
-                    const priceMatch = cartDataString.match(/'price':\s*'([^']+)'/);
+                    const priceMatch = cartDataString.match(/'price':\s*([\d.]+)/);
                     const optionKeywordMatch = cartDataString.match(
                       /'option_keyword':\s*'([^']+)'/
                     );
@@ -638,13 +704,15 @@ const ChatWindow: React.FC = () => {
                       ...prevCartData,
                       {
                         ...parsedCartData,
-                        count: 1, // Default count for new cart items
+                        count: selectedItemCount, // Default count for new cart items
                       },
                     ]);
                     setSelectedOptions((prevOptions) => [
                       ...prevOptions,
                       parsedData[0].value,
                     ]);
+
+                    setSelectedItemCount(1);
                   } else {
                     setChunkData(parsedData);
                   }
@@ -1109,6 +1177,17 @@ const ChatWindow: React.FC = () => {
     return item.value;
   };
 
+  const getItemOptionName = (item: string): string => {
+    const match = item.match(/'option_name':\s*'([^']*)'/);
+                            
+    if (match) {
+      const option_name = match[1];
+      return option_name;
+    } else {
+      return ""
+    }
+  }
+
   const [detailDialog, setDetailDialog] = useState(false);
   const [selectedItemData, setSelectedItemData] = useState<any>(null);
   const [selectedChip, setSelectedChip] = useState<string | null>("ALL");
@@ -1117,6 +1196,7 @@ const ChatWindow: React.FC = () => {
   );
 
   const handleBackButton = () => {
+    setSelectedOptionListData([]);
     if (chunkDataHistory.length > 0) {
       // Pop the last chunkData from the history stack and set it to chunkData
       const previousChunkData = chunkDataHistory[chunkDataHistory.length - 1];
@@ -1213,6 +1293,44 @@ const ChatWindow: React.FC = () => {
           );
         })}
       </Paper>
+      { selectedOptionListData.length !== 0 ? (
+        <Box
+        sx={{
+          display: "flex", // Use flexbox for layout
+          flexDirection: "vertically", // Stack items vertically
+          marginTop: "20px", // Space above the button
+          marginLeft: "20px", // Align with the parent container
+        }}
+      >
+        <Paper
+          sx={{
+            display: "flex",
+            flexWrap: "nowrap", // Prevent wrapping to ensure chips stay in one line
+            overflowX: "auto", // Enable horizontal scrolling
+            listStyle: "none",
+            p: 0.5,
+            m: 0,
+            padding: "10px",
+            width: "1200px", // Ensure it doesn't overflow its container
+          }}
+        >
+          {selectedOptionListData.map((text, index) => {
+            return (
+              <Chip
+                sx={{
+                  margin: "2px",
+                }}
+                label={text}
+                clickable
+                color="success"
+                variant="outlined" // Change variant when selected
+                key={index}
+              />
+            );
+          })}
+        </Paper>
+      </Box>
+      ) : null}
       <Box
         sx={{
           display: "flex", // Use flexbox for layout
@@ -1291,7 +1409,7 @@ const ChatWindow: React.FC = () => {
         <Typography
           sx={{
             textAlign: "center",
-            backgroundColor: "#f5f5f5",
+            backgroundColor: "#f5f5f5",           
             padding: "10px",
             borderRadius: "5px",
             color: "green",
@@ -1301,65 +1419,67 @@ const ChatWindow: React.FC = () => {
             variant="outlined"
             color="success"
             startIcon={<AddShoppingCartIcon />}
-            disabled={selectedOptions.length === 0} // Disable button if nothing is selected
+            disabled={selectedOptionListData.length === 0} // Disable button if nothing is selected
             onClick={() => {
+              console.log(chunkData)
               const itemsToAdd = chunkData.filter((item) =>
-                selectedOptions.includes(item.value)
+                selectedOptionListData.includes(getItemOptionName(item.value))
               );
 
-              setCartData((prevCartData) => {
-                const updatedCartData = [...prevCartData];
+              const cartDataString = itemsToAdd[0].value;
 
-                itemsToAdd.forEach((itemToAdd) => {
-                  const existingItemIndex = updatedCartData.findIndex(
-                    (cartItem) => cartItem.name === itemToAdd.value
-                  );
+              // Use regex to extract specific fields from the string
+              const typeMatch = cartDataString.match(/'type':\s*'([^']+)'/);
+              const nameMatch = cartDataString.match(/'name':\s*'([^']+)'/);
+              const descriptionMatch = cartDataString.match(
+                /'description':\s*'([^']*)'/
+              );
+              const priceMatch = cartDataString.match(/'price':\s*([\d.]+)/);
+              const optionKeywordMatch = cartDataString.match(
+                /'option_keyword':\s*'([^']+)'/
+              );
+              const optionNameMatch = cartDataString.match(
+                /'option_name':\s*'([^']+)'/
+              );
+              const optionPriceMatch = cartDataString.match(
+                /'option_price':\s*'([^']+)'/
+              );
 
-                  if (existingItemIndex !== -1) {
-                    // If the item already exists in the cart, update its count
-                    updatedCartData[existingItemIndex] = {
-                      ...updatedCartData[existingItemIndex],
-                      count:
-                        updatedCartData[existingItemIndex].count +
-                        currentAmount,
-                    };
-                  } else {
-                    // If the item is new, add it to the cart
-                    updatedCartData.push({
-                      type: itemToAdd.type,
-                      name:
-                        typeData +
-                        ", " +
-                        nameData +
-                        ", " +
-                        getItemText(itemToAdd),
-                      description: itemToAdd.description,
-                      price: `${
-                        parseFloat(getItemPrice(itemToAdd)) +
-                        parseFloat(itemToAdd.price)
-                      }`,
-                      option_keyword: itemToAdd.keyword,
-                      option_name: "", // Provide default values if necessary
-                      option_price: "",
-                      count: currentAmount,
-                    });
-                  }
-                });
+              // Construct the object manually
+              const parsedCartData = {
+                type: typeMatch ? typeMatch[1] : "",
+                name: nameMatch ? nameMatch[1] : "",
+                description: descriptionMatch ? descriptionMatch[1] : "",
+                price: priceMatch ? priceMatch[1] : "",
+                option_keyword: optionKeywordMatch
+                  ? optionKeywordMatch[1]
+                  : "",
+                option_name: optionNameMatch ? optionNameMatch[1] : "",
+                option_price: optionPriceMatch ? optionPriceMatch[1] : "",
+              };
 
-                return updatedCartData; // Return the updated cart data
-              });
-              setCartCount(cartCount + selectedOptions.length);
+              console.log(parsedCartData)
+
+              setCartCount(cartCount + 1);
+              setCartData((prevCartData) => [
+                ...prevCartData,
+                {
+                  ...parsedCartData,
+                  count: selectedItemCount, // Default count for new cart items
+                },
+              ]);
+
+              console.log("Cart updated:", parsedCartData);
               setSelectedOptions([]);
-              setChunkTotalPrice(0);
             }}
           >
-            ${chunkTotalPrice.toFixed(2)}
+            Add Cart
           </Button>
         </Typography>
       </Box>
       {Object.entries(groupedData).map(([groupKey, groupItems]) => (
         <Box key={groupKey} sx={{ marginBottom: "20px" }}>
-          {groupKey !== "undefined" ? (
+          {(groupKey !== "undefined") && (nameListData.length > 1) ? (
             <Typography
               variant="h6"
               sx={{
@@ -1679,7 +1799,7 @@ const ChatWindow: React.FC = () => {
             {cartData.map((item, index) => (
               <ItemCart
                 key={index}
-                title={item.name + item.option_name}
+                title={item.name}
                 price={item.price}
                 count={item.count}
               />
