@@ -165,6 +165,7 @@ const ChatWindow: React.FC = () => {
       option_name: string;
       option_price: string;
       count: number;
+      optionList: string[];
     }[]
   >([]);
 
@@ -185,7 +186,8 @@ const ChatWindow: React.FC = () => {
     title: string;
     price: string;
     count: number;
-  }> = ({ title, price, count }) => {
+    optionList: string[];
+  }> = ({ title, price, count, optionList }) => {
     const handleIncrement = () => {
       setCartData((prevData) =>
         prevData.map((item) =>
@@ -214,6 +216,14 @@ const ChatWindow: React.FC = () => {
       );
       setCartCount((prevCount) => prevCount - count);
     };
+
+    function chunkArray<T>(array: T[], chunkSize: number): T[][] {
+      const chunks: T[][] = [];
+      for (let i = 0; i < array.length; i += chunkSize) {
+        chunks.push(array.slice(i, i + chunkSize));
+      }
+      return chunks;
+    }
 
     return (
       <ListItem
@@ -253,17 +263,31 @@ const ChatWindow: React.FC = () => {
         }
       >
         <ListItemButton>
-          <ListItemText primary={title} secondary={"$" + price} />
-          <IconButton
-            edge="end"
-            aria-label="delete"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleRemove();
-            }}
-          >
-            <DeleteForeverIcon color="error" />
-          </IconButton>
+          <ListItemText primary={title} 
+            secondary={
+              <Box>
+                <Typography variant="body2" color="text.secondary" component="span">
+                  ${price}
+                </Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", marginTop: 1 }}>
+                  {chunkArray(optionList, 3).map((row, rowIndex) => (
+                    <Box key={rowIndex} sx={{ display: "flex", flexDirection: "row", marginBottom: "4px" }}>
+                      {row.map((option, index) => (
+                        <Chip
+                          key={index}
+                          color="success"
+                          label={option}
+                          size="small"
+                          sx={{
+                            marginLeft: index === 0 ? 0 : "2px", // Add spacing only for chips after the first one
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            } />
         </ListItemButton>
       </ListItem>
     );
@@ -705,6 +729,7 @@ const ChatWindow: React.FC = () => {
                       {
                         ...parsedCartData,
                         count: selectedItemCount, // Default count for new cart items
+                        optionList: []
                       },
                     ]);
                     setSelectedOptions((prevOptions) => [
@@ -713,6 +738,8 @@ const ChatWindow: React.FC = () => {
                     ]);
 
                     setSelectedItemCount(1);
+                  } else if (parsedData.length === 2) {
+                    
                   } else {
                     setChunkData(parsedData);
                   }
@@ -948,6 +975,7 @@ const ChatWindow: React.FC = () => {
                   {
                     ...parsedCartData,
                     count: 1, // Default count for new cart items
+                    optionList: []
                   },
                 ]);
 
@@ -1091,7 +1119,7 @@ const ChatWindow: React.FC = () => {
     setCartCount(cartCount + 1);
     setCartData((previousData) => [
       ...previousData,
-      { ...orderData[0], count: currentAmount },
+      { ...orderData[0], count: currentAmount, optionList: [] },
     ]);
 
     setOrderData([]);
@@ -1466,6 +1494,7 @@ const ChatWindow: React.FC = () => {
                 {
                   ...parsedCartData,
                   count: selectedItemCount, // Default count for new cart items
+                  optionList: selectedOptionListData
                 },
               ]);
 
@@ -1802,6 +1831,7 @@ const ChatWindow: React.FC = () => {
                 title={item.name}
                 price={item.price}
                 count={item.count}
+                optionList={item.optionList}
               />
             ))}
           </List>
