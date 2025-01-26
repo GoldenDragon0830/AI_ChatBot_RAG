@@ -66,12 +66,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           { isRequest ? (<PersonIcon fontSize="large" color="success" />) : (<div style={{display: 'flex', alignItems: 'center'}}><img src="/westsidewok.png" alt="logo" style={{width: "30px", height: "40px"}}/></div>)}
         </Badge>
         {
-          isRequest ? (<p></p>) : (<p style={{paddingLeft: '5px'}}>Assistant</p>)
+          isRequest ? (<p></p>) : (<p style={{paddingLeft: '5px', color: "white"}}>Assistant</p>)
         }
       </div>
       <Paper
         sx={{
-          backgroundColor: isRequest ? "#009900" : "#e0e0e0",
+          backgroundColor: isRequest ? "#059669" : "#e0e0e0",
           color: isRequest ? "#fff" : "#000",
           padding: 2,
           borderRadius: 2,

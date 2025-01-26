@@ -51,6 +51,8 @@ import { CheckBox, Description, LocalDining } from "@mui/icons-material";
 const label = { inputProps: { "aria-label": "Checkbox demo" } };
 
 const displayOptionSoup = ["Beef Dumplings","Egg Drop Soup", "Hot And Sour Soup", "Thai Chicken Noodle Soup", "Tofu Vegetable Soup"];
+const displayOptionContinue = ["Wonton Soup", "Egg Drop Wonton Soup"];
+const displayOptionDish = ["Fried Rice", "Lo-mein", "Chow Fun", "Mei Fun", "Thai Fried Rice", "With Broccoli", "With Eggplants", "With Mixed Vegetables", "Moo Shoo Style", "Steamed Chicken With Mixed Vegetables S", "Pepper Steak S", "Sichuan S", "Hunan Style S", "With String Beans in Garlic Sauce S", "With Mushrooms S", ] // small, large
 
 interface MessageInterface {
   content: string;
@@ -306,7 +308,7 @@ const ChatWindow: React.FC = () => {
     const [generalCount, setGeneralCount] = useState<number>(1);
 
     const handleIncrease = (optionKey: string) => { 
-      if (displayOptionSoup.includes(text)) {
+      if (displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text)) {
         setItemCount((prev) => ({
           ...prev,
           [optionKey]: (prev[optionKey] || 0) + 1,
@@ -317,7 +319,7 @@ const ChatWindow: React.FC = () => {
     };
   
     const handleDecrease = (optionKey: string) => {
-      if (displayOptionSoup.includes(text)) {
+      if (displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text)) {
         setItemCount((prev) => ({
           ...prev,
           [optionKey]: Math.max(0, (prev[optionKey] || 0) - 1),
@@ -333,8 +335,8 @@ const ChatWindow: React.FC = () => {
 
     const handleOnClick = () => {
       if (itemCount) {
-        if (displayOptionSoup.includes(text)) {
-          const optionToAdd = selectedOption === "Option 1" ? (text === "Beef Dumplings" ? "Steamed" : "Pint") : (text === "Beef Dumplings" ? "Fried" : "Quart");
+        if (displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text)) {
+          const optionToAdd = selectedOption === "Option 1" ? (displayOptionDish.includes(text) ? "Small" : text === "Beef Dumplings" ? "Steamed" : "Pint") : (displayOptionDish.includes(text) ? "Large" : text === "Beef Dumplings" ? "Fried" : "Quart");
           console.log(optionToAdd)
           setCartData((prevCartData) => [
             ...prevCartData,
@@ -367,7 +369,7 @@ const ChatWindow: React.FC = () => {
             width: 280,
             margin: "5px",
             cursor: "pointer",
-            backgroundColor: selectedOptionListData.includes(text) ? "grey.400" : "inherit",
+            backgroundColor: selectedOptionListData.includes(text) ? "grey.400" : "white",
             transition: "background-color 0.3s ease-in-out",
           }}
         >
@@ -440,7 +442,7 @@ const ChatWindow: React.FC = () => {
             disableSpacing
           >
             <Box sx={{ display: "flex", gap: 1 }}>
-              {displayOptionSoup.includes(text) ? (
+              {displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) ? (
                 <div>
                   {/* Badge for Option 1 */}
                   <Badge
@@ -451,7 +453,7 @@ const ChatWindow: React.FC = () => {
                     <Chip
                       color="success"
                       size="small"
-                      label={text === "Beef Dumplings" ? "Steamed" : "Pint $5"}
+                      label={displayOptionDish.includes(text) ? "Small" : text === "Beef Dumplings" ? "Steamed" : "Pint $5"}
                       variant={selectedOption === "Option 1" ? "filled" : "outlined"}
                       onClick={() => handleSelectOption("Option 1")}
                     />
@@ -465,7 +467,7 @@ const ChatWindow: React.FC = () => {
                     <Chip
                       color="success"
                       size="small"
-                      label={text === "Beef Dumplings" ? "Fried" : "Quart $10"}
+                      label={displayOptionDish.includes(text) ? "Large" : text === "Beef Dumplings" ? "Fried" : "Quart $10"}
                       variant={selectedOption === "Option 2" ? "filled" : "outlined"}
                       onClick={() => handleSelectOption("Option 2")}
                     />
@@ -488,8 +490,9 @@ const ChatWindow: React.FC = () => {
               >
                 <IconButton
                   size="small"
+                  color="success"
                   onClick={() =>
-                    displayOptionSoup.includes(text)
+                    displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text)
                       ? handleDecrease(selectedOption || "Option 1")
                       : handleDecrease("")
                   }
@@ -504,14 +507,14 @@ const ChatWindow: React.FC = () => {
                   }}
                 >
                   <Typography>
-                    {displayOptionSoup.includes(text)
+                    {displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text)
                       ? itemCount[selectedOption || "Option 1"] || 0
                       : generalCount}
                   </Typography>
                   <IconButton
                     size="small"
                     onClick={() =>
-                      displayOptionSoup.includes(text)
+                      displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text)
                         ? handleIncrease(selectedOption || "Option 1")
                         : handleIncrease("")
                     }
@@ -1304,7 +1307,9 @@ const ChatWindow: React.FC = () => {
       <Divider />
       <Paper
         sx={{
+          height: "140px",
           display: "flex",
+          backgroundColor: '#059669',
           justifyContent: "center",
           flexWrap: "wrap",
           listStyle: "none",
@@ -1314,18 +1319,15 @@ const ChatWindow: React.FC = () => {
       >
         {menuList.map((title, index) => {
           return (
-            <Chip
+            <Button
               sx={{
                 margin: "5px",
+                color: `${selectedChip === title ? "#07dfa1" : "white"}`,
               }}
-              label={title}
-              clickable
-              color="success"
-              icon={<DinnerDiningIcon />}
-              variant={selectedChip === title ? "filled" : "outlined"} // Change variant when selected
+              startIcon={<DinnerDiningIcon />}
+              // variant={selectedChip === title ? "filled" : "outlined"} // Change variant when selected
               key={index}
               onClick={() => {
-                setSelectedOptionListData([]);
                 if (title === "ALL") {
                   setSelectedChip(title); // Set the selected chip
                   setTypeData(title); // set one type data
@@ -1348,54 +1350,16 @@ const ChatWindow: React.FC = () => {
                   setMessages((prevMessage) => [...prevMessage, userMessage]);
                 }
               }}
-            />
+            >
+              {title}
+            </Button>
           );
         })}
       </Paper>
-      { selectedOptionListData.length !== 0 ? (
-        <Box
-        sx={{
-          display: "flex", // Use flexbox for layout
-          flexDirection: "vertically", // Stack items vertically
-          marginTop: "20px", // Space above the button
-          marginLeft: "20px", // Align with the parent container
-        }}
-      >
-        <Paper
-          sx={{
-            display: "flex",
-            flexWrap: "nowrap", // Prevent wrapping to ensure chips stay in one line
-            overflowX: "auto", // Enable horizontal scrolling
-            listStyle: "none",
-            p: 0.5,
-            m: 0,
-            padding: "10px",
-            width: "1200px", // Ensure it doesn't overflow its container
-          }}
-        >
-          {selectedOptionListData.map((text, index) => {
-            return (
-              <Chip
-                sx={{
-                  margin: "2px",
-                }}
-                label={text}
-                clickable
-                color="success"
-                variant="outlined" // Change variant when selected
-                key={index}
-              />
-            );
-          })}
-        </Paper>
-      </Box>
-      ) : null}
       <Box
         sx={{
           display: "flex", // Use flexbox for layout
           flexDirection: "vertically", // Stack items vertically
-          marginTop: "20px", // Space above the button
-          marginLeft: "20px", // Align with the parent container
         }}
       >
         <Paper
@@ -1406,13 +1370,13 @@ const ChatWindow: React.FC = () => {
             listStyle: "none",
             p: 0.5,
             m: 0,
-            padding: "10px",
+            padding: "20px",
             width: "1200px", // Ensure it doesn't overflow its container
+            backgroundColor: "#d1fae5"
           }}
         >
           <Button
             color="success"
-            variant="outlined"
             startIcon={<BackspaceIcon />}
             sx={{
               marginRight: "20px",
@@ -1425,16 +1389,12 @@ const ChatWindow: React.FC = () => {
           </Button>
           {nameListData.map((item, index) => {
             return (
-              <Chip
+              <Button
                 sx={{
                   margin: "5px",
+                  backgroundColor: `${selectedNameChip === item.value ? "#8cf2be" : "transparent"}`,
+                  color: "black"
                 }}
-                label={item.value}
-                clickable
-                color="success"
-                variant={
-                  selectedNameChip === item.value ? "filled" : "outlined"
-                } // Change variant when selected
                 key={index}
                 onClick={() => {
                   if (item.value === "ALL") {
@@ -1461,22 +1421,27 @@ const ChatWindow: React.FC = () => {
                     setMessages((prevMessage) => [...prevMessage, userMessage]);
                   }
                 }}
-              />
+              >
+                {item.value}
+              </Button>
             );
           })}
         </Paper>
         <Typography
           sx={{
             textAlign: "center",
-            backgroundColor: "#f5f5f5",           
+            backgroundColor: "#d1fae5",           
             padding: "10px",
             borderRadius: "5px",
             color: "green",
           }}
         >
           <Button
-            variant="outlined"
+            variant="contained"
             color="success"
+            sx={{
+              color: "black"
+            }}
             startIcon={<AddShoppingCartIcon />}
             disabled={selectedOptionListData.length === 0} // Disable button if nothing is selected
             onClick={() => {
@@ -1542,18 +1507,55 @@ const ChatWindow: React.FC = () => {
               setOneOrderData("")
             }}
           >
-            ${chunkTotalPrice.toFixed(2)}
+            Add Cart ${chunkTotalPrice.toFixed(2)}
           </Button>
         </Typography>
       </Box>
+      { selectedOptionListData.length !== 0 ? (
+        <Box
+        sx={{
+          display: "flex", // Use flexbox for layout
+          flexDirection: "vertically", // Stack items vertically
+        }}
+      >
+      <Paper
+        sx={{
+          display: "flex",
+          flexWrap: "nowrap", // Prevent wrapping to ensure chips stay in one line
+          overflowX: "auto", // Enable horizontal scrolling
+          listStyle: "none",
+          p: 0.5,
+          m: 0,
+          padding: "10px",
+          width: "1200px", // Ensure it doesn't overflow its container
+          backgroundColor: "#d1fae5"
+        }}
+      >
+        {selectedOptionListData.map((text, index) => {
+          return (
+            <Chip
+              sx={{
+                margin: "2px",
+              }}
+              label={text}
+              clickable
+              color="success"
+              variant="outlined" // Change variant when selected
+              key={index}
+            />
+          );
+        })}
+      </Paper>
+      </Box>
+      ) : null}
       {Object.entries(groupedData).map(([groupKey, groupItems]) => (
-        <Box key={groupKey} sx={{ marginBottom: "20px" }}>
+        <Box key={groupKey} sx={{backgroundColor: "#a7f3d0", height: "auto" }}>
           {(groupKey !== "undefined") && (nameListData.length > 1) ? (
             <Typography
               variant="h6"
               sx={{
                 marginBottom: "10px",
-                backgroundColor: "#f5f5f5",
+                backgroundColor: "#a7f3d0",
                 padding: "10px",
                 borderRadius: "5px",
               }}
@@ -1582,7 +1584,7 @@ const ChatWindow: React.FC = () => {
                   description={item.description}
                   style={{
                     border: isSelected ? "2px solid #1976d2" : "none", // Highlight selected border
-                    backgroundColor: isSelected ? "#e3f2fd" : "transparent", // Highlight selected background
+                    backgroundColor: isSelected ? "#e3f2fd" : "white", // Highlight selected background
                   }}
                   onClick={() => {
                     if (item.type === "option_name") {
@@ -1658,7 +1660,7 @@ const ChatWindow: React.FC = () => {
   );
 
   return (
-    <Box sx={{ display: "flex" }} style={{ padding: "1rem" }}>
+    <Box sx={{ display: "flex" }} >
       <Box
         component="nav"
         sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
@@ -1698,15 +1700,18 @@ const ChatWindow: React.FC = () => {
         sx={{
           flexGrow: 1,
           p: 3,
+          paddingBottom: "100px",
           width: { sm: `calc(100% - ${drawerWidth}px)` },
+          backgroundImage: `url('https://images.unsplash.com/photo-1614850715649-1d0106293bd1?q=100&w=1000&auto=format&fit=crop')`,
         }}
+        
       >
         <div
           style={{
             height: "80vh",
             maxHeight: "650px",
             overflowY: "auto",
-            padding: "20px",
+            padding: "10px",
             position: "relative",
           }}
           ref={containerRef}
@@ -1835,7 +1840,7 @@ const ChatWindow: React.FC = () => {
             right: "50px",
           }}
         >
-          <Fab color="success" aria-label="add" onClick={handleCartOpen}>
+          <Fab sx={{ backgroundColor: "#059669"}}aria-label="add" onClick={handleCartOpen}>
             <AddShoppingCartIcon />
           </Fab>
         </Badge>
