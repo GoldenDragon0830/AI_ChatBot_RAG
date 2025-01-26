@@ -197,7 +197,10 @@ def get_db_response(keyword: str, type: str, name: str):
         else:
             query = f'SELECT DISTINCT name, description, price FROM csv WHERE type="{type}"'
     elif keyword == "all_option_name":
-        query = f'SELECT DISTINCT * FROM csv WHERE type="{type}" AND name="{name}"'
+        if type == "":
+            query = f'SELECT DISTINCT * FROM csv WHERE name="{name}"'
+        else:
+            query = f'SELECT DISTINCT * FROM csv WHERE type="{type}" AND name="{name}"'
     else:
         return results_data  # Return empty if keyword doesn't match valid cases
 
@@ -406,7 +409,6 @@ def get_response_via_input(message: str, flag: str):
                         keyword_chunks["option_name"].append(formatted_data)
 
             # Convert the dictionary to a JSON string for the desired format
-        yield f'data: {all_content}\n\n'
 
         PROMPT = """
             Your task is to determine the correct keyword from a predefined set of two values: "select_product" or "add_cart". Based on the input provided by the user, classify it into one of the two keywords.
@@ -440,10 +442,13 @@ def get_response_via_input(message: str, flag: str):
         print("Detect Result from AI response: ", response)
             
         if (response == "add_cart"):
+            yield f'data: Successfully added to cart! Would you like to add more items?\n\n'
             print("Most Similar Data",keyword_chunks.get("option_name", [])[0])
             yield f'data: ADD_CART:{keyword_chunks.get("option_name", [])[0]}\n\n'
         else:
-            yield f'data: ChunkData:{json.dumps(keyword_chunks.get("option_name", []))}\n\n'    
+            yield f'data: {all_content}\n\n'
+
+            yield f'data: ChunkData:{json.dumps(keyword_chunks.get("option_name", []))}\n\n'
 
 
     elif flag == KEY_ASK_AMOUNT:
@@ -609,20 +614,21 @@ def get_response(message: str, flag: str):
                     for item in title_list:
 
                         field_type, field_value = item
-                        if field_type == "type":
-                            where_clauses.append(f'type="{field_value}"')
-                            detect_type = "type"
-                            detect_value = field_value
-                        elif field_type == "name":
-                            where_clauses.append(f'name="{field_value}"')
-                            has_name = True
-                            detect_type = "name"
-                            detect_value = field_value
-                        elif field_type == "option_keyword":
-                            where_clauses.append(f'option_keyword="{field_value}"')
-                            has_option_keyword = True
-                            detect_type = "option_keyword"
-                            detect_value = field_value
+                        if field_value != "":
+                            if field_type == "type":
+                                where_clauses.append(f'type="{field_value}"')
+                                detect_type = "type"
+                                detect_value = field_value
+                            elif field_type == "name":
+                                where_clauses.append(f'name="{field_value}"')
+                                has_name = True
+                                detect_type = "name"
+                                detect_value = field_value
+                            elif field_type == "option_keyword":
+                                where_clauses.append(f'option_keyword="{field_value}"')
+                                has_option_keyword = True
+                                detect_type = "option_keyword"
+                                detect_value = field_value
 
                     if has_option_keyword:
                         result_key = "option_name"
@@ -655,13 +661,53 @@ def get_response(message: str, flag: str):
 
                     print("Query Results:", results_data)
 
+        PROMPT = """
+            Your task is to determine the correct keyword from a predefined set of two values: "select_product" or "add_cart". Based on the input provided by the user, classify it into one of the two keywords.
+
+            Instructions:
+
+            1. Detection Process:
+                - If the input indicates that the AI is asking the user to make a selection or clarify a product choice, return "select_product".
+                Examples of such cases:
+                    - The user mentions a category or general interest (e.g., "I need a laptop", "Show me shoes").
+                    - The user has not explicitly selected a specific product.
+                    - The AI is expected to provide options or ask clarifying questions.
+                - If the input indicates that the AI has clearly identified the product the user wants and is confirming or proceeding with adding it to the cart, return "add_cart".
+                Examples of such cases:
+                    - The user has made a specific choice (e.g., "I'll take the blue shirt", "Add the iPhone 15 to my cart").
+                    - The AI has enough information to proceed with adding the product to the cart.
+
+            2. Output:
+                - Return only one of the two values: "select_product" or "add_cart".
+                - Do not include any additional words, sentences, or explanations in the output.
+
+            Guidelines:
+            - Always evaluate the user's intent carefully before selecting the output.
+            - If there is any ambiguity or lack of clarity in the user's intent, default to "select_product".
+            - Ensure the output is concise and strictly limited to "select_product" or "add_cart".
+
+        """
+
+        response = get_openai_response(PROMPT, all_content)
+
+        print("Detect Result from AI response: ", response)
+            
+        if (response == "add_cart"):
+            print("-------------------->", response)
+            yield f'data: Successfully added to cart! Would you like to add more items?\n\n'
+            print("Most Similar Data",results_data[0])
+            yield f'data: ADD_CART:{results_data[0]}\n\n'
+        else:
+            yield f'data: {all_content}\n\n'
+
+            yield f'data: ChunkData:{json.dumps(results_data)}\n\n'
         # Convert the dictionary to a JSON string for the desired format
         # yield f'data: ChunkData:{json.dumps(keyword_chunks)}\n\n'
-        yield f'data: {all_content}\n\n'
+        # yield f'data: {all_content}\n\n'
 
         yield f'data: TYPE:{detect_type}@{detect_value}\n\n'        
 
-        yield f'data: ChunkData:{json.dumps(results_data)}\n\n'
+        # yield f'data: ChunkData:{json.dumps(results_data)}\n\n'
         # answer_sent = False
 
     elif flag == KEY_ASK_AMOUNT:
