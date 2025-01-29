@@ -2,6 +2,7 @@ import os
 import re
 import json
 import openai
+import psycopg2
 from flask import Flask, request, Response, stream_with_context
 from dotenv import load_dotenv
 from flask_cors import CORS
@@ -23,8 +24,6 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableBranch
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_community.chat_message_histories import ChatMessageHistory
-from sqlalchemy import text
-from flaskext.mysql import MySQL
 
 load_dotenv()
 
@@ -35,7 +34,7 @@ PINECONE_ENV = os.getenv("PINECONE_ENV")
 PINECONE_INDEX = os.getenv("PINECONE_INDEX")
 PINECONE_NAMESPACE = os.getenv("PINECONE_NAMESPACE")
 OPENAI_MODEL_NAME = os.getenv("OPENAI_MODEL_NAME")
-PORT = os.getenv("PORT")
+PORT = 4002
 
 # Define constants for flags
 KEY_SELECT_PRODUCT = "SELECT_PRODUCT"
@@ -45,18 +44,30 @@ KEY_END_ORDER = "END_ORDER"
 KEY_CHAT_CUSTOMER = "CHAT_CUSTOMER"
 KEY_ANSWER_AMOUNT = "ANSWER_AMOUNT"
 
+# PostgreSQL configuration
+POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
+POSTGRES_DB = os.getenv("POSTGRES_DB", "csv")
+POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
+POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
+
 app = Flask(__name__)
 app.config["CORS_HEADERS"] = "Content-Type"
-mysql = MySQL()
-app.config['MYSQL_DATABASE_USER'] = 'root'
-app.config['MYSQL_DATABASE_PASSWORD'] = 'rootROOT123!@#'
-app.config['MYSQL_DATABASE_DB'] = 'csv'
-app.config['MYSQL_DATABASE_HOST'] = 'localhost'
-mysql.init_app(app)
+
 CORS(app, supports_credentials=True, origins="*")
 
-conn = mysql.connect()
-cursor =conn.cursor()
+
+# Connect to PostgreSQL
+conn = psycopg2.connect(
+    dbname=POSTGRES_DB,
+    user=POSTGRES_USER,
+    password=POSTGRES_PASSWORD,
+    host=POSTGRES_HOST,
+    port=POSTGRES_PORT,
+)
+cursor = conn.cursor()
+print("Connected to PostgreSQL database successfully!")
+
 
 def get_openai_response(prompt, message):
     """Helper function to get a response from OpenAI."""
@@ -195,27 +206,39 @@ def get_db_response(keyword: str, type: str, name: str):
         if type == "":
             query = f'SELECT DISTINCT name, description, price, type FROM csv'
         else:
-            query = f'SELECT DISTINCT name, description, price FROM csv WHERE type="{type}"'
+            query = f'SELECT DISTINCT name, description, price FROM csv WHERE type=%s'
     elif keyword == "all_option_name":
         if type == "":
-            query = f'SELECT DISTINCT * FROM csv WHERE name="{name}"'
+            query = f'SELECT DISTINCT * FROM csv WHERE name=%s'
         else:
-            query = f'SELECT DISTINCT * FROM csv WHERE type="{type}" AND name="{name}"'
+            query = f'SELECT DISTINCT * FROM csv WHERE type=%s AND name=%s'
     else:
         return results_data  # Return empty if keyword doesn't match valid cases
 
     # Execute the query
     print("QUERY: ",query)
-    cursor.execute(query)
-    results = cursor.fetchall()
+    try:
+        if keyword == "all_option_keyword" and type != "":
+            cursor.execute(query, (type,))
+        elif keyword == "all_option_name" and type != "":
+            cursor.execute(query, (type, name))
+        elif keyword == "all_option_name":
+            cursor.execute(query, (name,))
+        else:
+            cursor.execute(query)
 
-    # Process results based on the keyword
-    if keyword == "all_option_keyword":
-        results_data = [{"name": row[0], "description": row[1], "price": row[2], "type": row[3]} for row in results]
-    elif keyword == "all_option_name":   
-        results_data = [{"option_name": f'{dict(zip(column_names, row))}', "description": row[4], "price": row[7], "type": row[5]} for row in results]
+        results = cursor.fetchall()
 
-    yield f'data: ChunkData:{json.dumps(results_data)}\n\n'
+        # Process results based on the keyword
+        if keyword == "all_option_keyword":
+            results_data = [{"name": row[0], "description": row[1], "price": row[2], "type": row[3]} for row in results]
+        elif keyword == "all_option_name":
+            results_data = [{"option_name": f'{dict(zip(column_names, row))}', "description": row[4], "price": row[7], "type": row[5]} for row in results]
+
+        yield f'data: ChunkData:{json.dumps(results_data)}\n\n'
+    except psycopg2.Error as e:
+        print(f"Error executing query: {e}")
+        yield f'data: Error executing query\n\n'
 
 def get_detect_title_list(record: str, keywords: str):
     """Detect relevant titles from a message and record."""
@@ -598,12 +621,28 @@ def get_response(message: str, flag: str):
                     all_content += chunk[key]
                     
                 elif key == "context":
+
+                    keyword_chunks["option_name"] = []
+                    
+                    # Iterate over the documents in the context chunk
+                    for document in chunk[key]:
+                        text_field = document.page_content
+
+                        product_data = parse_product_data(text_field)
+                        formatted_data = {
+                            "option_name": json.dumps(product_data).replace("\"", "'"),
+                            "description": product_data.get("description", ""),
+                            "price": product_data.get("price", 0)
+                        }
+
+                        keyword_chunks["option_name"].append(formatted_data)
                     # Obtain the title list from get_detect_result function
                     # print(chunk[key])
                     title_list = get_detect_result(chunk[key], message)
                     print("AI detect result: ", title_list)
                     
                     where_clauses = []
+                    query_params = []  # To store parameters for the query
                     result_key = ""
                     detect_type = ""
                     detect_value = ""
@@ -611,24 +650,28 @@ def get_response(message: str, flag: str):
                     has_option_keyword = False
                     has_name = False
 
+                     # Create WHERE clause for PostgreSQL queries
                     for item in title_list:
-
                         field_type, field_value = item
                         if field_value != "":
                             if field_type == "type":
-                                where_clauses.append(f'type="{field_value}"')
+                                where_clauses.append(f'type=%s')
+                                query_params.append(field_value)
                                 detect_type = "type"
                                 detect_value = field_value
                             elif field_type == "name":
-                                where_clauses.append(f'name="{field_value}"')
+                                where_clauses.append(f'name=%s')
+                                query_params.append(field_value)
                                 has_name = True
                                 detect_type = "name"
                                 detect_value = field_value
                             elif field_type == "option_keyword":
-                                where_clauses.append(f'option_keyword="{field_value}"')
+                                where_clauses.append(f'option_keyword=%s')
+                                query_params.append(field_value)
                                 has_option_keyword = True
                                 detect_type = "option_keyword"
                                 detect_value = field_value
+
 
                     if has_option_keyword:
                         result_key = "option_name"
@@ -645,21 +688,41 @@ def get_response(message: str, flag: str):
                     else:
                         query = f"SELECT DISTINCT {result_key}, {result_key2}, price FROM csv WHERE {where_clauses}"
 
-                    print(query)
+                    print(f"Generated Query: {query}")
+                    print(f"Query Parameters: {query_params}")
 
-                    cursor.execute(query)
-                    results = cursor.fetchall()
-                    print(results)
+                    try:
+                        # Execute the query with parameters
+                        cursor.execute(query, tuple(query_params))
+                        results = cursor.fetchall()
 
-                    column_names = ["no","type", "name", "price", "description", "option_keyword", "option_name", "option_price"]
+                        column_names = ["no", "type", "name", "price", "description", "option_keyword", "option_name", "option_price"]
 
-                    # Format results for streaming
-                    if result_key == "option_name":
-                        results_data = [{result_key: f'{dict(zip(column_names, row))}', result_key2: row[8], "price": row[7]} for row in results]
-                    else:
-                        results_data = [{result_key : row[0], result_key2: row[1], "price": row[2]} for row in results]
+                        # Format results for streaming
+                        if result_key == "option_name":
+                            results_data = [
+                                {
+                                    result_key: f'{dict(zip(column_names, row))}',
+                                    result_key2: row[8],
+                                    "price": row[7],
+                                }
+                                for row in results
+                            ]
+                        else:
+                            results_data = [
+                                {
+                                    result_key: row[0],
+                                    result_key2: row[1],
+                                    "price": row[2],
+                                }
+                                for row in results
+                            ]
 
-                    print("Query Results:", results_data)
+                        print("Query Results:", results_data)
+
+                    except psycopg2.Error as e:
+                        print(f"Error executing query: {e}")
+                        results_data = {"error": "Failed to execute query"}
 
         PROMPT = """
             Your task is to determine the correct keyword from a predefined set of two values: "select_product" or "add_cart". Based on the input provided by the user, classify it into one of the two keywords.
@@ -695,8 +758,8 @@ def get_response(message: str, flag: str):
         if (response == "add_cart"):
             print("-------------------->", response)
             yield f'data: Successfully added to cart! Would you like to add more items?\n\n'
-            print("Most Similar Data",results_data[0])
-            yield f'data: ADD_CART:{results_data[0]}\n\n'
+            print("Most Similar Data",keyword_chunks.get("option_name", [])[0])
+            yield f'data: ADD_CART:{keyword_chunks.get("option_name", [])[0]}\n\n'
         else:
             yield f'data: {all_content}\n\n'
 
