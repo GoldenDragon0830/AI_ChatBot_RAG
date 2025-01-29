@@ -71,7 +71,7 @@ const ChatWindow: React.FC = () => {
 
   // const API_URL = "http://13.208.253.225:4000/chat";
   // const API_URL = "http://52.221.236.58:80/chat";
-  const API_URL = "http://3.99.185.93:4000/chat";
+  const API_URL = "http://85.209.93.93:4003/chat";
 
   const [messages, setMessages] = useState<MessageInterface[]>([
     { content: GREETING_WORD, role: "assistant" },
