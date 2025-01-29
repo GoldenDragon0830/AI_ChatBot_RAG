@@ -142,7 +142,7 @@ const ChatWindow: React.FC = () => {
     "Chinese_dishes",
     "Thai_food",
     "Chef's_specialities",
-    "sushi_appetizers",
+    "Sushi_appetizers",
     "Regular_rolls",
     "Vegetable_rolls",
     "Tempura_rolls",
