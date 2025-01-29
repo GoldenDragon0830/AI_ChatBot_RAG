@@ -51,7 +51,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       )}
       <Dialog open={open} onClose={handleClose}>
         <DialogActions>
-          <DialogTitle style={{ textAlign: "center" }}>{content}</DialogTitle>
+          <DialogTitle style={{ textAlign: "center" }}>{content.replace(/_/g, " ")}</DialogTitle>
         </DialogActions>
         <DialogContent>
           <img src={imageUrl} alt={content} style={{ width: "100%" }} />
@@ -101,7 +101,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           }}
           elevation={5}
         >
-          <Typography variant="body1">{content}</Typography>
+          <Typography variant="body1">{content.replace(/_/g, " ")}</Typography>
         </Paper>
       </div>
     </Box>
