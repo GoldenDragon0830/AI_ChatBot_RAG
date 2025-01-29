@@ -40,6 +40,8 @@ import ImageListItem from "@mui/material/ImageListItem";
 import Chip from "@mui/material/Chip";
 import DinnerDiningIcon from "@mui/icons-material/DinnerDining";
 import BackspaceIcon from "@mui/icons-material/Backspace";
+import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
+import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
 
 import Card from "@mui/material/Card";
 import CardHeader from "@mui/material/CardHeader";
@@ -51,8 +53,10 @@ import { CheckBox, Description, LocalDining } from "@mui/icons-material";
 const label = { inputProps: { "aria-label": "Checkbox demo" } };
 
 const displayOptionSoup = ["Beef Dumplings","Egg Drop Soup", "Hot And Sour Soup", "Thai Chicken Noodle Soup", "Tofu Vegetable Soup"];
-const displayOptionContinue = ["Wonton Soup", "Egg Drop Wonton Soup"];
-const displayOptionDish = ["Fried Rice", "Lo-mein", "Chow Fun", "Mei Fun", "Thai Fried Rice", "With Broccoli", "With Eggplants", "With Mixed Vegetables", "Moo Shoo Style", "Steamed Chicken With Mixed Vegetables S", "Pepper Steak S", "Sichuan S", "Hunan Style S", "With String Beans in Garlic Sauce S", "With Mushrooms S", ] // small, large
+const displayOptionContinue = ["Subgum Wonton Soup", "Wonton Soup", "Egg Drop Wonton Soup"];
+const displayOptionDish = ["Fried Rice", "Lo-mein", "Chow Fun", "Mei Fun", "Thai Fried Rice",  ]; // small, large
+
+const displayOptionChinaDish = ["With Broccoli", "With Eggplants", "With Mixed Vegetables", "Moo Shoo Style", "Steamed Chicken With Mixed Vegetables S", "Pepper Steak S", "Sichuan S", "Hunan Style S", "With String Beans in Garlic Sauce S", "With Mushrooms S",]; // small, large
 
 interface MessageInterface {
   content: string;
@@ -77,7 +81,7 @@ const INITIAL_AMOUNT = 1;
 const GREETING_WORD =
   "I'm West Side Wok Order Assistant, What would you like to order today?";
 
-const drawerWidth = 1200;
+const drawerWidth = 1300;
 
 const ChatWindow: React.FC = () => {
   const theme = useTheme();
@@ -102,9 +106,9 @@ const ChatWindow: React.FC = () => {
   // const [selectedSpecialOption, setSelectedSpecialOption] = useState("Pint"); // Default to "Pint"
   // const [specialItemCount, setSpecialItemCount] = useState(1);
 
-  const API_URL = "http://3.99.185.93:4002/chat";
-  const API_GET_FROM_DB_URL = "http://3.99.185.93:4002/get_db_data";
-  const API_CHAT_VIA_INPUT_URL = "http://3.99.185.93:4002/chat_via_input";
+  const API_URL = "http://85.209.93.93:4002/chat";
+  const API_GET_FROM_DB_URL = "http://85.209.93.93:4002/get_db_data";
+  const API_CHAT_VIA_INPUT_URL = "http://85.209.93.93:4002/chat_via_input";
 
   // const API_URL = process.env.REACT_APP_API_URL;
 
@@ -150,6 +154,7 @@ const ChatWindow: React.FC = () => {
   ];
 
   const [chunkData, setChunkData] = useState<ChunkOption[]>([]);
+  const [selectedChunkData, setSelectedChunkData] = useState<ChunkOption>()
 
   const [orderData, setOrderData] = useState<
     {
@@ -264,7 +269,7 @@ const ChatWindow: React.FC = () => {
           <ListItemText primary={title} 
             secondary={
               <Box>
-                <Typography variant="body2" color="text.secondary" component="span">
+                <Typography variant="body2" color="secondary" component="span" >
                   ${price}
                 </Typography>
                 <Box sx={{ display: "flex", flexDirection: "column", marginTop: 1 }}>
@@ -273,11 +278,18 @@ const ChatWindow: React.FC = () => {
                       {row.map((option, index) => (
                         <Chip
                           key={index}
-                          color="success"
                           label={option}
                           size="small"
                           sx={{
                             marginLeft: index === 0 ? 0 : "2px", // Add spacing only for chips after the first one
+                            color: "#73AD21", // Custom text color
+                            borderColor: "#73AD21", // Custom border color
+                            "& .MuiChip-label": {
+                              fontWeight: "bold", // Optional: Make the label bold
+                            },
+                            "&:hover": {
+                              backgroundColor: "#73AD21", // Optional: Add a hover effect with a lighter green
+                            },
                           }}
                         />
                       ))}
@@ -293,6 +305,7 @@ const ChatWindow: React.FC = () => {
 
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [chunkTotalPrice, setChunkTotalPrice] = useState(0);
+  
 
   const AmountItemButton: React.FC<{
     text: string;
@@ -308,7 +321,7 @@ const ChatWindow: React.FC = () => {
     const [generalCount, setGeneralCount] = useState<number>(1);
 
     const handleIncrease = (optionKey: string) => { 
-      if (displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text)) {
+      if (displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text)) {
         setItemCount((prev) => ({
           ...prev,
           [optionKey]: (prev[optionKey] || 0) + 1,
@@ -319,7 +332,7 @@ const ChatWindow: React.FC = () => {
     };
   
     const handleDecrease = (optionKey: string) => {
-      if (displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text)) {
+      if (displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text)) {
         setItemCount((prev) => ({
           ...prev,
           [optionKey]: Math.max(0, (prev[optionKey] || 0) - 1),
@@ -335,7 +348,7 @@ const ChatWindow: React.FC = () => {
 
     const handleOnClick = () => {
       if (itemCount) {
-        if (displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text)) {
+        if (displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text)) {
           const optionToAdd = selectedOption === "Option 1" ? (displayOptionDish.includes(text) ? "Small" : text === "Beef Dumplings" ? "Steamed" : "Pint") : (displayOptionDish.includes(text) ? "Large" : text === "Beef Dumplings" ? "Fried" : "Quart");
           console.log(optionToAdd)
           setCartData((prevCartData) => [
@@ -367,10 +380,14 @@ const ChatWindow: React.FC = () => {
         <Card
           sx={{
             width: 280,
-            margin: "5px",
+            marginLeft: "20px",
+            marginBottom: "20px",
             cursor: "pointer",
-            backgroundColor: selectedOptionListData.includes(text) ? "grey.400" : "white",
+            backgroundColor: selectedOptionListData.includes(text) ? "#F1F7E9" : "white",
             transition: "background-color 0.3s ease-in-out",
+            border: "1px solid",
+            borderColor: "#73AD21",
+            borderRadius: "20px"
           }}
         >
           <CardContent
@@ -387,6 +404,7 @@ const ChatWindow: React.FC = () => {
               },
             }}
             onClick={() => {
+              console.log(text)
               if (type === "option_name") {
                 setSelectedOptionListData((prevOptions) => {
                   if (prevOptions.includes(text)) {
@@ -395,7 +413,7 @@ const ChatWindow: React.FC = () => {
                     return [...prevOptions, text];
                   }
                 });
-              } else if (!displayOptionSoup.includes(text)) {
+              } else if (!displayOptionSoup.includes(text) && !displayOptionContinue.includes(text) && !displayOptionDish.includes(text) && !displayOptionChinaDish.includes(text)) {
                 onClick();
               }
             }}
@@ -404,7 +422,7 @@ const ChatWindow: React.FC = () => {
               variant="body2"
               sx={{
                 fontWeight: "bold",
-                color: "green",
+                color: "block",
                 fontSize: "20px",
                 marginBottom: "5px",
                 overflow: "hidden",
@@ -432,6 +450,85 @@ const ChatWindow: React.FC = () => {
                 {description}
               </Typography>
             ) : null}
+            <Box sx={{ display: "flex", marginBottom: "-20px", gap: 1, height: "30px" }}>
+              {displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text) ? (
+                <div>
+                  {/* Badge for Option 1 */}                    
+                    <Badge
+                      badgeContent={itemCount["Option 1"] || 0} // Dynamically display the count for Option 1
+                      sx={{
+                        "& .MuiBadge-badge": {
+                          backgroundColor: "#FF3B30", // Set the badge background color
+                          color: "white", // Set the badge text color (optional)
+                          border: "2px solid #FF3B30", // Optional: Add a border matching the color
+                        }
+                      }}
+                    >
+                      <Chip
+                        sx={{
+                          color: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`, // Custom text color
+                          borderColor: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`, // Custom border color
+                          "& .MuiChip-label": {
+                            fontWeight: "bold", // Optional: Make the label bold
+                          },
+                          "&:hover": {
+                            backgroundColor: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`, // Optional: Add a hover effect with a lighter green
+                          },
+                          marginRight: "5px",
+                          fontSize: "14px"
+                        }}
+                        size="small"
+                        label={(displayOptionSoup.includes(text) || displayOptionContinue.includes(text)) ? (text === "Beef Dumplings" ? "Steamed" : "Pint $5") : displayOptionDish.includes(text) ? "Small $9" : displayOptionChinaDish.includes(text) ? "Small $18" : undefined}
+                        variant="outlined"
+                        onClick={() => handleSelectOption("Option 1")}
+                      />
+                    </Badge>
+                    {/* Badge for Option 2 */}
+                    <Badge
+                      badgeContent={itemCount["Option 2"] || 0} // Dynamically display the count for Option 2
+                      sx={{
+                        "& .MuiBadge-badge": {
+                          backgroundColor: "#FF3B30", // Set the badge background color
+                          color: "white", // Set the badge text color (optional)
+                          border: "2px solid #FF3B30", // Optional: Add a border matching the color
+                        }
+                      }}
+                    >
+                      <Chip
+                        sx={{
+                          color: `${selectedOption === "Option 2" ? "#73AD21" : "#BABABA"}`, // Custom text color
+                          borderColor: `${selectedOption === "Option 2" ? "#73AD21" : "#BABABA"}`, // Custom border color
+                          "& .MuiChip-label": {
+                            fontWeight: "bold", // Optional: Make the label bold
+                          },
+                          "&:hover": {
+                            backgroundColor: `${selectedOption === "Option 2" ? "#73AD21" : "#BABABA"}`, // Optional: Add a hover effect with a lighter green
+                          },
+                          marginRight: "5px",
+                          fontSize: "14px"
+                        }}
+                        size="small"
+                        label={(displayOptionSoup.includes(text) || displayOptionContinue.includes(text)) ? (text === "Beef Dumplings" ? "Fried" : "Quart $10") : displayOptionDish.includes(text) ? "Large $16" : displayOptionChinaDish.includes(text) ? "Large $24" : undefined}
+                        variant="outlined"
+                        onClick={() => handleSelectOption("Option 2")}
+                      />
+                    </Badge>
+                    {
+                      !displayOptionSoup.includes(text) ? (
+                        <Chip
+                          color="info"
+                          size="small"
+                          label="More.."
+                          variant="outlined"
+                          onClick={onClick}
+                        />
+                      ) : null
+                    }
+                </div>
+              ) : (
+                null
+              )}
+            </Box>
           </CardContent>
           <CardActions
             sx={{
@@ -441,44 +538,9 @@ const ChatWindow: React.FC = () => {
             }}
             disableSpacing
           >
-            <Box sx={{ display: "flex", gap: 1 }}>
-              {displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) ? (
-                <div>
-                  {/* Badge for Option 1 */}
-                  <Badge
-                    badgeContent={itemCount["Option 1"] || 0} // Dynamically display the count for Option 1
-                    color="success"
-                    sx={{ marginRight: "2px" }}
-                  >
-                    <Chip
-                      color="success"
-                      size="small"
-                      label={displayOptionDish.includes(text) ? "Small" : text === "Beef Dumplings" ? "Steamed" : "Pint $5"}
-                      variant={selectedOption === "Option 1" ? "filled" : "outlined"}
-                      onClick={() => handleSelectOption("Option 1")}
-                    />
-                  </Badge>
-
-                  {/* Badge for Option 2 */}
-                  <Badge
-                    badgeContent={itemCount["Option 2"] || 0} // Dynamically display the count for Option 2
-                    color="success"
-                  >
-                    <Chip
-                      color="success"
-                      size="small"
-                      label={displayOptionDish.includes(text) ? "Large" : text === "Beef Dumplings" ? "Fried" : "Quart $10"}
-                      variant={selectedOption === "Option 2" ? "filled" : "outlined"}
-                      onClick={() => handleSelectOption("Option 2")}
-                    />
-                  </Badge>
-                </div>
-              ) : (
-                <Typography variant="body2" style={{ color: "green", marginLeft: "10px" }}>
-                  {"$" + parseFloat(price)}
-                </Typography>
-              )}
-            </Box>
+            <Typography variant="body2" style={{ color: "#73AD21", fontSize: "19px", fontWeight: "bold", marginLeft: "10px" }}>
+              {"$" + parseFloat(price)}
+            </Typography>
             {type === "name" && (
               <Box
                 sx={{
@@ -488,33 +550,37 @@ const ChatWindow: React.FC = () => {
                   justifyContent: "space-between",
                 }}
               >
-                <IconButton
-                  size="small"
-                  color="success"
-                  onClick={() =>
-                    displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text)
-                      ? handleDecrease(selectedOption || "Option 1")
-                      : handleDecrease("")
-                  }
-                >
-                  <RemoveIcon fontSize="small" />
-                </IconButton>
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    alignItems: "center",
-                  }}
-                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "row",
+                      alignItems: "center",
+                      border: "1px, solid",
+                      borderRadius: "10px",
+                      borderColor: "#BABABA"
+                    }}
+                  >
+                                    <IconButton
+                    size="small"
+                    color="inherit"
+                    onClick={() =>
+                      displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) ||displayOptionChinaDish.includes(text)
+                        ? handleDecrease(selectedOption || "Option 1")
+                        : handleDecrease("")
+                    }
+                  >
+                    <RemoveIcon fontSize="small" />
+                  </IconButton>
                   <Typography>
-                    {displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text)
+                    {displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text)
                       ? itemCount[selectedOption || "Option 1"] || 0
                       : generalCount}
                   </Typography>
                   <IconButton
                     size="small"
+                    color="inherit"
                     onClick={() =>
-                      displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text)
+                      displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text)
                         ? handleIncrease(selectedOption || "Option 1")
                         : handleIncrease("")
                     }
@@ -969,7 +1035,6 @@ const ChatWindow: React.FC = () => {
               try {
                 setOneOrderData("");
                 const cartDataString = data.split(`${KEY_ADD_CART}:`)[1]; // Extract the cart data string
-                console.log(cartDataString);
 
                 // Use regex to extract specific fields from the string
                 const typeMatch = cartDataString.match(/'type':\s*'([^']+)'/);
@@ -1302,14 +1367,24 @@ const ChatWindow: React.FC = () => {
     {}
   );
 
+  const MenuIcon = ({ color }: { color: string }) => {
+    return (
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="26" height="26" fill="white" fill-opacity="0.01"/>
+        <path d="M16.7406 14.8375H6.37188C6.74688 14.6172 7.14063 14.3969 7.60001 14.2844C7.90938 14.2094 8.27501 14.2047 8.66407 14.2C8.95938 14.1953 9.26407 14.1906 9.57813 14.1578C9.86407 14.1297 10.1453 14.0688 10.4172 14.0125C10.8063 13.9281 11.1766 13.8531 11.5469 13.8531C11.9172 13.8531 12.2875 13.9328 12.6813 14.0125C12.9531 14.0688 13.2391 14.1297 13.5203 14.1578C13.8344 14.1906 14.1391 14.1953 14.4344 14.2C14.8234 14.2047 15.1938 14.2094 15.4984 14.2844C15.9719 14.4016 16.3656 14.6219 16.7406 14.8375ZM4.84844 17.2891H18.2641C18.0203 20.6781 15.1047 23.3594 11.5563 23.3594C8.01251 23.3594 5.09688 20.6781 4.84844 17.2891ZM19.2625 16.0516V16.075C19.2625 16.2297 19.1359 16.3516 18.9859 16.3516H4.12657C3.97188 16.3516 3.85001 16.225 3.85001 16.075V16.0516C3.85001 15.8969 3.97657 15.775 4.12657 15.775H18.9859C19.1406 15.775 19.2625 15.9016 19.2625 16.0516ZM22.15 7.46875C22.1406 7.21562 22.0094 6.99531 21.7891 6.87344L14.4203 2.73438C14.3078 2.67344 14.1906 2.64062 14.0734 2.64062C13.9563 2.64062 13.8438 2.66875 13.7359 2.72969C13.5156 2.84688 13.3797 3.05781 13.3609 3.30625L12.6578 13.0516C12.7328 13.0656 12.8078 13.0844 12.8828 13.0984C13.1453 13.1547 13.3938 13.2062 13.6281 13.2297C13.7406 13.2391 13.8578 13.2484 13.9703 13.2531L21.8266 8.0875C22.0422 7.95156 22.1594 7.72656 22.15 7.46875ZM14.1719 12.2828C14.0922 12.3344 14.0031 12.3578 13.9141 12.3578C13.7641 12.3578 13.6141 12.2828 13.525 12.1469C13.3844 11.9313 13.4406 11.6406 13.6609 11.5C13.8766 11.3594 14.1672 11.4156 14.3078 11.6359C14.4438 11.8516 14.3875 12.1422 14.1719 12.2828ZM14.5656 9.32969C14.5469 9.57812 14.3406 9.76562 14.0969 9.76562H14.0641C13.8063 9.74687 13.6141 9.52188 13.6328 9.26406C13.6516 9.00625 13.8766 8.81406 14.1344 8.83281C14.3922 8.85156 14.5844 9.07187 14.5656 9.32969ZM14.7531 6.7375C14.7344 6.98594 14.5281 7.17344 14.2844 7.17344H14.2516C13.9938 7.15469 13.8016 6.92969 13.8203 6.67188C13.8391 6.41406 14.0641 6.22188 14.3219 6.24063C14.5797 6.25469 14.7719 6.47969 14.7531 6.7375ZM14.8844 4.3375C14.8 4.49219 14.6406 4.57656 14.4766 4.57656C14.3969 4.57656 14.3219 4.55781 14.2469 4.51562C14.0219 4.38906 13.9422 4.10313 14.0688 3.87813C14.1953 3.65313 14.4813 3.57344 14.7063 3.7C14.9313 3.82656 15.0109 4.1125 14.8844 4.3375ZM16.3844 10.8297C16.3047 10.8812 16.2156 10.9047 16.1266 10.9047C15.9766 10.9047 15.8266 10.8297 15.7375 10.6938C15.5969 10.4781 15.6531 10.1875 15.8734 10.0469C16.0891 9.90625 16.3797 9.9625 16.5203 10.1828C16.6609 10.3937 16.6 10.6844 16.3844 10.8297ZM16.5156 8.07344C16.4359 8.125 16.3469 8.14844 16.2578 8.14844C16.1078 8.14844 15.9578 8.07344 15.8641 7.9375C15.7234 7.72188 15.7844 7.43125 16 7.29062C16.2156 7.15 16.5063 7.21094 16.6469 7.42656C16.7922 7.64219 16.7313 7.93281 16.5156 8.07344ZM16.9094 5.47656C16.825 5.63125 16.6656 5.71562 16.5016 5.71562C16.4219 5.71562 16.3469 5.69688 16.2719 5.65469C16.0469 5.52813 15.9672 5.24219 16.0938 5.01719C16.2203 4.79219 16.5063 4.7125 16.7313 4.83906C16.9563 4.96563 17.0359 5.25156 16.9094 5.47656ZM18.6016 9.37188C18.5219 9.42344 18.4328 9.44687 18.3438 9.44687C18.1938 9.44687 18.0438 9.37187 17.95 9.23594C17.8094 9.02031 17.8703 8.72969 18.0859 8.58906C18.3016 8.44844 18.5922 8.50938 18.7328 8.725C18.8734 8.94063 18.8172 9.23125 18.6016 9.37188ZM18.9391 6.61563C18.8547 6.77031 18.6953 6.85469 18.5313 6.85469C18.4516 6.85469 18.3766 6.83594 18.3016 6.79375C18.0766 6.66719 17.9969 6.38125 18.1234 6.15625C18.25 5.93125 18.5359 5.85156 18.7609 5.97812C18.9859 6.10469 19.0656 6.39063 18.9391 6.61563ZM20.9641 7.75469C20.8797 7.90938 20.7203 7.99375 20.5563 7.99375C20.4766 7.99375 20.4016 7.975 20.3266 7.93281C20.1016 7.80625 20.0219 7.52031 20.1484 7.29531C20.275 7.07031 20.5609 6.99062 20.7859 7.11719C21.0109 7.24375 21.0906 7.52969 20.9641 7.75469Z" fill={color}/>
+        
+      </svg>
+    )
+  }
+
   const drawer = (
     <div>
       <Divider />
       <Paper
         sx={{
-          height: "140px",
+          height: "100px",
           display: "flex",
-          backgroundColor: '#059669',
+          backgroundColor: 'white',
           justifyContent: "center",
           flexWrap: "wrap",
           listStyle: "none",
@@ -1319,15 +1394,26 @@ const ChatWindow: React.FC = () => {
       >
         {menuList.map((title, index) => {
           return (
-            <Button
+            <Chip
               sx={{
                 margin: "5px",
-                color: `${selectedChip === title ? "#07dfa1" : "white"}`,
+                color: `${selectedChip === title ? "#FFFFFF" : "#BABABA"}`,
+                backgroundColor: `${selectedChip === title ? "#73AD21" : "#FFFFFF"}`,
+                fontWeight: `${selectedChip === title ? "bold" : "normal"}`, // Add this line
+                fontSize: "15px"
               }}
-              startIcon={<DinnerDiningIcon />}
-              // variant={selectedChip === title ? "filled" : "outlined"} // Change variant when selected
+              icon={
+                <MenuIcon
+                  color={selectedChip === title ? "#FFFFFF" : "#BABABA"} // Pass color dynamically
+                />
+              }
+              variant={selectedChip === title ? "filled" : "outlined"} // Change variant when selected
               key={index}
               onClick={() => {
+                setSelectedOptionListData([]);
+                setChunkTotalPrice(0);
+                setSelectedChunkData(undefined);
+                setTotalPrice("");
                 if (title === "ALL") {
                   setSelectedChip(title); // Set the selected chip
                   setTypeData(title); // set one type data
@@ -1350,9 +1436,9 @@ const ChatWindow: React.FC = () => {
                   setMessages((prevMessage) => [...prevMessage, userMessage]);
                 }
               }}
+              label={title}
             >
-              {title}
-            </Button>
+            </Chip>
           );
         })}
       </Paper>
@@ -1365,151 +1451,152 @@ const ChatWindow: React.FC = () => {
         <Paper
           sx={{
             display: "flex",
+            alignItems: "center",
             flexWrap: "nowrap", // Prevent wrapping to ensure chips stay in one line
             overflowX: "auto", // Enable horizontal scrolling
             listStyle: "none",
+            height: "auto",
             p: 0.5,
             m: 0,
-            padding: "20px",
-            width: "1200px", // Ensure it doesn't overflow its container
-            backgroundColor: "#d1fae5"
+            width: "100%", // Ensure it doesn't overflow its container
           }}
         >
-          <Button
-            color="success"
-            startIcon={<BackspaceIcon />}
-            sx={{
-              marginRight: "20px",
-              width: "100px",
-            }}
-            onClick={handleBackButton}
-            disabled={chunkDataHistory.length === 0}
-          >
-            Back
-          </Button>
-          {nameListData.map((item, index) => {
-            return (
-              <Button
-                sx={{
-                  margin: "5px",
-                  backgroundColor: `${selectedNameChip === item.value ? "#8cf2be" : "transparent"}`,
-                  color: "black"
-                }}
-                key={index}
-                onClick={() => {
-                  if (item.value === "ALL") {
-                    setSelectedNameChip(item.value);
-                    // setSelectedChunk("ALL");
-                    handleGetResponseFromDB(
-                      "all_option_name",
-                      typeData,
-                      nameData
-                    );
-                  } else {
-                    setSelectedNameChip(item.value);
-                    // setSelectedChunk(item.value)
-                    const userMessage: MessageInterface = {
-                      content: item.value, // Send the text of the item as the user's message
-                      role: "user",
-                    };
-                    const backMessage: MessageInterface = {
-                      content:
-                        `type: ${typeData} + name: ${nameData} + ` + item.value, // Send the text of the item as the user's message
-                      role: "user",
-                    };
-                    handleSendMessage(backMessage, flag, false, false);
-                    setMessages((prevMessage) => [...prevMessage, userMessage]);
-                  }
-                }}
-              >
-                {item.value}
-              </Button>
-            );
-          })}
+            <Button
+              color="success"
+              startIcon={<ArrowBackIosIcon />}
+              sx={{
+                marginLeft: "30px",
+                marginTop: "10px",
+                marginBottom: "10px",
+                width: "100px",
+                color: "black"
+              }}
+              onClick={handleBackButton}
+              disabled={chunkDataHistory.length === 0}
+            >
+              Back
+            </Button>
+            {nameListData.map((item, index) => {
+              return (
+                <Chip
+                  sx={{
+                    margin: "5px",
+                    color: `${selectedNameChip === item.value ? "#FFFFFF" : "#BABABA"}`,
+                    backgroundColor: `${selectedNameChip === item.value ? "#73AD21" : "#FFFFFF"}`,
+                    fontWeight: `${selectedNameChip === item.value ? "bold" : "normal"}`, // Add this line
+                    fontSize: "14px"
+                  }}
+                  variant="outlined"
+                  label={item.value}
+                  key={index}
+                  onClick={() => {
+                    if (item.value === "ALL") {
+                      setSelectedNameChip(item.value);
+                      // setSelectedChunk("ALL");
+                      handleGetResponseFromDB(
+                        "all_option_name",
+                        typeData,
+                        nameData
+                      );
+                    } else {
+                      setSelectedNameChip(item.value);
+                      // setSelectedChunk(item.value)
+                      const userMessage: MessageInterface = {
+                        content: item.value, // Send the text of the item as the user's message
+                        role: "user",
+                      };
+                      const backMessage: MessageInterface = {
+                        content:
+                          `type: ${typeData} + name: ${nameData} + ` + item.value, // Send the text of the item as the user's message
+                        role: "user",
+                      };
+                      handleSendMessage(backMessage, flag, false, false);
+                      setMessages((prevMessage) => [...prevMessage, userMessage]);
+                    }
+                  }}
+                >
+                </Chip>
+              );
+            })}
+            <Button
+              variant="outlined"
+              color="success"
+              sx={{
+                color: "#73AD21",
+                marginLeft: "auto",
+                fontSize: "16px",
+                fontWeight: "bold",
+                border: "1px solid",
+                borderColor: "#73AD21",
+              }}
+              startIcon={<AddShoppingCartIcon />}
+              disabled={selectedOptionListData.length === 0} // Disable button if nothing is selected
+              onClick={() => {
+                const itemsToAdd = chunkData.filter((item) =>
+                  selectedOptionListData.includes(getItemOptionName(item.value))
+                );
+
+                const cartDataString = itemsToAdd[0].value;
+                console.log(cartDataString)
+
+                // Use regex to extract specific fields from the string
+                const typeMatch = cartDataString.match(/'type':\s*'([^']+)'/);
+                const nameMatch = cartDataString.match(/'name':\s*(['"])(.*?)\1/);
+                const descriptionMatch = cartDataString.match(
+                  /'description':\s*'([^']*)'/
+                );
+                const priceMatch = cartDataString.match(/'price':\s*([\d.]+)/);
+                const optionKeywordMatch = cartDataString.match(
+                  /'option_keyword':\s*'([^']+)'/
+                );
+                const optionNameMatch = cartDataString.match(
+                  /'option_name':\s*'([^']+)'/
+                );
+                const optionPriceMatch = cartDataString.match(
+                  /'option_price':\s*'([^']+)'/
+                );
+
+                // Construct the object manually
+                const parsedCartData = {
+                  type: typeMatch ? typeMatch[1] : "",
+                  name: nameMatch ? nameMatch[2] : "",
+                  description: descriptionMatch ? descriptionMatch[1] : "",
+                  price: priceMatch ? priceMatch[1] : "",
+                  option_keyword: optionKeywordMatch
+                    ? optionKeywordMatch[1]
+                    : "",
+                  option_name: optionNameMatch ? optionNameMatch[1] : "",
+                  option_price: optionPriceMatch ? optionPriceMatch[1] : "",
+                };
+
+                console.log(parsedCartData)
+
+                setCartCount(cartCount + 1);
+                setCartData((prevCartData) => [
+                  ...prevCartData,
+                  {
+                    ...parsedCartData,
+                    count: selectedItemCount, // Default count for new cart items
+                    optionList: selectedOptionListData
+                  },
+                ]);
+
+                console.log("Cart updated:", parsedCartData);
+                setSelectedOptions([]);
+
+                const messageText: MessageInterface = {
+                  content: "Added to cart successfully! Would you like to add more items or options?",
+                  role: "assistant",
+                };
+            
+                setMessages((prevMessages) => [...prevMessages, messageText]);
+                
+                setOneOrderData("")
+              }}
+            >
+              ${((parseFloat(selectedChunkData?.price ?? '0') || 0) + chunkTotalPrice).toFixed(2)}
+            </Button>
         </Paper>
-        <Typography
-          sx={{
-            textAlign: "center",
-            backgroundColor: "#d1fae5",           
-            padding: "10px",
-            borderRadius: "5px",
-            color: "green",
-          }}
-        >
-          <Button
-            variant="contained"
-            color="success"
-            sx={{
-              color: "black"
-            }}
-            startIcon={<AddShoppingCartIcon />}
-            disabled={selectedOptionListData.length === 0} // Disable button if nothing is selected
-            onClick={() => {
-              const itemsToAdd = chunkData.filter((item) =>
-                selectedOptionListData.includes(getItemOptionName(item.value))
-              );
-
-              const cartDataString = itemsToAdd[0].value;
-              console.log(cartDataString)
-
-              // Use regex to extract specific fields from the string
-              const typeMatch = cartDataString.match(/'type':\s*'([^']+)'/);
-              const nameMatch = cartDataString.match(/'name':\s*(['"])(.*?)\1/);
-              const descriptionMatch = cartDataString.match(
-                /'description':\s*'([^']*)'/
-              );
-              const priceMatch = cartDataString.match(/'price':\s*([\d.]+)/);
-              const optionKeywordMatch = cartDataString.match(
-                /'option_keyword':\s*'([^']+)'/
-              );
-              const optionNameMatch = cartDataString.match(
-                /'option_name':\s*'([^']+)'/
-              );
-              const optionPriceMatch = cartDataString.match(
-                /'option_price':\s*'([^']+)'/
-              );
-
-              // Construct the object manually
-              const parsedCartData = {
-                type: typeMatch ? typeMatch[1] : "",
-                name: nameMatch ? nameMatch[2] : "",
-                description: descriptionMatch ? descriptionMatch[1] : "",
-                price: priceMatch ? priceMatch[1] : "",
-                option_keyword: optionKeywordMatch
-                  ? optionKeywordMatch[1]
-                  : "",
-                option_name: optionNameMatch ? optionNameMatch[1] : "",
-                option_price: optionPriceMatch ? optionPriceMatch[1] : "",
-              };
-
-              console.log(parsedCartData)
-
-              setCartCount(cartCount + 1);
-              setCartData((prevCartData) => [
-                ...prevCartData,
-                {
-                  ...parsedCartData,
-                  count: selectedItemCount, // Default count for new cart items
-                  optionList: selectedOptionListData
-                },
-              ]);
-
-              console.log("Cart updated:", parsedCartData);
-              setSelectedOptions([]);
-
-              const messageText: MessageInterface = {
-                content: "Added to cart successfully! Would you like to add more items or options?",
-                role: "assistant",
-              };
-          
-              setMessages((prevMessages) => [...prevMessages, messageText]);
-              
-              setOneOrderData("")
-            }}
-          >
-            Add Cart ${chunkTotalPrice.toFixed(2)}
-          </Button>
-        </Typography>
       </Box>
       { selectedOptionListData.length !== 0 ? (
         <Box
@@ -1527,8 +1614,8 @@ const ChatWindow: React.FC = () => {
           p: 0.5,
           m: 0,
           padding: "10px",
-          width: "1200px", // Ensure it doesn't overflow its container
-          backgroundColor: "#d1fae5"
+          paddingLeft: "45px",
+          width: "100%", // Ensure it doesn't overflow its container
         }}
       >
         {selectedOptionListData.map((text, index) => {
@@ -1536,10 +1623,12 @@ const ChatWindow: React.FC = () => {
             <Chip
               sx={{
                 margin: "2px",
+                paddingLeft: "10px",
+                paddingRight: "10px",
+                color: "#BABABA"
               }}
               label={text}
               clickable
-              color="success"
               variant="outlined" // Change variant when selected
               key={index}
             />
@@ -1549,24 +1638,17 @@ const ChatWindow: React.FC = () => {
       </Box>
       ) : null}
       {Object.entries(groupedData).map(([groupKey, groupItems]) => (
-        <Box key={groupKey} sx={{backgroundColor: "#a7f3d0", height: "auto" }}>
+        <Box key={groupKey} sx={{marginLeft: "20px", marginTop: "20px", height: "auto" }}>
           {(groupKey !== "undefined") && (nameListData.length > 1) ? (
             <Typography
-              variant="h6"
               sx={{
-                marginBottom: "10px",
-                backgroundColor: "#a7f3d0",
-                padding: "10px",
-                borderRadius: "5px",
+                display: "flex",
+                marginLeft: "30px",
+                color: "#73AD21",
+                fontSize: "18px"
               }}
             >
-              <Chip
-                icon={<LocalDining />}
-                label={groupKey}
-                size="medium"
-                variant="outlined"
-                color="success"
-              ></Chip>
+              <KeyboardDoubleArrowRightIcon />{groupKey}
             </Typography>
           ) : (
             <div></div>
@@ -1604,6 +1686,7 @@ const ChatWindow: React.FC = () => {
                       handleDetailDialogOpen();
                     } else {
                       setSelectedChunk(item.value);
+                      setSelectedChunkData(item);
                       if (item.type === "name") {
                         setNameData(item.value);
                       }
@@ -1702,14 +1785,13 @@ const ChatWindow: React.FC = () => {
           p: 3,
           paddingBottom: "100px",
           width: { sm: `calc(100% - ${drawerWidth}px)` },
-          backgroundImage: `url('https://images.unsplash.com/photo-1614850715649-1d0106293bd1?q=100&w=1000&auto=format&fit=crop')`,
         }}
         
       >
         <div
           style={{
             height: "80vh",
-            maxHeight: "650px",
+            maxHeight: "950px",
             overflowY: "auto",
             padding: "10px",
             position: "relative",
@@ -1719,6 +1801,12 @@ const ChatWindow: React.FC = () => {
           {messages.map((message, index) => (
             <ChatMessage key={index} {...message} />
           ))}
+          
+          <ChatInput
+            onSendMessage={(message) =>
+              handleSendMessageViaInput(message.content, flag)
+            }
+          />
           {loading && (
             <div
               style={{
@@ -1731,11 +1819,6 @@ const ChatWindow: React.FC = () => {
               <CircularProgress />
             </div>
           )}
-          <ChatInput
-            onSendMessage={(message) =>
-              handleSendMessageViaInput(message.content, flag)
-            }
-          />
           {showAmountSelector && (
             <Box
               sx={{
@@ -1832,16 +1915,24 @@ const ChatWindow: React.FC = () => {
           </Dialog>
         </div>
         <Badge
-          color="secondary"
           badgeContent={cartCount}
-          style={{
+          sx={{
+            "& .MuiBadge-badge": {
+              backgroundColor: "#FF3B30", // Set the badge background color
+              color: "white", // Set the badge text color (optional)
+              border: "2px solid #FF3B30", // Optional: Add a border matching the color
+            },
             position: "fixed",
             bottom: "150px",
             right: "50px",
           }}
         >
-          <Fab sx={{ backgroundColor: "#059669"}}aria-label="add" onClick={handleCartOpen}>
-            <AddShoppingCartIcon />
+          <Fab
+            sx={{ backgroundColor: "#73AD21" }}
+            aria-label="add"
+            onClick={handleCartOpen}
+          >
+            <AddShoppingCartIcon sx={{ color: "white" }} />
           </Fab>
         </Badge>
 
@@ -1876,7 +1967,6 @@ const ChatWindow: React.FC = () => {
 
           <AppBar
             position="absolute"
-            color="success"
             sx={{
               display: "flex",
               top: "auto",
@@ -1884,6 +1974,7 @@ const ChatWindow: React.FC = () => {
               bottom: 0,
               alignItems: "center",
               justifyContent: "center",
+              backgroundColor: "#73AD21"
             }}
           >
             <Paper

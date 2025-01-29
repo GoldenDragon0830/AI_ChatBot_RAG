@@ -43,18 +43,28 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
         position: "fixed",
         bottom: 0,
         right: 0,
-        left: "1200px",
+        left: "1300px",
         padding: "30px",
+        backgroundColor: "#F4F7FD",
+        borderRadius: "30px"
       }}
     >
       <TextField
-        label="Enter your message"
+        label="Type message"
         variant="outlined"
         color="success"
         fullWidth
         value={message.content}
         onChange={handleInputChange}
         onKeyDown={handleKeyPress}
+        sx={{
+          "& .MuiOutlinedInput-root": {
+            borderRadius: "30px", // Apply border-radius to the input field
+          },
+          "& .MuiOutlinedInput-notchedOutline": {
+            // Optional: Adjust border thickness
+          },
+        }}
       />
       <Button
         variant="contained"
@@ -62,10 +72,11 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
         onClick={handleSendMessage}
         sx={{
           marginLeft: "10px",
-          backgroundColor: "#059669"
+          backgroundColor: "#73AD21",
+          borderRadius: "30px"
         }}
       >
-        Send
+        {"Send"}
       </Button>
     </div>
   );
