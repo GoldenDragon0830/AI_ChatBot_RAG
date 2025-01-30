@@ -7,6 +7,7 @@ from flask import Flask, request, Response, stream_with_context
 from dotenv import load_dotenv
 from flask_cors import CORS
 
+from openai import Timeout
 from pinecone import Pinecone
 from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
@@ -56,6 +57,11 @@ app.config["CORS_HEADERS"] = "Content-Type"
 
 CORS(app, supports_credentials=True, origins="*")
 
+# Set OpenAI API KEY
+openai.api_key = OPENAI_API_KEY
+
+# Configure OpenAI timeout
+openai.timeout = 200
 
 # Connect to PostgreSQL
 conn = psycopg2.connect(
@@ -74,7 +80,8 @@ def get_openai_response(prompt, message):
     response = openai.chat.completions.create(
         model=OPENAI_MODEL_NAME,
         messages=[{"role": "user", "content": f'{prompt}, Message {message}'}],
-        max_tokens=200
+        max_tokens=200,
+        timeout=200  # Increase timeout to 20 seconds
     )
     return response.choices[0].message.content.strip()
 
@@ -125,7 +132,8 @@ def get_detect_result(record: str, keywords: str):
                 "content": f'Menu : {record}, Input: {keywords}'
             }
         ],
-        max_tokens=1000
+        max_tokens=1000,
+        timeout=200
     )
 
     response = summary_response.choices[0].message.content.strip()
@@ -167,7 +175,8 @@ def get_keyword_array(message: str):
                 "content": message
             }
         ],
-        max_tokens=200
+        max_tokens=200,
+        timeout=200
     )
     response = summary_response.choices[0].message.content.strip()
     print("response", response)
@@ -286,7 +295,8 @@ def get_detect_title_list(record: str, keywords: str):
                 "content": f'Records : {record}, Keyword: {keywords}'
             }
         ],
-        max_tokens=1000
+        max_tokens=1000,
+        timeout=200
     )
 
     response = summary_response.choices[0].message.content.strip()
@@ -509,7 +519,8 @@ def get_response_via_input(message: str, flag: str):
                     "content": message
                 }
             ],
-            max_tokens=200
+            max_tokens=200,
+            timeout=200
         ).choices[0].message.content.strip()
 
         yield f'data: {KEY_ANSWER_AMOUNT}:{response}\n\n'
@@ -807,7 +818,8 @@ def get_response(message: str, flag: str):
                     "content": message
                 }
             ],
-            max_tokens=200
+            max_tokens=200,
+            timeout=200
         ).choices[0].message.content.strip()
 
         yield f'data: {KEY_ANSWER_AMOUNT}:{response}\n\n'
