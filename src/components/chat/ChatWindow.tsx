@@ -48,7 +48,7 @@ import CardHeader from "@mui/material/CardHeader";
 import CardContent from "@mui/material/CardContent";
 import CardActions from "@mui/material/CardActions";
 import { green, red } from "@mui/material/colors";
-import { CheckBox, Description, LocalDining } from "@mui/icons-material";
+import { CheckBox, Description, LocalDining, UndoRounded } from "@mui/icons-material";
 
 const label = { inputProps: { "aria-label": "Checkbox demo" } };
 
@@ -366,7 +366,7 @@ const ChatWindow: React.FC = () => {
             c_price = selectedOption === "Option 1" ? "5" : "10";
           } else if (displayOptionDish.includes(text)) {
             c_price = selectedOption === "Option 1" ? "9" : "16";
-          } else if (displayOptionSoup.includes(text)) {
+          } else if (displayOptionChinaDish.includes(text)) {
             c_price = selectedOption === "Option 1" ? "18" : "24";
           }
           console.log(optionToAdd)
@@ -806,7 +806,9 @@ const ChatWindow: React.FC = () => {
                         : parsedData
                       : parsedData;
                   console.log(updatedData)
-                  setNameListData(updatedData);
+                  if (updatedData.length !== 1) {
+                    setNameListData(updatedData);
+                  }
                 } else if (Object.keys(jsonData[0])[0] === "option_name") {
                   if (parsedData.length === 1) {
                     console.log(parsedData);
@@ -1371,7 +1373,7 @@ const ChatWindow: React.FC = () => {
     }
   }, [nameListData]);
 
-  const groupedData: Record<string, ChunkOption[]> = chunkData.reduce(
+  let groupedData: Record<string, ChunkOption[]> = chunkData.reduce(
     (acc: Record<string, ChunkOption[]>, item) => {
       const groupKey =
         selectedChip === "ALL" || selectedNameChip === "ALL"
@@ -1385,6 +1387,16 @@ const ChatWindow: React.FC = () => {
     },
     {}
   );
+  
+  // Reorder groupedData based on nameListData's order
+  if (nameListData.length > 1) {
+    groupedData = Object.fromEntries(
+      nameListData
+        .map((nameItem) => nameItem.value)
+        .filter((key) => groupedData[key]) // Ensure only existing keys are included
+        .map((key) => [key, groupedData[key]])
+    );
+  }
 
   const MenuIcon = ({ color }: { color: string }) => {
     return (
@@ -1580,7 +1592,7 @@ const ChatWindow: React.FC = () => {
                   type: typeMatch ? typeMatch[1] : "",
                   name: nameMatch ? nameMatch[2] : "",
                   description: descriptionMatch ? descriptionMatch[1] : "",
-                  price: priceMatch ? priceMatch[1] : "",
+                  price: `${((parseFloat(selectedChunkData?.price ?? '0') || 0) + chunkTotalPrice).toFixed(2)}`,
                   option_keyword: optionKeywordMatch
                     ? optionKeywordMatch[1]
                     : "",
