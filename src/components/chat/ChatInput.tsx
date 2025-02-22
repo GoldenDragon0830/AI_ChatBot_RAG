@@ -1,6 +1,7 @@
 import { Button, TextField } from "@mui/material";
 import React, { useState } from "react";
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
+import SendIcon from '@mui/icons-material/Send';
 
 interface ChatInputProps {
   onSendMessage: (message: {
@@ -23,8 +24,10 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
   };
 
   const handleSendMessage = () => {
-    onSendMessage(message);
-    setMessage({ content: "", role: "user" });
+    if ( message.content.length !== 0) {
+      onSendMessage(message);
+      setMessage({ content: "", role: "user" });
+    }
   };
 
   const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -36,31 +39,44 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
   return (
     <div
       style={{
+        display: "flex",
         position: "fixed",
         bottom: 0,
         right: 0,
-        left: "1220px",
-        padding: "20px",
+        left: "1300px",
+        padding: "30px",
+        backgroundColor: "#F4F7FD",
+        borderRadius: "30px"
       }}
     >
       <TextField
-        label="Enter your message"
+        label="Type message"
         variant="outlined"
         color="success"
-        style={{ marginBottom: "20px" }}
         fullWidth
         value={message.content}
         onChange={handleInputChange}
         onKeyDown={handleKeyPress}
+        sx={{
+          "& .MuiOutlinedInput-root": {
+            borderRadius: "30px", // Apply border-radius to the input field
+          },
+          "& .MuiOutlinedInput-notchedOutline": {
+            // Optional: Adjust border thickness
+          },
+        }}
       />
       <Button
         variant="contained"
-        color="success"
-        disabled={message.content.length === 0}
+        endIcon={<SendIcon />}
         onClick={handleSendMessage}
-        fullWidth
+        sx={{
+          marginLeft: "10px",
+          backgroundColor: "#73AD21",
+          borderRadius: "30px"
+        }}
       >
-        Send
+        {"Send"}
       </Button>
     </div>
   );

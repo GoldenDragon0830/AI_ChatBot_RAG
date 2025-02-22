@@ -51,40 +51,59 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       )}
       <Dialog open={open} onClose={handleClose}>
         <DialogActions>
-          <DialogTitle style={{ textAlign: "center" }}>{content}</DialogTitle>
+          <DialogTitle style={{ textAlign: "center" }}>{content.replace(/_/g, " ")}</DialogTitle>
         </DialogActions>
         <DialogContent>
           <img src={imageUrl} alt={content} style={{ width: "100%" }} />
         </DialogContent>
       </Dialog>
-      <div style={{display: 'flex', alignItems: 'center', }}>
-        <Badge
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-          badgeInset="14%"
-          color="success"
-        >
-          { isRequest ? (<PersonIcon fontSize="large" color="success" />) : (<div style={{display: 'flex', alignItems: 'center'}}><img src="/westsidewok.png" alt="logo" style={{width: "30px", height: "40px"}}/></div>)}
-        </Badge>
-        {
-          isRequest ? (<p></p>) : (<p style={{paddingLeft: '5px'}}>Assistant</p>)
-        }
-      </div>
-      <Paper
-        sx={{
-          backgroundColor: isRequest ? "#009900" : "#e0e0e0",
-          color: isRequest ? "#fff" : "#000",
-          padding: 2,
-          borderRadius: 2,
-          maxWidth: "100%",
-          borderTopRightRadius: isRequest ? 0 : 4,
-          borderBottomLeftRadius: isRequest ? 4 : 0,
-          wordBreak: "break-word",
-          overflowWrap: "break-word",
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: isRequest ? 'row-reverse' : 'row', // Align icon to the right for user, left for assistant
+          alignItems: 'flex-start', // Align items at the top for consistent vertical alignment
+          marginBottom: '10px',
         }}
-        elevation={5}
       >
-        <Typography variant="body1">{content}</Typography>
-      </Paper>
+        {/* Icon Section */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start', // Align icon to the top of the text bubble
+            margin: isRequest ? '0 0 0 10px' : '0 10px 0 0',
+          }}
+        >
+          <Badge
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            badgeInset="14%"
+            color="success"
+          >
+            {isRequest ? (
+              <img src="/user.png" alt="logo" style={{ width: "40px", height: "40px" }} />
+            ) : (
+                <img src="/assistant.png" alt="logo" style={{ width: "40px", height: "40px" }} />
+            )}
+          </Badge>
+        </div>
+
+        {/* Message Section */}
+        <Paper
+          sx={{
+            backgroundColor: isRequest ? "#DCF4BB" : "#e0e0e0",
+            color: "#000",
+            padding: 2,
+            borderRadius: 2,
+            maxWidth: "100%",
+            borderTopRightRadius: isRequest ? 0 : 4,
+            borderBottomLeftRadius: isRequest ? 4 : 0,
+            wordBreak: "break-word",
+            overflowWrap: "break-word",
+          }}
+          elevation={5}
+        >
+          <Typography variant="body1">{content.replace(/_/g, " ")}</Typography>
+        </Paper>
+      </div>
     </Box>
   );
 };
