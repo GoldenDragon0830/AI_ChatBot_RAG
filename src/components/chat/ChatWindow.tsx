@@ -106,9 +106,9 @@ const ChatWindow: React.FC = () => {
   // const [selectedSpecialOption, setSelectedSpecialOption] = useState("Pint"); // Default to "Pint"
   // const [specialItemCount, setSpecialItemCount] = useState(1);
 
-  const API_URL = "http://85.209.93.93:4002/chat";
-  const API_GET_FROM_DB_URL = "http://85.209.93.93:4002/get_db_data";
-  const API_CHAT_VIA_INPUT_URL = "http://85.209.93.93:4002/chat_via_input";
+  const API_URL = "http://85.209.93.93:4005/chat";
+  const API_GET_FROM_DB_URL = "http://85.209.93.93:4005/get_db_data";
+  const API_CHAT_VIA_INPUT_URL = "http://85.209.93.93:4005/chat_via_input";
 
   // const API_URL = process.env.REACT_APP_API_URL;
 
@@ -898,11 +898,10 @@ const ChatWindow: React.FC = () => {
     }
   };
 
-  const handleSendMessage = async (
+  const handleDisplayOption = async (
     message: MessageInterface,
     flag: string,
     showInChat: boolean = true,
-    isInput: boolean = false
   ) => {
     setCurrentAmount(1);
     setShowAmountSelector(false);
@@ -913,7 +912,7 @@ const ChatWindow: React.FC = () => {
 
     try {
       const response = await fetch(
-        `${isInput ? API_CHAT_VIA_INPUT_URL : API_URL}?message=${
+        `${API_URL}?message=${
           message.content
         }&history=${JSON.stringify(messages)}&flag=${flag}`,
         {
@@ -1102,14 +1101,119 @@ const ChatWindow: React.FC = () => {
               } catch (e) {
                 console.error(e);
               }
-            } else {
+            } 
+            // else {
+            //   setMessages((prev) => {
+            //     const newMessages = [...prev];
+            //     const lastMessageIndex = newMessages.length - 1;
+            //     if (
+            //       lastMessageIndex >= 0 &&
+            //       newMessages[lastMessageIndex].role === "assistant"
+            //     ) {
+            //       newMessages[lastMessageIndex].content =
+            //         newMessageContent.split("ChunkData:")[0] || "";
+            //       newMessages[lastMessageIndex].content =
+            //         newMessageContent.split("TYPE:")[0] || "";
+            //       if (data.includes(KEY_ASK_AMOUNT)) {
+            //         newMessages[lastMessageIndex].content =
+            //           newMessageContent.split(KEY_ASK_AMOUNT + ":")[0] || "";
+            //       }
+            //     } else {
+            //       newMessages.push({
+            //         content: newMessageContent,
+            //         role: "assistant",
+            //       });
+            //     }
+            //     return newMessages;
+            //   });
+            // }
+          }
+        });
+      }
+    } catch (error) {
+      console.error(
+        "Chat Error:",
+        error instanceof Error ? error.message : error
+      );
+      // setMessages((prev) => {
+      //   const newMessages = [...prev];
+      //   const lastMessageIndex = newMessages.length - 1;
+      //   if (
+      //     lastMessageIndex >= 0 &&
+      //     newMessages[lastMessageIndex].role === "assistant"
+      //   ) {
+      //     newMessages[lastMessageIndex].content =
+      //       "Sorry, there was an error. Please try again.";
+      //   } else {
+      //     newMessages.push({
+      //       content: "Sorry, there was an error. Please try again.",
+      //       role: "assistant",
+      //     });
+      //   }
+      //   return newMessages;
+      // });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendMessage = async (
+    message: MessageInterface,
+    flag: string,
+    showInChat: boolean = true,
+  ) => {
+    setCurrentAmount(1);
+    setShowAmountSelector(false);
+    if (showInChat) {
+      setMessages((prevMessages) => [...prevMessages, message]);
+    }
+    setLoading(true);
+
+    try {
+      const response = await fetch(
+        `${API_CHAT_VIA_INPUT_URL}?message=${
+          message.content
+        }&history=${JSON.stringify(messages)}&flag=${flag}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "text/event-stream",
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error("Network response was not ok");
+      if (!response.body) throw new Error("Response body is null");
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let newMessageContent = "";
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        buffer += chunk;
+
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        // eslint-disable-next-line no-loop-func
+        lines.forEach((line) => {
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6).trim();
+            newMessageContent += data;
+            if (!data.includes("ChunkData:")) {
               setMessages((prev) => {
                 const newMessages = [...prev];
                 const lastMessageIndex = newMessages.length - 1;
-                if (
-                  lastMessageIndex >= 0 &&
-                  newMessages[lastMessageIndex].role === "assistant"
-                ) {
+                // if (
+                //   lastMessageIndex >= 0 &&
+                //   newMessages[lastMessageIndex].role === "assistant"
+                // ) {
                   newMessages[lastMessageIndex].content =
                     newMessageContent.split("ChunkData:")[0] || "";
                   newMessages[lastMessageIndex].content =
@@ -1118,12 +1222,12 @@ const ChatWindow: React.FC = () => {
                     newMessages[lastMessageIndex].content =
                       newMessageContent.split(KEY_ASK_AMOUNT + ":")[0] || "";
                   }
-                } else {
-                  newMessages.push({
-                    content: newMessageContent,
-                    role: "assistant",
-                  });
-                }
+                // } else {
+                //   newMessages.push({
+                //     content: newMessageContent,
+                //     role: "assistant",
+                //   });
+                // }
                 return newMessages;
               });
             }
@@ -1135,23 +1239,23 @@ const ChatWindow: React.FC = () => {
         "Chat Error:",
         error instanceof Error ? error.message : error
       );
-      setMessages((prev) => {
-        const newMessages = [...prev];
-        const lastMessageIndex = newMessages.length - 1;
-        if (
-          lastMessageIndex >= 0 &&
-          newMessages[lastMessageIndex].role === "assistant"
-        ) {
-          newMessages[lastMessageIndex].content =
-            "Sorry, there was an error. Please try again.";
-        } else {
-          newMessages.push({
-            content: "Sorry, there was an error. Please try again.",
-            role: "assistant",
-          });
-        }
-        return newMessages;
-      });
+      // setMessages((prev) => {
+      //   const newMessages = [...prev];
+      //   const lastMessageIndex = newMessages.length - 1;
+      //   if (
+      //     lastMessageIndex >= 0 &&
+      //     newMessages[lastMessageIndex].role === "assistant"
+      //   ) {
+      //     newMessages[lastMessageIndex].content =
+      //       "Sorry, there was an error. Please try again.";
+      //   } else {
+      //     newMessages.push({
+      //       content: "Sorry, there was an error. Please try again.",
+      //       role: "assistant",
+      //     });
+      //   }
+      //   return newMessages;
+      // });
     } finally {
       setLoading(false);
     }
@@ -1214,12 +1318,12 @@ const ChatWindow: React.FC = () => {
       role: "user",
     };
     if (flag === KEY_ASK_AMOUNT)
-      handleSendMessage(message, KEY_ANSWER_AMOUNT, true, true);
+      handleSendMessage(message, KEY_ANSWER_AMOUNT, true);
     else {
       // setChunkData([]);
       setOrderDetailDialogOpen(false);
       setFlag(KEY_SELECT_PRODUCT);
-      handleSendMessage(backMessage, KEY_SELECT_PRODUCT, false, false);
+      handleSendMessage(backMessage, KEY_SELECT_PRODUCT, false);
       setFlag(KEY_SELECT_PRODUCT);
       setMessages((prevMessage) => [...prevMessage, message]);
     }
@@ -1255,15 +1359,15 @@ const ChatWindow: React.FC = () => {
 
   const handleContinueOrder = async () => {
     // setOneOrderData("");
-    setOrderDetailDialogOpen(false);
-    const displayMessage: MessageInterface = {
-      content: " I want to order again.",
-      role: "user",
-    };
+    // setOrderDetailDialogOpen(false);
+    // const displayMessage: MessageInterface = {
+    //   content: " I want to order again.",
+    //   role: "user",
+    // };
 
-    setChunkData([]);
-    handleSendMessage(displayMessage, KEY_CHAT_CUSTOMER, true);
-    setFlag(KEY_SELECT_PRODUCT);
+    // setChunkData([]);
+    // handleSendMessage(displayMessage, KEY_CHAT_CUSTOMER, true);
+    // setFlag(KEY_SELECT_PRODUCT);
   };
 
   const getItemName = (item: string): string => {
@@ -1455,16 +1559,16 @@ const ChatWindow: React.FC = () => {
                   setSelectedChip(title); // Set the selected chip
                   setTypeData(title); // set one type data
                   setNameData("");
-                  const userMessage: MessageInterface = {
-                    content: title, // Send the text of the item as the user's message
-                    role: "user",
-                  };
+                  // const userMessage: MessageInterface = {
+                  //   content: title, // Send the text of the item as the user's message
+                  //   role: "user",
+                  // };
                   const backMessage: MessageInterface = {
                     content: "I want to find new type." + "type: " + title, // Send the text of the item as the user's message
                     role: "user",
                   };
-                  handleSendMessage(backMessage, flag, false, false);
-                  setMessages((prevMessage) => [...prevMessage, userMessage]);
+                  handleDisplayOption(backMessage, flag, false);
+                  // setMessages((prevMessage) => [...prevMessage, userMessage]);
                 }
               }}
               label={title.replace(/_/g, " ")}
@@ -1541,7 +1645,7 @@ const ChatWindow: React.FC = () => {
                           `type: ${typeData} + name: ${nameData} + ` + item.value, // Send the text of the item as the user's message
                         role: "user",
                       };
-                      handleSendMessage(backMessage, flag, false, false);
+                      handleDisplayOption(backMessage, flag, false);
                       setMessages((prevMessage) => [...prevMessage, userMessage]);
                     }
                   }}
@@ -1615,12 +1719,12 @@ const ChatWindow: React.FC = () => {
                 console.log("Cart updated:", parsedCartData);
                 setSelectedOptions([]);
 
-                const messageText: MessageInterface = {
-                  content: "Added to cart successfully! Would you like to add more items or options?",
-                  role: "assistant",
-                };
+                // const messageText: MessageInterface = {
+                //   content: "Added to cart successfully! Would you like to add more items or options?",
+                //   role: "assistant",
+                // };
             
-                setMessages((prevMessages) => [...prevMessages, messageText]);
+                // setMessages((prevMessages) => [...prevMessages, messageText]);
                 
                 setOneOrderData("")
               }}
@@ -1721,20 +1825,20 @@ const ChatWindow: React.FC = () => {
                       if (item.type === "name") {
                         setNameData(item.value);
                       }
-                      const userMessage: MessageInterface = {
-                        content: item.value, // Send the text of the item as the user's message
-                        role: "user",
-                      };
+                      // const userMessage: MessageInterface = {
+                      //   content: item.value, // Send the text of the item as the user's message
+                      //   role: "user",
+                      // };
                       const backMessage: MessageInterface = {
                         content:
                           "type:" + typeData + "," + "name:" + item.value, // Send the text of the item as the user's message
                         role: "user",
                       };
-                      handleSendMessage(backMessage, flag, false, false);
-                      setMessages((prevMessage) => [
-                        ...prevMessage,
-                        userMessage,
-                      ]);
+                      handleDisplayOption(backMessage, flag, false);
+                      // setMessages((prevMessage) => [
+                      //   ...prevMessage,
+                      //   userMessage,
+                      // ]);
                     }
                   }}
                 />
