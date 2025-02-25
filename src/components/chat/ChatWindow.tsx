@@ -2,38 +2,26 @@ import React, { useState, useRef, useEffect } from "react";
 import ChatInput from "./ChatInput";
 import ChatMessage from "./ChatMessage";
 
-import { CircularProgress,  useMediaQuery,  useTheme,  Dialog,  DialogContent,  DialogActions,  DialogTitle,  Button,  Box,  Fab,  Badge,  Drawer,  ListItemButton,  AppBar,  Typography,  Checkbox,} from "@mui/material";
+import { CircularProgress,  useMediaQuery,  useTheme,  Dialog,  DialogContent, DialogTitle,  Button,  Box,  Fab,  Badge,  Drawer,  ListItemButton,  AppBar,  Typography,} from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
-import Avatar from "@mui/material/Avatar";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import ButtonGroup from "@mui/material/ButtonGroup";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
-import ChangeCircleIcon from "@mui/icons-material/ChangeCircle";
-import LoupeIcon from "@mui/icons-material/Loupe";
-import Snackbar from "@mui/material/Snackbar";
 import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
 import ImageList from "@mui/material/ImageList";
 import ImageListItem from "@mui/material/ImageListItem";
 import Chip from "@mui/material/Chip";
-import DinnerDiningIcon from "@mui/icons-material/DinnerDining";
-import BackspaceIcon from "@mui/icons-material/Backspace";
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
 
 import Card from "@mui/material/Card";
-import CardHeader from "@mui/material/CardHeader";
 import CardContent from "@mui/material/CardContent";
 import CardActions from "@mui/material/CardActions";
-import { green, red } from "@mui/material/colors";
-import { CheckBox, Description, LocalDining, UndoRounded } from "@mui/icons-material";
-
-const label = { inputProps: { "aria-label": "Checkbox demo" } };
 
 const displayOptionSoup = ["Beef Dumplings","Egg Drop Soup", "Hot And Sour Soup", "Thai Chicken Noodle Soup", "Tofu Vegetable Soup"];
 const displayOptionContinue = ["Subgum Wonton Soup", "Wonton Soup", "Egg Drop Wonton Soup"];
@@ -98,24 +86,6 @@ const ChatWindow: React.FC = () => {
   const [messages, setMessages] = useState<MessageInterface[]>([
     { content: GREETING_WORD, role: "assistant" },
   ]);
-
-  const initial_data = [
-    { type: "appetizers" },
-    { type: "soups" },
-    { type: "traditional_side_dishes" },
-    { type: "chinese_dishes" },
-    { type: "thai_food" },
-    { type: "chef's_specialities" },
-    { type: "sushi_appetizers" },
-    { type: "regular_rolls" },
-    { type: "vegetable_rolls" },
-    { type: "tempura_rolls" },
-    { type: "specialty_rolls" },
-    { type: "sushi_platters" },
-    { type: "poke_and_salads" },
-    { type: "sushi_or_sashimi" },
-    { type: "others" },
-  ];
 
   const menuList = [
     "ALL",
