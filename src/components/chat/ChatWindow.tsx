@@ -1319,7 +1319,7 @@ const ChatWindow: React.FC = () => {
       <Divider />
       <Paper
         sx={{
-          height: "100px",
+          height: "auto",
           display: "flex",
           backgroundColor: 'white',
           justifyContent: "center",
