@@ -356,7 +356,7 @@ const ChatWindow: React.FC = () => {
       <ImageListItem key={text} className="image-list-item">
         <Card
           sx={{
-            width: { xs: "25vw", md: "20vw" }, // Responsive width
+            width: { xs: "10vw", md: "15vw" }, // Responsive width
             maxWidth: "280px",
             minWidth: "200px",
             marginLeft: "1vw",
@@ -1299,7 +1299,7 @@ const ChatWindow: React.FC = () => {
       <Divider />
       <Paper
         sx={{
-          height: "100px",
+          height: "auto",
           display: "flex",
           backgroundColor: 'white',
           justifyContent: "center",
@@ -1641,6 +1641,18 @@ const ChatWindow: React.FC = () => {
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
+      {loading && (
+        <div
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "85%",
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          <CircularProgress />
+        </div>
+      )}
       <Box
         component="nav"
         sx={{
@@ -1706,18 +1718,6 @@ const ChatWindow: React.FC = () => {
               handleSendMessageViaInput(message.content, flag)
             }
           />
-          {loading && (
-            <div
-              style={{
-                position: "fixed",
-                top: "50%",
-                left: "calc(60% + 50%)", // Center in chatting area
-                transform: "translate(-50%, -50%)",
-              }}
-            >
-              <CircularProgress />
-            </div>
-          )}
         </div>
         {/* Cart Badge */}
         <Badge

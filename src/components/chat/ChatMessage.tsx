@@ -74,13 +74,13 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ content, role, imageUrl }) =>
               <img
                 src="/user.png"
                 alt="logo"
-                style={{ width: "3vw", height: "3vw", maxWidth: "40px", minWidth: "30px" }}
+                style={{ width: "40px", height: "40px", maxWidth: "40px", minWidth: "40px" }}
               />
             ) : (
               <img
                 src="/assistant.png"
                 alt="logo"
-                style={{ width: "3vw", height: "3vw", maxWidth: "40px", minWidth: "30px" }}
+                style={{ width: "40px", height: "40px", maxWidth: "40px", minWidth: "40px" }}
               />
             )}
           </Badge>
