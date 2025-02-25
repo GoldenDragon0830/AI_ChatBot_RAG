@@ -1,11 +1,6 @@
 import React, { useState } from "react";
-import { Typography, Paper, Box, Dialog,
-  DialogContent,
-  DialogActions,
-  DialogTitle, } from "@mui/material";
+import { Typography, Paper, Box, Dialog, DialogContent, DialogActions, DialogTitle } from "@mui/material";
 import Badge from '@mui/joy/Badge';
-import PersonIcon from '@mui/icons-material/Person';
-  
 
 interface ChatMessageProps {
   content: string;
@@ -13,11 +8,7 @@ interface ChatMessageProps {
   imageUrl?: string;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({
-  content,
-  role,
-  imageUrl,
-}) => {
+const ChatMessage: React.FC<ChatMessageProps> = ({ content, role, imageUrl }) => {
   const isRequest = role === "user";
   const [open, setOpen] = useState(false);
 
@@ -29,29 +20,31 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       sx={{
         display: "flex",
         justifyContent: isRequest ? "flex-end" : "flex-start",
-        mb: 1,
-        flexDirection: "column", // Ensure image and text stack vertically
-        alignItems: isRequest ? "flex-end" : "flex-start", // Alignment for image and text
+        mb: { xs: 0.5, md: 1 }, // Responsive margin-bottom
+        flexDirection: "column",
+        alignItems: isRequest ? "flex-end" : "flex-start",
       }}
     >
       {imageUrl && (
-        <Box // Image container
+        <Box
           component="img"
           src={imageUrl}
           alt="Chat message visual"
           sx={{
-            maxWidth: "300px",
-            maxHeight: "200px",
+            maxWidth: { xs: "40vw", md: "25vw" }, // Responsive image width
+            maxHeight: "20vh", // Relative height
             borderRadius: 2,
-            mb: 1, // Margin bottom for spacing between image and text
-            boxShadow: 3, // Optional shadow for better visualization
+            mb: 0.5, // Responsive margin
+            boxShadow: 3,
           }}
           onClick={handleOpen}
         />
       )}
-      <Dialog open={open} onClose={handleClose}>
+      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
         <DialogActions>
-          <DialogTitle style={{ textAlign: "center" }}>{content.replace(/_/g, " ")}</DialogTitle>
+          <DialogTitle sx={{ textAlign: "center", wordBreak: "break-word" }}>
+            {content.replace(/_/g, " ")}
+          </DialogTitle>
         </DialogActions>
         <DialogContent>
           <img src={imageUrl} alt={content} style={{ width: "100%" }} />
@@ -59,41 +52,46 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       </Dialog>
       <div
         style={{
-          display: 'flex',
-          flexDirection: isRequest ? 'row-reverse' : 'row', // Align icon to the right for user, left for assistant
-          alignItems: 'flex-start', // Align items at the top for consistent vertical alignment
-          marginBottom: '10px',
+          display: "flex",
+          flexDirection: isRequest ? "row-reverse" : "row",
+          alignItems: "flex-start",
+          marginBottom: "0.5vh", // Relative margin
         }}
       >
-        {/* Icon Section */}
         <div
           style={{
-            display: 'flex',
-            alignItems: 'flex-start', // Align icon to the top of the text bubble
-            margin: isRequest ? '0 0 0 10px' : '0 10px 0 0',
+            display: "flex",
+            alignItems: "flex-start",
+            margin: isRequest ? "0 0 0 0.5vw" : "0 0.5vw 0 0",
           }}
         >
           <Badge
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
             badgeInset="14%"
             color="success"
           >
             {isRequest ? (
-              <img src="/user.png" alt="logo" style={{ width: "40px", height: "40px" }} />
+              <img
+                src="/user.png"
+                alt="logo"
+                style={{ width: "40px", height: "40px", maxWidth: "40px", minWidth: "40px" }}
+              />
             ) : (
-                <img src="/assistant.png" alt="logo" style={{ width: "40px", height: "40px" }} />
+              <img
+                src="/assistant.png"
+                alt="logo"
+                style={{ width: "40px", height: "40px", maxWidth: "40px", minWidth: "40px" }}
+              />
             )}
           </Badge>
         </div>
-
-        {/* Message Section */}
         <Paper
           sx={{
             backgroundColor: isRequest ? "#DCF4BB" : "#e0e0e0",
             color: "#000",
-            padding: 2,
+            padding: { xs: 1, md: 2 }, // Responsive padding
             borderRadius: 2,
-            maxWidth: "100%",
+            maxWidth: { xs: "70vw", md: "50vw" }, // Responsive max width
             borderTopRightRadius: isRequest ? 0 : 4,
             borderBottomLeftRadius: isRequest ? 4 : 0,
             wordBreak: "break-word",

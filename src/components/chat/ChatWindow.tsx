@@ -81,7 +81,7 @@ const INITIAL_AMOUNT = 1;
 const GREETING_WORD =
   "I'm West Side Wok Order Assistant, What would you like to order today?";
 
-const drawerWidth = 1300;
+const drawerWidth = "70%";
 
 const ChatWindow: React.FC = () => {
   const theme = useTheme();
@@ -241,33 +241,19 @@ const ChatWindow: React.FC = () => {
     return (
       <ListItem
         secondaryAction={
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-          >
-            <IconButton
-              size="small"
-              color="success"
-              onClick={handleIncrement}
-            >
+          <Box sx={{display: "flex", flexDirection: "column", alignItems: "center",}}>
+            <IconButton size="small" color="success" onClick={handleIncrement}>
               <AddIcon fontSize="small" />
             </IconButton>
             <Typography>{count}</Typography>
-            <IconButton
-              size="small"
-              onClick={handleDecrement}
-            >
+            <IconButton size="small" onClick={handleDecrement} >
               <RemoveIcon fontSize="small" />
             </IconButton>
           </Box>
         }
       >
         <ListItemButton>
-          <ListItemText primary={title} 
-            secondary={
+          <ListItemText primary={title} secondary={
               <Box>
                 <Typography variant="body2" color="secondary" component="span" >
                   ${price}
@@ -276,11 +262,7 @@ const ChatWindow: React.FC = () => {
                   {chunkArray(optionList, 3).map((row, rowIndex) => (
                     <Box key={rowIndex} sx={{ display: "flex", flexDirection: "row", marginBottom: "4px" }}>
                       {row.map((option, index) => (
-                        <Chip
-                          key={index}
-                          label={option}
-                          size="small"
-                          sx={{
+                        <Chip key={index} label={option} size="small" sx={{
                             marginLeft: index === 0 ? 0 : "2px", // Add spacing only for chips after the first one
                             color: "#73AD21", // Custom text color
                             borderColor: "#73AD21", // Custom border color
@@ -300,14 +282,7 @@ const ChatWindow: React.FC = () => {
             } />
             
         </ListItemButton>
-        <IconButton
-          edge="end"
-          aria-label="delete"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleRemove();
-          }}
-        >
+        <IconButton edge="end" aria-label="delete" onClick={(e) => { e.stopPropagation(); handleRemove(); }} >
           <DeleteForeverIcon color="error" />
         </IconButton>
       </ListItem>
@@ -398,32 +373,21 @@ const ChatWindow: React.FC = () => {
       <ImageListItem key={text} className="image-list-item">
         <Card
           sx={{
-            width: 280,
-            marginLeft: "20px",
-            marginBottom: "20px",
+            width: { xs: "10vw", md: "15vw" }, // Responsive width
+            maxWidth: "280px",
+            minWidth: "200px",
+            marginLeft: "1vw",
+            marginBottom: "1vh",
             cursor: "pointer",
             backgroundColor: selectedOptionListData.includes(text) ? "#F1F7E9" : "white",
             transition: "background-color 0.3s ease-in-out",
             border: "1px solid",
             borderColor: "#73AD21",
-            borderRadius: "20px"
+            borderRadius: "20px",
           }}
-        >
-          <CardContent
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "flex-start",
-              alignItems: "flex-start",
-              height: "auto",
-              position: "relative",
-              transition: "transform 0.3s ease-in-out",
-              "&:hover": {
-                transform: "scale(1.05)",
-              },
-            }}
+        > 
+          <CardContent sx={{ display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "flex-start", height: "auto", position: "relative", transition: "transform 0.3s ease-in-out",  "&:hover": { transform: "scale(1.05)", }, }}
             onClick={() => {
-              console.log(text)
               if (type === "option_name") {
                 setSelectedOptionListData((prevOptions) => {
                   if (prevOptions.includes(text)) {
@@ -437,35 +401,11 @@ const ChatWindow: React.FC = () => {
               }
             }}
           >
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: "bold",
-                color: "block",
-                fontSize: "20px",
-                marginBottom: "5px",
-                overflow: "hidden",
-                display: "-webkit-box",
-                WebkitLineClamp: 1,
-                WebkitBoxOrient: "vertical",
-              }}
-            >
+            <Typography variant="body2" sx={{ fontWeight: "bold", color: "block", fontSize: "20px", marginBottom: "5px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient:  "vertical", }} >
               {text}
             </Typography>
-            {type !== "option_name" ? (
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "gray",
-                  fontSize: "14px",
-                  marginBottom: "10px",
-                  height: "40px",
-                  overflow: "hidden",
-                  display: "-webkit-box",
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: "vertical",
-                }}
-              >
+            {type !== "option_name" ? ( <Typography variant="body2" sx={{ color: "gray", fontSize: "14px", marginBottom: "10px", height: "40px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, 
+                  WebkitBoxOrient: "vertical", }} >
                 {description}
               </Typography>
             ) : null}
@@ -473,46 +413,12 @@ const ChatWindow: React.FC = () => {
               {displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text) ? (
                 <div>
                   {/* Badge for Option 1 */}                    
-                    <Badge
-                      badgeContent={itemCount["Option 1"] || 0} // Dynamically display the count for Option 1
-                      sx={{
-                        "& .MuiBadge-badge": {
-                          backgroundColor: "#FF3B30", // Set the badge background color
-                          color: "white", // Set the badge text color (optional)
-                          border: "2px solid #FF3B30", // Optional: Add a border matching the color
-                        }
-                      }}
-                    >
-                      <Chip
-                        sx={{
-                          color: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`, // Custom text color
-                          borderColor: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`, // Custom border color
-                          "& .MuiChip-label": {
-                            fontWeight: "bold", // Optional: Make the label bold
-                          },
-                          "&:hover": {
-                            backgroundColor: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`, // Optional: Add a hover effect with a lighter green
-                          },
-                          marginRight: "5px",
-                          fontSize: "14px"
-                        }}
-                        size="small"
-                        label={(displayOptionSoup.includes(text) || displayOptionContinue.includes(text)) ? (text === "Beef Dumplings" ? "Steamed" : "Pint $5") : displayOptionDish.includes(text) ? "Small $9" : displayOptionChinaDish.includes(text) ? "Small $18" : undefined}
-                        variant="outlined"
-                        onClick={() => handleSelectOption("Option 1")}
-                      />
+                    <Badge badgeContent={itemCount["Option 1"] || 0} // Dynamically display the count for Option 1 
+                      sx={{ "& .MuiBadge-badge": { backgroundColor: "#FF3B30", color: "white", border: "2px solid #FF3B30", } }} >
+                      <Chip sx={{ color: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`, borderColor: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`, "& .MuiChip-label": { fontWeight: "bold",  }, "&:hover": { backgroundColor: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`,  }, marginRight: "5px", fontSize: "14px" }} size="small" label={(displayOptionSoup.includes(text) || displayOptionContinue.includes(text)) ? (text === "Beef Dumplings" ? "Steamed" : "Pint $5") : displayOptionDish.includes(text) ? "Small $9" : displayOptionChinaDish.includes(text) ? "Small $18" : undefined} variant="outlined" onClick={() => handleSelectOption("Option 1")} />
                     </Badge>
                     {/* Badge for Option 2 */}
-                    <Badge
-                      badgeContent={itemCount["Option 2"] || 0} // Dynamically display the count for Option 2
-                      sx={{
-                        "& .MuiBadge-badge": {
-                          backgroundColor: "#FF3B30", // Set the badge background color
-                          color: "white", // Set the badge text color (optional)
-                          border: "2px solid #FF3B30", // Optional: Add a border matching the color
-                        }
-                      }}
-                    >
+                    <Badge badgeContent={itemCount["Option 2"] || 0} sx={{  "& .MuiBadge-badge": { backgroundColor: "#FF3B30",  color: "white",  border: "2px solid #FF3B30",  } }} >
                       <Chip
                         sx={{
                           color: `${selectedOption === "Option 2" ? "#73AD21" : "#BABABA"}`, // Custom text color
@@ -1774,24 +1680,36 @@ const ChatWindow: React.FC = () => {
   );
 
   return (
-    <Box sx={{ display: "flex" }} >
+    <Box sx={{ display: "flex", height: "100vh" }}>
+      {loading && (
+        <div
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "85%",
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          <CircularProgress />
+        </div>
+      )}
       <Box
         component="nav"
         sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
         aria-label="mailbox folders"
       >
         <Drawer
-          variant="temporary"
-          ModalProps={{
-            keepMounted: true,
-          }}
+          variant="permanent" // Always visible for desktop
           sx={{
-            display: { xs: "block", sm: "none" },
+            display: { xs: "block" }, // Ensure visibility on desktop
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
-              width: drawerWidth,
+              width: drawerWidth, // Percentage-based width
+              maxWidth: "900px", // Cap the maximum width for large screens
+              minWidth: "400px", // Minimum width for smaller desktop screens
             },
           }}
+          open
         >
           {drawer}
         </Drawer>
@@ -1813,18 +1731,17 @@ const ChatWindow: React.FC = () => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
-          paddingBottom: "100px",
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          p: { xs: 1, md: 3 }, // Responsive padding
+          width: { xs: `calc(100% - ${drawerWidth})` }, // Remaining width for chatting area
+          minWidth: "300px", // Minimum width to ensure usability
         }}
-        
       >
         <div
           style={{
-            height: "80vh",
-            maxHeight: "950px",
+            height: "calc(100vh - 100px)", // Responsive height minus input area
+            maxHeight: "none", // Remove fixed maxHeight
             overflowY: "auto",
-            padding: "10px",
+            padding: "1vw", // Relative padding
             position: "relative",
           }}
           ref={containerRef}
@@ -1838,124 +1755,18 @@ const ChatWindow: React.FC = () => {
               handleSendMessageViaInput(message.content, flag)
             }
           />
-          {loading && (
-            <div
-              style={{
-                position: "fixed",
-                top: "50%",
-                left: "80%",
-                transform: "translate(-50%, -50%)",
-              }}
-            >
-              <CircularProgress />
-            </div>
-          )}
-          {showAmountSelector && (
-            <Box
-              sx={{
-                display: "flex",
-                mb: 1,
-                maxWidth: "200px",
-                maxHeight: "200px",
-                flexDirection: "column",
-              }}
-            >
-              <Button variant="contained" sx={{ margin: "10px" }}>
-                {orderData[0].name + orderData[0].option_name}
-              </Button>
-              <ButtonGroup variant="outlined">
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  onClick={() =>
-                    currentAmount > 1
-                      ? setCurrentAmount(currentAmount - 1)
-                      : setCurrentAmount(1)
-                  }
-                >
-                  <RemoveIcon />
-                </Button>
-                <Button>{currentAmount}</Button>
-                <Button
-                  variant="contained"
-                  onClick={() => setCurrentAmount(currentAmount + 1)}
-                >
-                  <AddIcon />
-                </Button>
-                <Button
-                  style={{ width: "200px" }}
-                  onClick={() => handleAmountClick(true, 0)}
-                >
-                  <AddShoppingCartIcon />
-                </Button>
-              </ButtonGroup>
-              <Dialog open={open} onClose={handleClose}>
-                <DialogActions>
-                  <DialogTitle
-                    style={{
-                      textAlign: "center",
-                      whiteSpace: "normal",
-                      wordBreak: "break-word",
-                      maxWidth: "fit-content",
-                    }}
-                  >
-                    {orderData[0].name + orderData[0].option_name}
-                  </DialogTitle>
-                </DialogActions>
-                <DialogContent></DialogContent>
-              </Dialog>
-            </Box>
-          )}
-          <Dialog open={orderDetailDialogOpen}>
-            {orderData.length > 0 && (
-              <>
-                <DialogTitle>
-                  <p>{orderData[0].name + orderData[0].option_name}</p>
-                </DialogTitle>
-                <DialogContent>
-                  <p>Total Price: {totalPrice}</p>
-                </DialogContent>
-              </>
-            )}
-            <DialogActions>
-              <Button
-                component="label"
-                role={undefined}
-                variant="contained"
-                tabIndex={-1}
-                startIcon={<AddShoppingCartIcon />}
-                onClick={handleAddCart}
-              >
-                Add Cart
-              </Button>
-              <Button
-                startIcon={<ChangeCircleIcon />}
-                variant="contained"
-                color="success"
-              >
-                Change Amount
-              </Button>
-              <Button
-                startIcon={<LoupeIcon />}
-                onClick={handleContinueOrder}
-                color="success"
-              >
-                New Order
-              </Button>
-            </DialogActions>
-          </Dialog>
         </div>
         <Badge
           badgeContent={cartCount}
           sx={{
             "& .MuiBadge-badge": {
-              backgroundColor: "#FF3B30", // Set the badge background color
-              color: "white", // Set the badge text color (optional)
-              border: "2px solid #FF3B30", // Optional: Add a border matching the color
+              backgroundColor: "#FF3B30",
+              color: "white",
+              border: "2px solid #FF3B30",
             },
             position: "fixed",
-            bottom: "150px",
-            right: "50px",
+            bottom: "10vh", // Relative positioning
+            right: "5vw",
           }}
         >
           <Fab
@@ -1982,7 +1793,7 @@ const ChatWindow: React.FC = () => {
             sx={{
               position: "relative",
               overflow: "auto",
-              marginBottom: "50px",
+              marginBottom: "5vh",
             }}
           >
             {cartData.map((item, index) => (
@@ -1999,13 +1810,12 @@ const ChatWindow: React.FC = () => {
           <AppBar
             position="absolute"
             sx={{
-              display: "flex",
               top: "auto",
-              height: "50px",
+              height: "5vh", // Relative height
               bottom: 0,
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: "#73AD21"
+              backgroundColor: "#73AD21",
             }}
           >
             <Paper

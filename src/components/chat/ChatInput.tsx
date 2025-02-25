@@ -1,6 +1,5 @@
 import { Button, TextField } from "@mui/material";
 import React, { useState } from "react";
-import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import SendIcon from '@mui/icons-material/Send';
 
 interface ChatInputProps {
@@ -10,11 +9,10 @@ interface ChatInputProps {
   }) => void;
 }
 
+const drawerWidth = "70%";
+
 const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
-  const [message, setMessage] = useState<{
-    content: string;
-    role: "user" | "assistant";
-  }>({
+  const [message, setMessage] = useState<{ content: string; role: "user" | "assistant" }>({
     content: "",
     role: "user",
   });
@@ -24,7 +22,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
   };
 
   const handleSendMessage = () => {
-    if ( message.content.length !== 0) {
+    if (message.content.length !== 0) {
       onSendMessage(message);
       setMessage({ content: "", role: "user" });
     }
@@ -43,10 +41,10 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
         position: "fixed",
         bottom: 0,
         right: 0,
-        left: "1300px",
-        padding: "30px",
+        left: drawerWidth, // Align with chatting area
+        padding: "1vw", // Relative padding
         backgroundColor: "#F4F7FD",
-        borderRadius: "30px"
+        borderRadius: "30px",
       }}
     >
       <TextField
@@ -59,11 +57,9 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
         onKeyDown={handleKeyPress}
         sx={{
           "& .MuiOutlinedInput-root": {
-            borderRadius: "30px", // Apply border-radius to the input field
+            borderRadius: "30px",
           },
-          "& .MuiOutlinedInput-notchedOutline": {
-            // Optional: Adjust border thickness
-          },
+          maxWidth: { xs: "40vw", md: "30vw" }, // Responsive input width
         }}
       />
       <Button
@@ -71,9 +67,10 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
         endIcon={<SendIcon />}
         onClick={handleSendMessage}
         sx={{
-          marginLeft: "10px",
+          marginLeft: "1vw",
           backgroundColor: "#73AD21",
-          borderRadius: "30px"
+          borderRadius: "30px",
+          padding: { xs: "6px 12px", md: "8px 16px" }, // Responsive padding
         }}
       >
         {"Send"}
