@@ -57,13 +57,13 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           <img src={imageUrl} alt={content} style={{ width: "100%" }} />
         </DialogContent>
       </Dialog>
-      <div style={{display: 'flex', alignItems: 'center', }}>
+      <div style={{display: 'flex', alignItems: 'center', justifyContent: "center"}}>
         <Badge
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           badgeInset="14%"
           color="success"
         >
-          { isRequest ? (<PersonIcon fontSize="large" color="primary" />) : (<div style={{display: 'flex', alignItems: 'center'}}><img src="/restaruantlogo.png" alt="logo" style={{width: "40px", height: "40px"}}/></div>)}
+          { isRequest ? (<PersonIcon fontSize="large" color="primary" style={{color: "#73AD21", width: "34px", height: "34px"}} />) : (<div style={{display: 'flex', alignItems: 'center'}}><img src="/restaruantlogo.png" alt="logo" style={{width: "40px", height: "40px"}}/></div>)}
         </Badge>
         {
           isRequest ? (<p></p>) : (<p style={{paddingLeft: '5px'}}>Assistant</p>)
@@ -71,10 +71,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       </div>
       <Paper
         sx={{
-          backgroundColor: isRequest ? "#2196f3" : "#e0e0e0",
+          backgroundColor: isRequest ? "#73AD21" : "#e0e0e0",
           color: isRequest ? "#fff" : "#000",
           padding: 2,
-          borderRadius: 2,
+          borderRadius: "15px 15px 15px 0",
           maxWidth: "100%",
           borderTopRightRadius: isRequest ? 0 : 4,
           borderBottomLeftRadius: isRequest ? 4 : 0,

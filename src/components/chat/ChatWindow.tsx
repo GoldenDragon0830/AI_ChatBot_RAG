@@ -4,6 +4,12 @@ import ChatMessage from "./ChatMessage";
 import DOMPurify from 'dompurify';
 
 import {
+  Grid,
+  Chip,
+  Card,
+  CardMedia,
+  CardContent,
+  TextField,
   CircularProgress,
   useMediaQuery,
   useTheme,
@@ -20,6 +26,11 @@ import {
   AppBar,
   Typography
 } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
+import DeleteIcon from "@mui/icons-material/Delete";
+import CloseIcon from "@mui/icons-material/Close";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import IconButton from "@mui/material/IconButton";
 import ImageList from "@mui/material/ImageList";
 import ImageListItem from "@mui/material/ImageListItem";
@@ -35,8 +46,6 @@ import ListItemAvatar from "@mui/material/ListItemAvatar";
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import DoubleArrowTwoToneIcon from '@mui/icons-material/DoubleArrowTwoTone';
 import ButtonGroup from "@mui/material/ButtonGroup";
-import AddIcon from "@mui/icons-material/Add";
-import RemoveIcon from "@mui/icons-material/Remove";
 import ChangeCircleIcon from "@mui/icons-material/ChangeCircle";
 import LoupeIcon from "@mui/icons-material/Loupe";
 import Snackbar from "@mui/material/Snackbar";
@@ -60,7 +69,7 @@ const KEY_ANSWER_AMOUNT = "ANSWER_AMOUNT";
 const INITIAL_AMOUNT = 1;
 const GREETING_WORD = "I'm Drip Drop Deals Order Assistant, What would you like to order today?";
 
-const drawerWidth = 1200;
+const drawerWidth = 1350;
 
 const ChatWindow: React.FC = () => {
   const theme = useTheme();
@@ -107,6 +116,7 @@ const ChatWindow: React.FC = () => {
     }[]
   >([]);
 
+
   const [cartData, setCartData] = useState<
     {
       title: string;
@@ -132,56 +142,26 @@ const ChatWindow: React.FC = () => {
     count: number;
   }> = ({ title, imageUrl, price, count }) => {
     return (
-      <ListItem
-        secondaryAction={
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <IconButton 
-              size="small" 
-              color="primary"
-              onClick={(e) => {
-                e.stopPropagation();
-                setCartData(prev => prev.map(item => 
-                  item.title === title ? {...item, count: item.count + 1} : item
-                ));
-              }}
-            >
-              <AddIcon fontSize="small" />
-            </IconButton>
-            <Typography>{count}</Typography>
-            <IconButton 
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                setCartData(prev => prev.map(item => 
-                  item.title === title ? {...item, count: Math.max(1, item.count - 1)} : item
-                ));
-              }}
-            >
-              <RemoveIcon fontSize="small" />
-            </IconButton>
-          </Box>
-        }
-      >
-      <ListItemButton>
-        <ListItemAvatar>
-          <Avatar>
-            <img src={imageUrl} alt={title} width="100%" />
-          </Avatar>
-        </ListItemAvatar>
-        <ListItemText primary={title} secondary={"$"+price.match(/\$?(\d+\.\d+)/)?.[1]} />
-        <IconButton
-          edge="end"
-          aria-label="delete"
-          onClick={(e) => {
-            e.stopPropagation();
-            setCartData(prev => prev.filter(item => item.title !== title));
-            setCartCount(prev => prev - 1);
-          }}
-        >
-          <DeleteForeverIcon color="secondary" />
-        </IconButton>
-      </ListItemButton>
-      </ListItem>
+      <Box
+      key={title}
+      display="flex"
+      alignItems="center"
+      padding="10px"
+      borderBottom="1px solid #ddd"
+    >
+      <img
+        src={imageUrl.split(", ")[0]}
+        alt={title}
+        style={{ width: "50px", height: "50px", marginRight: "10px" }}
+      />
+      <Box>
+        <Typography variant="body1">{title}</Typography>
+        <Typography variant="body2" color="green">
+          {price || "$0.00"}
+        </Typography>
+        <Typography variant="body2">Count: {count}</Typography>
+      </Box>
+    </Box>
     );
   };
 
@@ -260,8 +240,8 @@ const ChatWindow: React.FC = () => {
     }
 
     return (
-      <ImageListItem key={text} className="image-list-item">
-        <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, backgroundColor: 'rgba(0,0,0,0.7)', padding: '4px 8px', borderRadius: 4 }}>
+      <ImageListItem key={text} className="image-list-item" style={{ margin: "8px", width:"240px", height: "180px", border: "solid 1px #73AD21", borderRadius: "15px"}} >
+        <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, backgroundColor: '#73AD21', padding: '4px 8px', borderRadius: 4 }}>
           <Typography variant="body2" style={{ color: 'white'  }}>
             {"$"+price.match(/\$?(\d+\.\d+)/)?.[1]}
           </Typography>
@@ -305,8 +285,9 @@ const ChatWindow: React.FC = () => {
         </div>
         <ImageListItemBar
           className="image-list-item-bar"
+          style={{backgroundColor: '#73AD21'}}
           title={
-            <div className="item-bar-title">
+            <div className="item-bar-title"  >
               <span className="item-text">{text}</span>
               <div
                 className="item-button"
@@ -347,20 +328,61 @@ const ChatWindow: React.FC = () => {
         />
 
         <Dialog open={open} onClose={handleClose}>
-          <DialogActions>
-            <DialogTitle style={{ textAlign: "center", whiteSpace: "normal", wordBreak: "break-word", maxWidth: "fit-content" }}>
-              {text}
-            </DialogTitle>
-          </DialogActions>
-          <DialogContent>
-            <img src={url} alt={text} style={{ width: "100%" }} />
-            <p>Single Price: {price}</p>
-            <p>Details: </p>
-            <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(details)}}></div>
-            <p>Features: </p>
-            <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(features)}}></div>
-          </DialogContent>
+          <Grid container justifyContent="center" mt={4}>
+            <Card sx={{ boxShadow: 0, padding: 3 }}>
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography
+                  variant="h5"
+                  fontWeight="bold"
+                  textAlign="center"
+                  flexGrow={1}
+                >
+                  {text}
+                </Typography>
+                <Chip
+                  label={price !== "N/A" ? price : "Price not available"}
+                  color={price !== "N/A" ? "success" : "default"}
+                  sx={{ fontWeight: "bold" }}
+                />
+              </Box>
 
+              <CardMedia
+                component="img"
+                height="400"
+                image={url}
+                alt={text}
+                sx={{ borderRadius: 2, marginY: 2 }}
+              />
+
+              <CardContent>
+                <Box mt={2}>
+                  <Typography variant="h6" fontWeight="bold">
+                    Details:
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    component="div"
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(details || "No details provided."),
+                    }}
+                  />
+                </Box>
+
+                <Box mt={2}>
+                  <Typography variant="h6" fontWeight="bold">
+                    Features:
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    component="div"
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(features || "No features listed."),
+                    }}
+                  />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
         </Dialog>
       </ImageListItem>
     );
@@ -797,6 +819,8 @@ const ChatWindow: React.FC = () => {
   //   // setShowContinueSelector(false);
   // };
 
+  const getTotalItems = () => cartData.reduce((sum, item) => sum + item.count, 0);
+
   const drawer = (
     <div>
       {/* <div style={{ padding: "16px", textAlign: "center", display: "flex", alignItems: "center" }}>
@@ -811,11 +835,11 @@ const ChatWindow: React.FC = () => {
       <Divider />
       {uniqueChunkData.map((category) => (
         <Box key={category.keyword} sx={{ marginTop: '20px', marginLeft: '10px' }}>
-          <Fab variant="extended" size="medium" color="primary">
+          <Fab variant="extended" size="medium" color="primary" sx={{ marginLeft: "10px", backgroundColor: "#73AD21", color: "white", '&:hover': { backgroundColor: "#f5f5f5" }, borderRadius: "15px", padding: "10px 20px 10px 20px"}} >
             <DoubleArrowTwoToneIcon sx={{ mr: 1 }} />
             {category.keyword}
           </Fab>
-          <ImageList cols={isSmallScreen ? 2 : isMediumScreen ? 4 : 5} style={{ padding: "10px" }}>
+          <ImageList cols={isSmallScreen ? 2 : isMediumScreen ? 4 : 5} style={{display: "flex", flexWrap:"wrap" }}>
             {category.data.map((item, index) => (
               item.image_urls != "" ? (
                 <ItemButton
@@ -841,25 +865,36 @@ const ChatWindow: React.FC = () => {
   );
 
   return (
-    <Box sx={{ display: "flex" }} style={{ padding: "1rem" }}>
+    <Box sx={{ display: "flex", height: "100vh" }}>
+      {loading && (
+        <div
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "85%",
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          <CircularProgress />
+        </div>
+      )}
       <Box
         component="nav"
         sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
         aria-label="mailbox folders"
       >
-        {/* The implementation can be swapped with js to avoid SEO duplication of links. */}
         <Drawer
-          variant="temporary"
-          ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
-          }}
+          variant="permanent" // Always visible for desktop
           sx={{
-            display: { xs: "block", sm: "none" },
+            display: { xs: "block" }, // Ensure visibility on desktop
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
-              width: drawerWidth,
+              width: drawerWidth, // Percentage-based width
+              maxWidth: "900px", // Cap the maximum width for large screens
+              minWidth: "400px", // Minimum width for smaller desktop screens
             },
           }}
+          open
         >
           {drawer}
         </Drawer>
@@ -881,16 +916,17 @@ const ChatWindow: React.FC = () => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          p: { xs: 1, md: 3 }, // Responsive padding
+          width: { xs: `calc(100% - ${drawerWidth})` }, // Remaining width for chatting area
+          minWidth: "300px", // Minimum width to ensure usability
         }}
       >
         <div
           style={{
-            height: "80vh",
-            maxHeight: "650px",
+            height: "calc(100vh - 100px)", // Responsive height minus input area
+            maxHeight: "none", // Remove fixed maxHeight
             overflowY: "auto",
-            padding: "20px",
+            padding: "1vw", // Relative padding
             position: "relative",
           }}
           ref={containerRef}
@@ -898,249 +934,175 @@ const ChatWindow: React.FC = () => {
           {messages.map((message, index) => (
             <ChatMessage key={index} {...message} />
           ))}
-          {/* <Grid container spacing={2} style={{ marginTop: "20px" }}> */}
-          {/* <ImageList
-            cols={isSmallScreen ? 2 : isMediumScreen ? 4 : 6}
-            style={{ padding: "10px" }}
-          >
-            {uniqueChunkData.map((item, index) =>
-              item.image_urls == "" ? (
-                <AmountItemButton
-                  key={index}
-                  text={item.title}
-                  onClick={() => handleButtonClick(item.title, "")}
-                />
-              ) : (
-                <ItemButton
-                  key={index}
-                  text={item.title}
-                  url={item.image_urls.split(",")[0]}
-                  onClick={() => {
-                    setOrderData([item]);
-                    handleButtonClick(
-                      item.title,
-                      item.image_urls.split(",")[0]
-                    );
-                  }}
-                />
-              )
-            )}
-          </ImageList> */}
-          {loading && (
-            <div
-              style={{
-                position: "fixed",
-                top: "50%",
-                left: "80%",
-                transform: "translate(-50%, -50%)",
-              }}
-            >
-              <CircularProgress />
-            </div>
-          )}
+          
           <ChatInput
             onSendMessage={(message) =>
               handleSendMessageViaInput(message.content, flag)
             }
           />
-          {showAmountSelector && (
-            <Box
-              sx={{
-                display: "flex",
-                mb: 1,
-                maxWidth: "200px",
-                maxHeight: "200px",
-                flexDirection: "column", // Ensure image and text stack vertically
-              }}
-            >
-              <Box // Image container
-                component="img"
-                src={orderData[0].image_urls.split(", ")[0]}
-                alt="Chat message visual"
-                sx={{
-                  borderRadius: 2,
-                  mb: 1, // Margin bottom for spacing between image and text
-                  boxShadow: 3, // Optional shadow for better visualization
-                }}
-                onClick={handleOpen}
-              />
-              <ButtonGroup variant="outlined">
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  onClick={() =>
-                    currentAmount > 1
-                      ? setCurrentAmount(currentAmount - 1)
-                      : setCurrentAmount(1)
-                  }
-                >
-                  <RemoveIcon />
-                </Button>
-                <Button>
-                  {currentAmount}
-                </Button>
-                <Button
-                  variant="contained"
-                  onClick={() => setCurrentAmount(currentAmount + 1)}
-                >
-                  <AddIcon />
-                </Button>
-                <Button style={{ width: "200px" }} onClick={() =>handleAmountClick(true, 0)}>
-                  <AddShoppingCartIcon />
-                </Button>
-              </ButtonGroup>
-              <Dialog open={open} onClose={handleClose}>
-                <DialogActions>
-                  <DialogTitle style={{ textAlign: "center", whiteSpace: "normal", wordBreak: "break-word", maxWidth: "fit-content" }}>
-                    {orderData[0].title}
-                  </DialogTitle>
-                </DialogActions>
-                <DialogContent>
-                  <img
-                    src={orderData[0].image_urls.split(", ")[0]}
-                    alt={orderData[0].title}
-                    style={{ width: "100%" }}
-                  />
-                </DialogContent>
-              </Dialog>
-            </Box>
-          )}
-          {/* {showContinueSelector && (
-            <Box
-              sx={{
-                display: "flex",
-                mb: 1,
-                maxWidth: "600px",
-                maxHeight: "200px",
-                flexDirection: "column", // Ensure image and text stack vertically
-              }}
-            >
-              <ButtonGroup variant="outlined">
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  onClick={handleContinueOrder}
-                >
-                  <ShoppingCartCheckoutIcon /> I want to order again
-                </Button>
-                <Button variant="contained" onClick={handleFinishOrder}>
-                  <AssignmentTurnedInIcon /> That's all. I want to finish order
-                </Button>
-              </ButtonGroup>
-            </Box>
-          )} */}
-          <Dialog open={orderDetailDialogOpen}>
-            {orderData.length > 0 && (
-              <>
-                <DialogTitle>
-                  <p>{orderData[0].title}</p>
-                </DialogTitle>
-                <DialogContent>
-                  <p>Total Price: {totalPrice}</p>
-                  <img
-                    src={orderData[0].image_urls.split(", ")[0]}
-                    alt={orderData[0].title}
-                    style={{ width: "100%" }}
-                  />
-                  <p>Category: {orderData[0].category}</p>
-                  <p>Subtitle: {orderData[0].subtitle}</p>
-                  <p>Single Price: {"$"+orderData[0].single_price.match(/\$?(\d+\.\d+)$/)?.[1]}</p>
-                  <p>Details: </p>
-                  <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(orderData[0].details)}}></div>
-                  <p>Features: </p>
-                  <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(orderData[0].directions)}}></div>
-                </DialogContent>
-              </>
-            )}
-            <DialogActions>
-              <Button
-                component="label"
-                role={undefined}
-                variant="contained"
-                tabIndex={-1}
-                startIcon={<AddShoppingCartIcon />}
-                onClick={handleAddCart}
-              >
-                Add Cart
-              </Button>
-              <Button
-                startIcon={<ChangeCircleIcon />}
-                variant="contained"
-                onClick={() =>
-                  handleButtonClick(
-                    orderData[0].title,
-                    orderData[0].image_urls.split(", ")[0]
-                  )
-                }
-                color="primary"
-              >
-                Change Amount
-              </Button>
-              <Button
-                startIcon={<LoupeIcon />}
-                onClick={handleContinueOrder}
-                color="primary"
-              >
-                New Order
-              </Button>
-            </DialogActions>
-          </Dialog>
         </div>
         <Badge
-          color="secondary"
           badgeContent={cartCount}
-          style={{
+          sx={{
+            "& .MuiBadge-badge": {
+              backgroundColor: "#FF3B30",
+              color: "white",
+              border: "2px solid #FF3B30",
+            },
             position: "fixed",
-            bottom: "150px",
-            right: "70px",
+            bottom: "12vh", // Relative positioning
+            right: "30px",
           }}
         >
-          <Fab color="primary" aria-label="add" onClick={handleCartOpen}>
-            <AddShoppingCartIcon />
+          <Fab
+            sx={{ backgroundColor: "#73AD21", width: "70px", height: "70px" }}
+            aria-label="add"
+            onClick={handleCartOpen}
+          >
+            <AddShoppingCartIcon sx={{ color: "white", fontSize: "35px" }} />
           </Fab>
         </Badge>
 
-        <Drawer 
-          anchor="right"
-          open={cartOpen} 
-          onClose={handleCartClose}
-          sx={{
-            "& .MuiDrawer-paper": {
-              boxSizing: "border-box",
-              width: "500px",
-            },
-          }}>
-          <div style={{ padding: "16px", textAlign: "center" }}>
-            <img
-              src="/cart.svg"
-              alt="Cart"
-              style={{ maxWidth: "100%", height: "200px" }}
-            />
-          </div>
-          <List sx={{ position: 'relative', overflow: 'auto', marginBottom: '50px'}}>
-            {cartData.map((item, index) => (
-              <ItemCart
-                key={index}
-                title={item.title}
-                imageUrl={item.image_urls.split(", ")[0]}
-                price={item.single_price}
-                count={item.count}
+        <Drawer
+            anchor="right"
+            open={cartOpen}
+            onClose={handleCartClose}
+            sx={{
+              '& .MuiDrawer-paper': {
+                width: '540px',
+                padding: '20px',
+              },
+            }}
+          >
+            <Box sx={{ position: 'relative', padding: "16px", textAlign: "center" }}>
+              <IconButton
+                onClick={handleCartClose}
+                sx={{
+                  position: 'absolute',
+                  right: 8,
+                  top: 8,
+                  color: '#73AD21',
+                  '&:hover': {
+                    backgroundColor: 'rgba(115, 173, 33, 0.1)'
+                  }
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+              <img
+                src="/cart.gif"
+                alt="Cart"
+                style={{ maxWidth: "100%", height: "200px" }}
               />
-            ))}
-          </List>
-          
-          <AppBar position="absolute" color="primary" sx={{ display: 'flex', top: 'auto', height: '50px', bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
-            <Paper elevation={0} sx={{ bgcolor: 'transparent', color: 'white', padding: 1 }}>
-              <h4>Total Items: {cartData.reduce((sum, item) => sum + item.count, 0)} || 
-               
-              Total Price: ${cartData.reduce((sum, item) => {
+            </Box>
+
+            <List>
+              {cartData.map((item, index) => (
+                <ListItem key={index} divider>
+                  <ListItemAvatar>
+                    <Avatar src={item.image_urls} variant="square" />
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={item.title}
+                    secondary={`$${item.single_price}`}
+                    primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: '600' }}
+                    secondaryTypographyProps={{ fontSize: '0.8rem', color: 'green' }}
+                  />
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    border="2px solid #7ac142"
+                    borderRadius="5px"
+                    padding="2px 8px"
+                    gap={1}
+                  >
+                    <IconButton size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCartData(prev => prev.map(cartItem => 
+                          cartItem.title === item.title ? {...cartItem, count: cartItem.count + 1} : cartItem
+                        ));
+                      }} 
+                      sx={{ color: '#7ac142' }}
+                    >
+                      <AddIcon fontSize="small" />
+                    </IconButton>
+
+                    <Typography variant="body1" fontWeight="bold" color="#7ac142">
+                      {item.count}
+                    </Typography>
+
+                    <IconButton size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCartData(prev => prev.map(cartItem => 
+                          cartItem.title === item.title ? {...cartItem, count: Math.max(1, cartItem.count - 1)} : cartItem
+                        ));
+                      }} 
+                      sx={{ color: '#7ac142' }}
+                    >
+                      <RemoveIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                  <IconButton size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCartData(prev => prev.filter(cartItem => cartItem.title !== item.title));
+                      setCartCount(prev => prev - 1);
+                    }} 
+                    color="error"
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </ListItem>
+              ))}
+            </List>
+
+            <div
+              style={{
+                top: 'auto',
+                bottom: 0,
+                padding: '10px',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <Paper
+                elevation={0}
+                sx={{
+                  display: 'flex',
+                  padding: '10px 20px',
+                }}
+              >
+                <Typography>Total Items: {cartData.reduce((sum, item) => sum + item.count, 0)} |
+                  Total Price: ${cartData.reduce((sum, item) => {
                 const priceMatch = item.single_price.match(/\$?(\d+\.\d+)/);
                 const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
                 return sum + (price * item.count);
-              }, 0).toFixed(2)}</h4>
-            </Paper>
-          </AppBar>
-        </Drawer>
+              }, 0).toFixed(2)}</Typography>
+              </Paper>
+            </div>
+            <div style={{display: "flex"}}>
+              <Button
+                  variant="contained"
+                  color="success"
+                  size="large"
+                  sx={{
+                    bgcolor: '#7ac142',
+                    width: '300px',
+                    margin: '10px auto',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  Checkout: ${cartData.reduce((sum, item) => {
+                  const priceMatch = item.single_price.match(/\$?(\d+\.\d+)/);
+                  const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
+                  return sum + (price * item.count);
+                }, 0).toFixed(2)}
+                </Button>
+            </div>
+          </Drawer>
       </Box>
     </Box>
   );
