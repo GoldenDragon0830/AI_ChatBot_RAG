@@ -240,7 +240,7 @@ const ChatWindow: React.FC = () => {
     }
 
     return (
-      <ImageListItem key={text} className="image-list-item" style={{ margin: "8px", width:"240px", height: "180px", border: "solid 1px #73AD21", borderRadius: "15px"}} >
+      <ImageListItem key={text} className="image-list-item" style={{ margin: "8px", width:"240px", border: "solid 1px #73AD21", borderRadius: "15px"}} >
         <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, backgroundColor: '#73AD21', padding: '4px 8px', borderRadius: 4 }}>
           <Typography variant="body2" style={{ color: 'white'  }}>
             {"$"+price.match(/\$?(\d+\.\d+)/)?.[1]}
@@ -915,54 +915,70 @@ const ChatWindow: React.FC = () => {
       <Box
         component="main"
         sx={{
-          flexGrow: 1,
-          p: { xs: 1, md: 3 }, // Responsive padding
-          width: { xs: `calc(100% - ${drawerWidth})` }, // Remaining width for chatting area
+          position: "relative",
+          // flexGrow: 1,
+          // p: { xs: 1, md: 3 }, // Responsive padding
+          // width: { xs: `calc(100% - ${drawerWidth})` }, // Remaining width for chatting area
           minWidth: "300px", // Minimum width to ensure usability
         }}
       >
+          <div
+            style={{
+              height: "calc(100vh - 100px)", // Responsive height minus input area
+              maxHeight: "none", // Remove fixed maxHeight
+              overflowY: "auto",
+              padding: "1vw", // Relative padding
+              position: "relative",
+            }}
+            ref={containerRef}
+          >
+            {messages.map((message, index) => (
+              <ChatMessage key={index} {...message} />
+            ))}
+            
+
+          </div>
         <div
           style={{
-            height: "calc(100vh - 100px)", // Responsive height minus input area
-            maxHeight: "none", // Remove fixed maxHeight
-            overflowY: "auto",
-            padding: "1vw", // Relative padding
-            position: "relative",
-          }}
-          ref={containerRef}
-        >
-          {messages.map((message, index) => (
-            <ChatMessage key={index} {...message} />
-          ))}
-          
-          <ChatInput
-            onSendMessage={(message) =>
-              handleSendMessageViaInput(message.content, flag)
-            }
-          />
-        </div>
-        <Badge
-          badgeContent={cartCount}
-          sx={{
-            "& .MuiBadge-badge": {
-              backgroundColor: "#FF3B30",
-              color: "white",
-              border: "2px solid #FF3B30",
-            },
-            position: "fixed",
-            bottom: "12vh", // Relative positioning
-            right: "30px",
+            display: "flex",
+            position: "absolute",
+            width: "100%",
+            bottom: 0,
+            // right: 0,
+            // left: drawerWidth, // Align with chatting area
+            // padding: "1vw", // Relative padding
+            backgroundColor: "#F4F7FD",
+            borderRadius: "20px",
           }}
         >
-          <Fab
-            sx={{ backgroundColor: "#73AD21", width: "70px", height: "70px" }}
-            aria-label="add"
-            onClick={handleCartOpen}
+          <Badge
+            badgeContent={cartCount}
+            sx={{
+              "& .MuiBadge-badge": {
+                backgroundColor: "#FF3B30",
+                color: "white",
+                border: "2px solid #FF3B30",
+              },
+              position: "absolute",
+              bottom: "12vh", // Relative positioning
+              right: "30px",
+            }}
           >
-            <AddShoppingCartIcon sx={{ color: "white", fontSize: "35px" }} />
-          </Fab>
-        </Badge>
+            <Fab
+              sx={{ backgroundColor: "#73AD21", width: "70px", height: "70px" }}
+              aria-label="add"
+              onClick={handleCartOpen}
+            >
+              <AddShoppingCartIcon sx={{ color: "white", fontSize: "35px" }} />
+            </Fab>
+          </Badge>
 
+          <ChatInput
+              onSendMessage={(message) =>
+                handleSendMessageViaInput(message.content, flag)
+              }
+            />
+        </div>
         <Drawer
             anchor="right"
             open={cartOpen}
@@ -1102,7 +1118,7 @@ const ChatWindow: React.FC = () => {
                 }, 0).toFixed(2)}
                 </Button>
             </div>
-          </Drawer>
+        </Drawer>
       </Box>
     </Box>
   );

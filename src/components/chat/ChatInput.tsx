@@ -35,18 +35,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        position: "fixed",
-        bottom: 0,
-        right: 0,
-        left: drawerWidth, // Align with chatting area
-        padding: "1vw", // Relative padding
-        backgroundColor: "#F4F7FD",
-        borderRadius: "30px",
-      }}
-    >
+    <div style={{width: "100%", padding: "1vw"}}>
       <TextField
         fullWidth
         placeholder="Type message"
