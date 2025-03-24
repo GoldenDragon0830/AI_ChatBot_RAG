@@ -3,7 +3,6 @@ const { ref, get, getDatabase }  = require('firebase/database');
 const { initializeApp } = require('firebase/app');
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCAyIpUeMceliKvlJ1ohVb9kPEtw3sZ7Go",
   authDomain: "soundglide-41873.firebaseapp.com",
   databaseURL: "https://soundglide-41873-default-rtdb.firebaseio.com",
   projectId: "soundglide-41873",
