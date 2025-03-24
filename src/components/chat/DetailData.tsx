@@ -10,15 +10,15 @@ import {
   Chip,
   IconButton,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 
 const DetailData: React.FC = () => {
   // Retrieve the data from sessionStorage
   const itemData = JSON.parse(sessionStorage.getItem("itemData") || "{}");
 
   // Price extraction with fallback to "N/A"
-  const priceMatch = itemData.single_price?.match(/\$?(\d+\.\d+)$/);
-  const price = priceMatch ? `$${priceMatch[1]}` : "N/A";
+  // const priceMatch = itemData.single_price?.match(/\$?(\d+\.\d+)$/);
+  // const price = priceMatch ? `$${priceMatch[1]}` : "N/A";
 
   if (!itemData || !itemData.title) {
     return <Typography variant="h6">No data available.</Typography>;
@@ -26,8 +26,11 @@ const DetailData: React.FC = () => {
 
   return (
     <Grid container justifyContent="center" mt={4}>
-      <Card sx={{ boxShadow: 0, padding: 3 }}>
+      <Card sx={{ boxShadow: 0, padding: "2vh 20vw" }}>
         <Box display="flex" justifyContent="space-between" alignItems="center">
+          <IconButton onClick={()=>{window.close()}} >
+            <ArrowBackIosIcon/>
+          </IconButton>
           <Typography
             variant="h5"
             fontWeight="bold"
@@ -37,9 +40,13 @@ const DetailData: React.FC = () => {
             {itemData.title}
           </Typography>
           <Chip
-            label={price !== "N/A" ? price : "Price not available"}
-            color={price !== "N/A" ? "success" : "default"}
-            sx={{ fontWeight: "bold" }}
+            label={itemData.single_price !== "N/A" ? "$"+itemData.single_price : "$Undefined"}
+            sx={{
+              fontWeight: "bold",
+              backgroundColor: "#73AD21",
+              color: "white",
+              borderRadius: 1
+            }}
           />
         </Box>
 

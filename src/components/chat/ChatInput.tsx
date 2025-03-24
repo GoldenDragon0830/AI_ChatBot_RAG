@@ -1,6 +1,8 @@
-import { Button, TextField,InputAdornment, IconButton } from "@mui/material";
+import { TextField,InputAdornment, IconButton, Box } from "@mui/material";
 import React, { useState } from "react";
 import SendIcon from '@mui/icons-material/Send';
+
+import { sendMessageToAdmin } from "./sendMessage";
 
 interface ChatInputProps {
   onSendMessage: (message: {
@@ -8,8 +10,6 @@ interface ChatInputProps {
     role: "user" | "assistant";
   }) => void;
 }
-
-const drawerWidth = "70%";
 
 const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
   const [message, setMessage] = useState<{ content: string; role: "user" | "assistant" }>({
@@ -35,7 +35,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
   };
 
   return (
-    <div style={{width: "100%", padding: "1vw"}}>
+    <Box sx={{width: "100%", padding: "1vw"}}>
       <TextField
         fullWidth
         placeholder="Type message"
@@ -56,7 +56,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
           ),
         }}
       />
-    </div>
+    </Box>
   );
 };
 
