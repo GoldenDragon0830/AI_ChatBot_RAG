@@ -2,9 +2,11 @@ import os
 import re
 import json
 import openai
-from flask import Flask, request, Response, stream_with_context
+from flask import Flask, request, Response, jsonify, stream_with_context
 from dotenv import load_dotenv
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
+import time
+
 
 from pinecone import Pinecone
 from langchain_openai import ChatOpenAI
@@ -23,6 +25,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableBranch
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_community.chat_message_histories import ChatMessageHistory
+from firebase_script import login_user, send_message
 
 load_dotenv()
 
@@ -188,9 +191,27 @@ def parse_product_data(page_content):
 
     return product_data
 
-def get_response(message: str, flag: str):
+def get_response(message_id: str, message: str, username: str, group_id: str, company_id: str, flag: str):
     """Generate a response based on the message and flag."""
     print(message)
+
+    print(f"-> sendMessage: {message_id} / {message} / {username} / {group_id} / {company_id} / {flag}")
+
+    send_message(
+        message_id,
+        int(time.time() * 1000),
+        message,
+        {
+            "_id": message_id,
+            "displayName": username,
+        },
+        group_id,
+        company_id,
+        quick_replies=None,
+        cipher=None
+    )
+
+    print("send_message////send_message////send_message")
     
     if flag == KEY_SELECT_PRODUCT:
         keywords = get_keyword_array(message)
@@ -314,14 +335,17 @@ def get_response(message: str, flag: str):
                                 keyword_chunks[keyword].append(product_data)
 
             if answer_sent == False:
+                print("yield f'data: {all_content----------->")
                 yield f'data: {all_content}\n\n'
                 answer_sent = True
 
             # Convert the dictionary to a JSON string for the desired format
+            print("yield f'data: ChunkData:{json.dumps(keyword_chunks)}----------->")
             yield f'data: ChunkData:{json.dumps(keyword_chunks)}\n\n'
         
         
         answer_sent = False
+        print("yield f'data: OPTION_END----------->")
         yield f'data: OPTION_END\n\n'
 
     elif flag == KEY_ASK_AMOUNT:
@@ -330,6 +354,7 @@ def get_response(message: str, flag: str):
             Response must be 1 sentence. Do not make long.
         """
         response = get_openai_response(PROMPT, message)
+        print("yield f'data: {KEY_ASK_AMOUNT----------->")
         yield f'data: {KEY_ASK_AMOUNT}:{response}\n\n'
     
     elif flag == KEY_CHAT_CUSTOMER:
@@ -339,6 +364,7 @@ def get_response(message: str, flag: str):
             Make response only one sentence. Do not make over 2 sentences.
         """
         response = get_openai_response(PROMPT, message)
+        print("yield f'data: {response----------->")
         yield f'data: {response}\n\n'  
 
     elif flag == KEY_ANSWER_AMOUNT:
@@ -361,14 +387,40 @@ def get_response(message: str, flag: str):
             max_tokens=200
         ).choices[0].message.content.strip()
 
+        print("yield f'data: {KEY_ANSWER_AMOUNT----------->")
         yield f'data: {KEY_ANSWER_AMOUNT}:{response}\n\n'
 
 @app.route("/chat")
 def sse_request():
     """Handle chat requests."""
+    message_id = request.args.get('id', '')
+    username = request.args.get('username', '')
+    group_id = request.args.get('group_id', '')
     message = request.args.get('message', '')
+    company_id = "qxBI110QaIiaQIffistj"
     flag = request.args.get('flag', '')
-    return Response(stream_with_context(get_response(message, flag)), content_type='text/event-stream')
+
+    print(f"-> sse_request----> {message_id} / {message} / {username} / {group_id} / {company_id} / {flag}")
+    print("//")
+    return Response(stream_with_context(get_response(message_id, message, username, group_id, company_id, flag)), content_type='text/event-stream')
+
+
+@app.route('/chat/auth/signin', methods=['POST'])
+@cross_origin()
+def login():
+    data = request.get_json()
+
+    if not data or not data.get('email'):
+        return jsonify({'error': 'Missing email or password'}), 400
+
+    email = data.get('email')
+    # print("login---email--->", email)
+    user_data = login_user(email)
+    print("login---user_data--->", user_data)
+    print("//")
+
+    return jsonify({'data': user_data}), 200
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=PORT)

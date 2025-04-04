@@ -2,9 +2,11 @@ import React, { useState, useRef, useEffect } from "react";
 import ChatInput from "./ChatInput";
 import ChatMessage from "./ChatMessage";
 import CheckoutModal from "./CheckoutModal";
+// import LoginModal from "./LoginModal";
 import DOMPurify from 'dompurify';
+// Remove validator import and add email validation function
 
-import { sendMessageToAdmin } from './sendMessage';
+// import { sendMessageToAdmin } from './sendMessage';
 
 import {
   Modal,
@@ -53,6 +55,7 @@ import Paper from '@mui/material/Paper';
 import LinkIcon from '@mui/icons-material/Link';
 import { Details } from "@mui/icons-material";
 import { title } from "process";
+import { group } from "console";
 
 interface MessageInterface {
   content: string;
@@ -66,7 +69,10 @@ const KEY_SELECT_PRODUCT = "SELECT_PRODUCT";
 const KEY_ASK_AMOUNT = "ASK_AMOUNT";
 const KEY_ANSWER_AMOUNT = "ANSWER_AMOUNT";
 const INITIAL_AMOUNT = 1;
-const GREETING_WORD = "I'm Drip Drop Deals Order Assistant, What would you like to order today?";
+const GREETING_WORD = "Hi {displayName}, What would you like to order today?";
+const GREETING_WORD_LOGIN = "I'm Drip Drop Deals Order Assistant, Please enter your email address before getting started.";
+const INVALID_EMAIL = "The email address is invalid. Please re-enter your email address.";
+
 
 const drawerWidth = 1400;
 
@@ -79,7 +85,21 @@ const ChatWindow: React.FC = () => {
   const [orderDetailDialogOpen, setOrderDetailDialogOpen] = useState(false);
   const [totalPrice, setTotalPrice] = useState("");
   const [currentAmount, setCurrentAmount] = useState(INITIAL_AMOUNT);
+
+  const [loginFlag, setLoginFlag] = useState<boolean>(false);
+
   const [visibleCheckoutModal, setVisibleCheckoutModal] = useState<boolean>(false);
+  // const [visibleLoginModal, setVisibleLoginModal] = useState<boolean>(true);
+
+  const [userDataFlag, setUserDataFlag] = useState<boolean>(false);
+  const [userData, setUserData] = useState({
+    id: String,
+    email: String,
+    displayName: String,
+    type:  String,
+    group_id: String,
+    company: String
+  });
 
   // const API_URL = "http://13.208.253.225:4000/chat";
   // const API_URL = "http://52.221.236.58:80/chat";
@@ -87,8 +107,13 @@ const ChatWindow: React.FC = () => {
   // const API_URL = process.env.REACT_APP_API_URL;
 
   const [messages, setMessages] = useState<MessageInterface[]>([
-    { content: GREETING_WORD, role: "assistant" },
+    { content: GREETING_WORD_LOGIN, role: "assistant" },
   ]);
+
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
   interface ChunkData {
     keyword: string;
@@ -530,6 +555,14 @@ const ChatWindow: React.FC = () => {
   styleSheet.innerText = styles;
   document.head.appendChild(styleSheet);
 
+  // useEffect(() => {
+  //   if (!visibleLoginModal) {
+  //     if(!userDataFlag){
+  //       setVisibleLoginModal(true);
+  //     }
+  //   }
+  // }, [visibleLoginModal]);
+
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
@@ -577,22 +610,20 @@ const ChatWindow: React.FC = () => {
     setLoading(true);
 
     try {
-      await sendMessageToAdmin(
-        "BJr1VG8fdGlrcTEApHOp",
-        Date.now(),
-        message.content,
-        {
-          _id: "BJr1VG8fdGlrcTEApHOp",
-          name: "James",
-        },
-        "Zyu5DWwkmWA4f335T4Z6",
-        "qxBI110QaIiaQIffistj"
-      );
+      // await sendMessageToAdmin(
+      //   "BJr1VG8fdGlrcTEApHOp",
+      //   Date.now(),
+      //   message.content,
+      //   {
+      //     _id: "BJr1VG8fdGlrcTEApHOp",
+      //     name: "James",
+      //   },
+      //   "Zyu5DWwkmWA4f335T4Z6",
+      //   "qxBI110QaIiaQIffistj"
+      // );
 
       const response = await fetch(
-        `${API_URL}?message=${message.content}&history=${JSON.stringify(
-          messages
-        )}&flag=${flag}`,
+        `${API_URL}?id=${userData.id}&username=${userData.displayName}&group_id=${userData.group_id}&message=${message.content}&history=${JSON.stringify(messages)}&flag=${flag}`,
         {
           method: "GET",
           headers: {
@@ -627,17 +658,17 @@ const ChatWindow: React.FC = () => {
             newMessageContent += data;
 
             const temp = newMessageContent.split("ChunkData:")[0] || "";
-            sendMessageToAdmin(
-              "BJr1VG8fdGlrcTEApHOp",
-              Date.now(),
-              temp,
-              {
-                _id: "BJr1VG8fdGlrcTEApHOp",
-                name: "James",
-              },
-              "Zyu5DWwkmWA4f335T4Z6",
-              "qxBI110QaIiaQIffistj"
-            );
+            // sendMessageToAdmin(
+            //   "BJr1VG8fdGlrcTEApHOp",
+            //   Date.now(),
+            //   temp,
+            //   {
+            //     _id: "BJr1VG8fdGlrcTEApHOp",
+            //     name: "James",
+            //   },
+            //   "Zyu5DWwkmWA4f335T4Z6",
+            //   "qxBI110QaIiaQIffistj"
+            // );
             
             if (data.includes("ChunkData:")) {
               try {
@@ -815,21 +846,68 @@ const ChatWindow: React.FC = () => {
     }
   };
 
-  const handleSendMessageViaInput = (text: string, flag: string) => {
+  const handleSendMessageViaInput = async(text: string, flag: string) => {
     const message: MessageInterface = {
       content: text,
       role: "user",
     };
-    if (flag === KEY_ASK_AMOUNT)
-      handleSendMessage(message, KEY_ANSWER_AMOUNT, true);    
-    else { 
-      setChunkData([]);
-      // setShowContinueSelector(false);
-      setOrderDetailDialogOpen(false);
-      
-      setFlag(KEY_SELECT_PRODUCT);
-      handleSendMessage(message, KEY_SELECT_PRODUCT, true);
-      setFlag(KEY_SELECT_PRODUCT);
+
+    if(loginFlag){
+      if (flag === KEY_ASK_AMOUNT){
+        handleSendMessage(message, KEY_ANSWER_AMOUNT, true);    
+      }
+      else {
+
+        console.log("handleSendMessageViaInput--->", loginFlag);
+
+        setChunkData([]);
+        // setShowContinueSelector(false);
+        setOrderDetailDialogOpen(false);
+        
+        setFlag(KEY_SELECT_PRODUCT);
+        handleSendMessage(message, KEY_SELECT_PRODUCT, true);
+        setFlag(KEY_SELECT_PRODUCT);
+      }
+    } else {
+      console.log("loginFlag--->", loginFlag, text);
+      setMessages((prevMessages) => [...prevMessages, message]);
+      if(isValidEmail(text)){
+
+        setLoading(true);
+        
+        const response = await fetch(`${API_URL}/auth/signin`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: text }), // Replace with actual form data
+        });
+    
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+    
+        const data = await response.json();
+        console.log("Success:", data);
+        setUserData(data.data);
+        setUserDataFlag(true);
+        
+        setLoading(false);
+
+        const message: MessageInterface = {
+          content: `Hi ${data.data.displayName}, What would you like to order today?`,
+          role: "assistant",
+        };
+        setMessages((prevMessages) => [...prevMessages, message]);
+        setLoginFlag(true);
+
+      } else {
+        const message: MessageInterface = {
+          content: INVALID_EMAIL,
+          role: "assistant",
+        };
+        setMessages((prevMessages) => [...prevMessages, message]);
+      }
     }
   };
 
@@ -1019,7 +1097,7 @@ const ChatWindow: React.FC = () => {
           // border: "solid 1px red",
           borderRadius: "20px",
           boxShadow: 5,
-          margin: "4px 10px"
+          margin: "4px 10px",
         }}
       >
           <div
@@ -1223,6 +1301,7 @@ const ChatWindow: React.FC = () => {
             </div>
         </Drawer>
       </Box>
+      {/* <LoginModal setUserDataFlag={setUserDataFlag} setUserData={setUserData} open={visibleLoginModal} onClose={()=> setVisibleLoginModal(false)} /> */}
     </Box>
   );
 };

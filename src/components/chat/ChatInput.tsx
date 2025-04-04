@@ -2,7 +2,7 @@ import { TextField,InputAdornment, IconButton, Box } from "@mui/material";
 import React, { useState } from "react";
 import SendIcon from '@mui/icons-material/Send';
 
-import { sendMessageToAdmin } from "./sendMessage";
+// import { sendMessageToAdmin } from "./sendMessage";
 
 interface ChatInputProps {
   onSendMessage: (message: {
