@@ -55,7 +55,7 @@ const KEY_SELECT_PRODUCT = "SELECT_PRODUCT";
 const KEY_ASK_AMOUNT = "ASK_AMOUNT";
 const KEY_ANSWER_AMOUNT = "ANSWER_AMOUNT";
 const INITIAL_AMOUNT = 1;
-const GREETING_WORD = "I'm Restaurant Depot Order Assistant, What would you like to order today?";
+const GREETING_WORD = "I'm Deli Kasbah Order Assistant, What would you like to order today?";
 
 const drawerWidth = 1200;
 
