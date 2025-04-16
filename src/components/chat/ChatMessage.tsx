@@ -65,7 +65,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           badgeInset="14%"
           color="success"
         >
-          { isRequest ? (<PersonIcon fontSize="large" color="primary" />) : (<div style={{display: 'flex', alignItems: 'center'}}><img src="/deli-kasbah/deli-kasbah-logo.png" alt="logo" style={{width: "60px", height: "50px"}}/></div>)}
+          { isRequest ? (<PersonIcon fontSize="large" color="primary" />) : (<div style={{display: 'flex', alignItems: 'center'}}><img src="/deli-kasbeh/deli-kasbah-logo.png" alt="logo" style={{width: "60px", height: "50px"}}/></div>)}
         </Badge>
         {
           isRequest ? (<p></p>) : (<p style={{paddingLeft: '5px'}}>Assistant</p>)
