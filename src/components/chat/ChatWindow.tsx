@@ -1067,7 +1067,7 @@ const ChatWindow: React.FC = () => {
           }}>
           <div style={{ padding: "16px", textAlign: "center" }}>
             <img
-              src="/cart.svg"
+              src="/medwaste-solutions/cart.svg"
               alt="Cart"
               style={{ maxWidth: "100%", height: "200px" }}
             />
