@@ -106,9 +106,9 @@ const ChatWindow: React.FC = () => {
   // const [selectedSpecialOption, setSelectedSpecialOption] = useState("Pint"); // Default to "Pint"
   // const [specialItemCount, setSpecialItemCount] = useState(1);
 
-  const API_URL = "http://85.209.93.93:4002/chat";
-  const API_GET_FROM_DB_URL = "http://85.209.93.93:4002/get_db_data";
-  const API_CHAT_VIA_INPUT_URL = "http://85.209.93.93:4002/chat_via_input";
+  const API_URL = "https://soundglide.com/backend/api/v3/chat";
+  const API_GET_FROM_DB_URL = "https://soundglide.com/backend/api/v3/get_db_data";
+  const API_CHAT_VIA_INPUT_URL = "https://soundglide.com/backend/api/v3/chat_via_input";
 
   // const API_URL = process.env.REACT_APP_API_URL;
 
