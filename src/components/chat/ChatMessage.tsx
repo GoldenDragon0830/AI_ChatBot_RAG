@@ -72,13 +72,13 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ content, role, imageUrl }) =>
           >
             {isRequest ? (
               <img
-                src="/user.png"
+                src="/west-side-wok/user.png"
                 alt="logo"
                 style={{ width: "40px", height: "40px", maxWidth: "40px", minWidth: "40px" }}
               />
             ) : (
               <img
-                src="/assistant.png"
+                src="/west-side-wok/assistant.png"
                 alt="logo"
                 style={{ width: "40px", height: "40px", maxWidth: "40px", minWidth: "40px" }}
               />
