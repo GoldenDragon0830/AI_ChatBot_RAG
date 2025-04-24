@@ -17,7 +17,11 @@ import {
   Drawer,
   ListItemButton,
   AppBar,
-  Typography
+  Typography,
+  Card,
+  CardContent,
+  Stack,
+  Chip
 } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import ImageList from "@mui/material/ImageList";
@@ -49,13 +53,23 @@ interface MessageInterface {
   role: "user" | "assistant";
 }
 
+interface CardData {
+  title: string;
+  company: string;
+  category: string[];
+  content: string;
+  icon_url: string;
+}
+
+const COMPANY_NAME = "medwaste-solutions";
+
 const KEY_CHAT_CUSTOMER = "CHAT_CUSTOMER";
 // const KEY_FINISH_ORDER = "FINISH_ORDER";
 const KEY_SELECT_PRODUCT = "SELECT_PRODUCT";
 const KEY_ASK_AMOUNT = "ASK_AMOUNT";
 const KEY_ANSWER_AMOUNT = "ANSWER_AMOUNT";
 const INITIAL_AMOUNT = 1;
-const GREETING_WORD = "I'm Restaurant Depot Order Assistant, What would you like to order today?";
+const GREETING_WORD = "I'm Medical Waste Disposal Assistant, What would you like to order today?";
 
 const drawerWidth = 1200;
 
@@ -71,7 +85,7 @@ const ChatWindow: React.FC = () => {
 
   // const API_URL = "http://13.208.253.225:4000/chat";
   // const API_URL = "http://52.221.236.58:80/chat";
-  const API_URL = "http://85.209.93.93:4003/chat";
+  const API_URL = "https://soundglide.com/backend/api/chat";
 
   const [messages, setMessages] = useState<MessageInterface[]>([
     { content: GREETING_WORD, role: "assistant" },
@@ -126,6 +140,56 @@ const ChatWindow: React.FC = () => {
   const [flag, setFlag] = useState(KEY_SELECT_PRODUCT);
   const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Add new state for company data
+  const [companyData, setCompanyData] = useState<CardData>({
+    title: "",
+    company: "",
+    category: [],
+    content: "",
+    icon_url: "/medwaste-logo.png"
+  });
+
+  // Add useEffect to fetch company data
+  useEffect(() => {
+    const fetchCompanyData = async () => {
+      try {
+        const response = await fetch(`https://soundglide.com/backend/api/company/${COMPANY_NAME}`);
+        const data = await response.json();
+        
+        if (data && data.length > 0) {
+          const company = data[0];
+          // Parse the category string which is a JSON string
+          let categories;
+          try {
+            categories = JSON.parse(company.category);
+          } catch {
+            categories = ["PPC Company","Google Ads","Facebook Ads","Tik Tok Ads","Instagram Ads"];  // fallback categories
+          }
+
+          setCompanyData({
+            title: company.title || "Medical Waste Disposal",
+            company: company.company || "medwaste-solutions",
+            category: categories, // Use the parsed categories array
+            content: company.content || "",
+            icon_url: company.icon_url || `/${COMPANY_NAME}/medwaste-logo.png`
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching company data:", error);
+        // Set default values if fetch fails
+        setCompanyData({
+          title: "Medical Waste Disposal",
+          company: "medwaste-solutions",
+          category: ["Medical Waste", "Waste Disposal"],
+          content: "",
+          icon_url: `/${COMPANY_NAME}/medwaste-logo.png`
+        });
+      }
+    };
+
+    fetchCompanyData();
+  }, []);
 
   const ItemCart: React.FC<{
     title: string;
@@ -736,28 +800,85 @@ const ChatWindow: React.FC = () => {
     setFlag(KEY_SELECT_PRODUCT);
     // setShowContinueSelector(false);
   };
-  // const handleFinishOrder = async () => {
-  //   setOrderDetailDialogOpen(false);
-  //   const displayMessage: MessageInterface = {
-  //     content: "That's all. I want to finish order",
-  //     role: "user",
-  //   };
-  //   handleSendMessage(displayMessage, KEY_FINISH_ORDER, true);
-  //   // setShowContinueSelector(false);
-  // };
+
+  
+  const InfoCard: React.FC<{ data: CardData }> = ({ data }) => {
+    return (
+      <Card sx={{ 
+        maxWidth: '100%', 
+        mb: 3,
+        border: '1px solid #FFB74D',
+        borderRadius: '30px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        margin: '30px'
+      }}>
+        <CardContent>
+          <Stack direction="row" spacing={2} alignItems="center" mb={2}>
+            <img 
+              src={data.icon_url} 
+              alt={data.company}
+              style={{ 
+                width: 100, 
+                height: 100, 
+                borderRadius: '50%' 
+              }}
+            />
+            <Stack direction="column" spacing={2}  mb={2}>
+              <Typography variant="h5" component="div">
+                {data.title}
+              </Typography>
+              <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                {data.category.map((cat, index) => (
+                  <Chip
+                    key={index}
+                    label={cat}
+                    sx={{
+                      backgroundColor: '#FFF3E0',
+                      color: '#000',
+                      border: 'none',
+                      borderRadius: '20px',
+                    }}
+                  />
+                ))}
+              </Stack>
+            </Stack>
+          </Stack>
+
+          <Typography variant="body1" color="text.secondary" mb={2}>
+            {data.content}
+          </Typography>
+
+          <Stack direction="row" spacing={2} justifyContent="center">
+            <Button 
+              variant="contained" 
+              sx={{ 
+                backgroundColor: '#8BC34A',
+                '&:hover': { backgroundColor: '#7CB342' },
+                borderRadius: '20px',
+              }}
+            >
+              View Profile
+            </Button>
+            <Button 
+              variant="contained" 
+              sx={{ 
+                backgroundColor: '#FF9800',
+                '&:hover': { backgroundColor: '#F57C00' },
+                borderRadius: '20px',
+              }}
+            >
+              Book Appointment
+            </Button>
+          </Stack>
+        </CardContent>
+      </Card>
+    );
+  };
 
   const drawer = (
     <div>
-      {/* <div style={{ padding: "16px", textAlign: "center", display: "flex", alignItems: "center" }}>
-        <img
-          src="/cart.svg"
-          alt="Cart"
-          style={{ width: "100px", height: "auto" }}
-        />
-        <span>The photos related to conversation will be displayed in the below list.</span>
-      </div> */}
-
       <Divider />
+      <InfoCard data={companyData} />
       {uniqueChunkData.map((category) => (
         <Box key={category.keyword} sx={{ marginTop: '20px', marginLeft: '10px' }}>
           <Fab variant="extended" size="medium" color="primary">
@@ -851,34 +972,6 @@ const ChatWindow: React.FC = () => {
           {messages.map((message, index) => (
             <ChatMessage key={index} {...message} />
           ))}
-          {/* <Grid container spacing={2} style={{ marginTop: "20px" }}> */}
-          {/* <ImageList
-            cols={isSmallScreen ? 2 : isMediumScreen ? 4 : 6}
-            style={{ padding: "10px" }}
-          >
-            {uniqueChunkData.map((item, index) =>
-              item.image_urls == "" ? (
-                <AmountItemButton
-                  key={index}
-                  text={item.title}
-                  onClick={() => handleButtonClick(item.title, "")}
-                />
-              ) : (
-                <ItemButton
-                  key={index}
-                  text={item.title}
-                  url={item.image_urls.split(",")[0]}
-                  onClick={() => {
-                    setOrderData([item]);
-                    handleButtonClick(
-                      item.title,
-                      item.image_urls.split(",")[0]
-                    );
-                  }}
-                />
-              )
-            )}
-          </ImageList> */}
           {loading && (
             <div
               style={{
@@ -958,30 +1051,6 @@ const ChatWindow: React.FC = () => {
               </Dialog>
             </Box>
           )}
-          {/* {showContinueSelector && (
-            <Box
-              sx={{
-                display: "flex",
-                mb: 1,
-                maxWidth: "600px",
-                maxHeight: "200px",
-                flexDirection: "column", // Ensure image and text stack vertically
-              }}
-            >
-              <ButtonGroup variant="outlined">
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  onClick={handleContinueOrder}
-                >
-                  <ShoppingCartCheckoutIcon /> I want to order again
-                </Button>
-                <Button variant="contained" onClick={handleFinishOrder}>
-                  <AssignmentTurnedInIcon /> That's all. I want to finish order
-                </Button>
-              </ButtonGroup>
-            </Box>
-          )} */}
           <Dialog open={orderDetailDialogOpen}>
             {orderData.length > 0 && (
               <>
@@ -1067,7 +1136,7 @@ const ChatWindow: React.FC = () => {
           }}>
           <div style={{ padding: "16px", textAlign: "center" }}>
             <img
-              src="/medwaste-solutions/cart.svg"
+              src={`/${COMPANY_NAME}/cart.svg`}
               alt="Cart"
               style={{ maxWidth: "100%", height: "200px" }}
             />
