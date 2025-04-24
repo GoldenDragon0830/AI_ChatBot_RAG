@@ -103,7 +103,7 @@ const ChatWindow: React.FC = () => {
 
   // const API_URL = "http://13.208.253.225:4000/chat";
   // const API_URL = "http://52.221.236.58:80/chat";
-  const API_URL = "http://85.209.93.93:4001/chat";
+  const API_URL = "https://soundglide.com/backend/api/v2/chat";
   // const API_URL = process.env.REACT_APP_API_URL;
 
   const [messages, setMessages] = useState<MessageInterface[]>([
@@ -1184,7 +1184,7 @@ const ChatWindow: React.FC = () => {
                 <CloseIcon />
               </IconButton>
               <img
-                src="/cart.gif"
+                src="/drip-drop-deals/cart.svg"
                 alt="Cart"
                 style={{ maxWidth: "100%", height: "200px" }}
               />
