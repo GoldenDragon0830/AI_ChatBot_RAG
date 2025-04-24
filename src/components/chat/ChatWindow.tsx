@@ -17,8 +17,13 @@ import {
   Drawer,
   ListItemButton,
   AppBar,
-  Typography
+  Typography,
+  Card,
+  CardContent,
+  Stack,
+  Chip
 } from "@mui/material";
+
 import IconButton from "@mui/material/IconButton";
 import ImageList from "@mui/material/ImageList";
 import ImageListItem from "@mui/material/ImageListItem";
@@ -49,13 +54,23 @@ interface MessageInterface {
   role: "user" | "assistant";
 }
 
+interface CardData {
+  title: string;
+  company: string;
+  category: string[];
+  content: string;
+  icon_url: string;
+}
+
+const COMPANY_NAME = "internet-leads-us";
+
 const KEY_CHAT_CUSTOMER = "CHAT_CUSTOMER";
 // const KEY_FINISH_ORDER = "FINISH_ORDER";
 const KEY_SELECT_PRODUCT = "SELECT_PRODUCT";
 const KEY_ASK_AMOUNT = "ASK_AMOUNT";
 const KEY_ANSWER_AMOUNT = "ANSWER_AMOUNT";
 const INITIAL_AMOUNT = 1;
-const GREETING_WORD = "I'm Restaurant Depot Order Assistant, What would you like to order today?";
+const GREETING_WORD = "I'm Internet Specialists Assistant, How can I help you today?";
 
 const drawerWidth = 1200;
 
@@ -71,7 +86,7 @@ const ChatWindow: React.FC = () => {
 
   // const API_URL = "http://13.208.253.225:4000/chat";
   // const API_URL = "http://52.221.236.58:80/chat";
-  const API_URL = "http://85.209.93.93:4003/chat";
+  const API_URL = "https://soundglide.com/backend/api/chat";
 
   const [messages, setMessages] = useState<MessageInterface[]>([
     { content: GREETING_WORD, role: "assistant" },
@@ -127,6 +142,56 @@ const ChatWindow: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Add new state for company data
+  const [companyData, setCompanyData] = useState<CardData>({
+    title: "",
+    company: "",
+    category: [],
+    content: "",
+    icon_url: "/internet-leads-us-logo.png"
+  });
+
+  // Add useEffect to fetch company data
+  useEffect(() => {
+    const fetchCompanyData = async () => {
+      try {
+        const response = await fetch(`https://soundglide.com/backend/api/company/${COMPANY_NAME}`);
+        const data = await response.json();
+        
+        if (data && data.length > 0) {
+          const company = data[0];
+          // Parse the category string which is a JSON string
+          let categories;
+          try {
+            categories = JSON.parse(company.category);
+          } catch {
+            categories = ["PPC Company","Google Ads","Facebook Ads","Tik Tok Ads","Instagram Ads"];  // fallback categories
+          }
+
+          setCompanyData({
+            title: company.title || "Internet Specialists",
+            company: company.company || "internet-leads-us",
+            category: categories, // Use the parsed categories array
+            content: company.content || "",
+            icon_url: company.icon_url || `/${COMPANY_NAME}/internet-leads-us-logo.png`
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching company data:", error);
+        // Set default values if fetch fails
+        setCompanyData({
+          title: "Internet Specialists",
+          company: "internet-leads-us",
+          category: ["Medical Waste", "Waste Disposal"],
+          content: "",
+          icon_url: `/${COMPANY_NAME}/internet-leads-us-logo.png`
+        });
+      }
+    };
+
+    fetchCompanyData();
+  }, []);
+  
   const ItemCart: React.FC<{
     title: string;
     imageUrl: string;
@@ -736,27 +801,82 @@ const ChatWindow: React.FC = () => {
     setFlag(KEY_SELECT_PRODUCT);
     // setShowContinueSelector(false);
   };
-  // const handleFinishOrder = async () => {
-  //   setOrderDetailDialogOpen(false);
-  //   const displayMessage: MessageInterface = {
-  //     content: "That's all. I want to finish order",
-  //     role: "user",
-  //   };
-  //   handleSendMessage(displayMessage, KEY_FINISH_ORDER, true);
-  //   // setShowContinueSelector(false);
-  // };
+  const InfoCard: React.FC<{ data: CardData }> = ({ data }) => {
+    return (
+      <Card sx={{ 
+        maxWidth: '100%', 
+        mb: 3,
+        border: '1px solid #FFB74D',
+        borderRadius: '30px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        margin: '30px'
+      }}>
+        <CardContent>
+          <Stack direction="row" spacing={2} alignItems="center" mb={2}>
+            <img 
+              src={data.icon_url} 
+              alt={data.company}
+              style={{ 
+                width: 100, 
+                height: 100, 
+                borderRadius: '50%' 
+              }}
+            />
+            <Stack direction="column" spacing={2}  mb={2}>
+              <Typography variant="h5" component="div">
+                {data.title}
+              </Typography>
+              <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                {data.category.map((cat, index) => (
+                  <Chip
+                    key={index}
+                    label={cat}
+                    sx={{
+                      backgroundColor: '#FFF3E0',
+                      color: '#000',
+                      border: 'none',
+                      borderRadius: '20px',
+                    }}
+                  />
+                ))}
+              </Stack>
+            </Stack>
+          </Stack>
+
+          <Typography variant="body1" color="text.secondary" mb={2}>
+            {data.content}
+          </Typography>
+
+          <Stack direction="row" spacing={2} justifyContent="center">
+            <Button 
+              variant="contained" 
+              sx={{ 
+                backgroundColor: '#8BC34A',
+                '&:hover': { backgroundColor: '#7CB342' },
+                borderRadius: '20px',
+              }}
+            >
+              View Profile
+            </Button>
+            <Button 
+              variant="contained" 
+              sx={{ 
+                backgroundColor: '#FF9800',
+                '&:hover': { backgroundColor: '#F57C00' },
+                borderRadius: '20px',
+              }}
+            >
+              Book Appointment
+            </Button>
+          </Stack>
+        </CardContent>
+      </Card>
+    );
+  };
 
   const drawer = (
     <div>
-      {/* <div style={{ padding: "16px", textAlign: "center", display: "flex", alignItems: "center" }}>
-        <img
-          src="/cart.svg"
-          alt="Cart"
-          style={{ width: "100px", height: "auto" }}
-        />
-        <span>The photos related to conversation will be displayed in the below list.</span>
-      </div> */}
-
+      <InfoCard data={companyData}/>
       <Divider />
       {uniqueChunkData.map((category) => (
         <Box key={category.keyword} sx={{ marginTop: '20px', marginLeft: '10px' }}>
@@ -1067,7 +1187,7 @@ const ChatWindow: React.FC = () => {
           }}>
           <div style={{ padding: "16px", textAlign: "center" }}>
             <img
-              src="/cart.svg"
+              src={`/${COMPANY_NAME}/cart.svg`}
               alt="Cart"
               style={{ maxWidth: "100%", height: "200px" }}
             />
