@@ -2,6 +2,7 @@ import os
 import re
 import json
 import openai
+import psycopg2
 from flask import Flask, request, Response, stream_with_context, send_file
 from dotenv import load_dotenv
 from flask_cors import CORS, cross_origin
@@ -46,9 +47,43 @@ KEY_END_ORDER = "END_ORDER"
 KEY_CHAT_CUSTOMER = "CHAT_CUSTOMER"
 KEY_ANSWER_AMOUNT = "ANSWER_AMOUNT"
 
+
+# PostgreSQL configuration
+POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
+POSTGRES_DB = os.getenv("POSTGRES_DB", "csv")
+POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
+POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
+
 app = Flask(__name__)
 app.config["CORS_HEADERS"] = "Content-Type"
 CORS(app, supports_credentials=True, origins="*")
+
+# Connect to PostgreSQL
+conn = psycopg2.connect(
+    dbname=POSTGRES_DB,
+    user=POSTGRES_USER,
+    password=POSTGRES_PASSWORD,
+    host=POSTGRES_HOST,
+    port=POSTGRES_PORT,
+)
+cursor = conn.cursor()
+print("Connected to PostgreSQL database successfully!")
+
+def get_db_response_by_company(company: str):
+    """Retrieve data from the database based on the company name."""
+
+    query = f'SELECT * FROM first_content WHERE company = %s'
+    print("Query:", query)
+
+    try:
+        cursor.execute(query, (company,))
+        rows = cursor.fetchall()
+
+        print("Result data: ", rows)
+        return rows
+    except psycopg2.Error as e:
+        print("Error executing query:", e)
 
 def get_openai_response(prompt, message):
     """Helper function to get a response from OpenAI."""
@@ -392,6 +427,35 @@ def proxy_image():
         return f"Error fetching image: {str(e)}", 500
     except Exception as e:
         return f"Server error: {str(e)}", 500
+    
+@app.route("/company/<company_name>")
+def get_company_data(company_name):
+    """
+    Route to get company data from database.
+    Args:
+        company_name (str): Name of the company to query
+    Returns:
+        JSON response with structured data or error message
+    """
+    try:
+        cursor.execute('SELECT * FROM first_content WHERE company = %s', (company_name,))
+        columns = [desc[0] for desc in cursor.description]  # Get column names
+        rows = cursor.fetchall()
+
+        if not rows:
+            return jsonify({"error": "No data found for company"}), 404
+
+        # Convert rows to list of dictionaries with field names
+        structured_data = []
+        for row in rows:
+            row_dict = {}
+            for i, value in enumerate(row):
+                row_dict[columns[i]] = value
+            structured_data.append(row_dict)
+
+        return jsonify(structured_data), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=PORT)
