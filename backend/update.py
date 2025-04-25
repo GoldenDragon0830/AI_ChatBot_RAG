@@ -3,7 +3,7 @@ import re
 import json
 import openai
 import psycopg2
-from flask import Flask, request, Response, stream_with_context, send_file
+from flask import Flask, request, Response, stream_with_context, send_file, jsonify
 from dotenv import load_dotenv
 from flask_cors import CORS, cross_origin
 import requests
