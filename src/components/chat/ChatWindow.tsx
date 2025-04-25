@@ -17,7 +17,8 @@ import {
   Drawer,
   ListItemButton,
   AppBar,
-  Typography
+  Typography,
+  Skeleton
 } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import ImageList from "@mui/material/ImageList";
@@ -195,6 +196,45 @@ const ChatWindow: React.FC = () => {
     subtitle: string;
     onClick: () => void;
   }> = ({ text, url, price, quantities, subtitle, onClick }) => {
+    const [imageUrl, setImageUrl] = useState<string>(url);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+      const fetchImageUrl = async () => {
+        try {
+          setLoading(true);
+          const response = await fetch(`https://soundglide.com/backend/api/proxy-image?url=${encodeURIComponent(url)}`);
+          console.log(response)
+          // Check if the response is an image (binary data)
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.startsWith('image/')) {
+            // Create a blob URL from the image data
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            setImageUrl(blobUrl);
+          } else {
+            // If not an image, try parsing as JSON (fallback)
+            const data = await response.json();
+            setImageUrl(data.url);
+          }
+        } catch (error) {
+          console.error('Error fetching image URL:', error);
+          setImageUrl(url); // Fallback to original URL
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchImageUrl();
+      
+      // Cleanup function to revoke blob URLs
+      return () => {
+        if (imageUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(imageUrl);
+        }
+      };
+    }, [url]);
+
     const [open, setOpen] = useState(false);
 
     const handleOpen = () => setOpen(true);
@@ -272,7 +312,17 @@ const ChatWindow: React.FC = () => {
               </div>
             )
           }
-        <img src={url} alt={text} loading="lazy" onClick={handleOpen} />
+        {loading ? (
+          <Skeleton variant="rectangular" width="100%" height={200} />
+        ) : (
+          <img 
+            src={imageUrl} 
+            alt={text} 
+            loading="lazy" 
+            onClick={handleOpen}
+            onError={() => setImageUrl(url)} // Fallback to original URL on error
+          />
+        )}
         <div className="overlay">
           <IconButton
             color="primary"

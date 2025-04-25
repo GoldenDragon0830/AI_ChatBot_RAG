@@ -2,9 +2,12 @@ import os
 import re
 import json
 import openai
-from flask import Flask, request, Response, stream_with_context
+from flask import Flask, request, Response, stream_with_context, send_file
 from dotenv import load_dotenv
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
+import requests
+from io import BytesIO
+from urllib.parse import unquote
 
 from pinecone import Pinecone
 from langchain_openai import ChatOpenAI
@@ -353,6 +356,42 @@ def sse_request():
     message = request.args.get('message', '')
     flag = request.args.get('flag', '')
     return Response(stream_with_context(get_response(message, flag)), content_type='text/event-stream')
+
+@app.route("/proxy-image")
+@cross_origin()
+def proxy_image():
+    """
+    Proxy endpoint to handle image URLs and return the image content.
+    Query parameter: url - The encoded image URL to fetch
+    Returns: Image file response
+    """
+    try:
+        # Get and decode the image URL from query parameters
+        image_url = unquote(request.args.get('url', ''))
+        if not image_url:
+            return "No image URL provided", 400
+
+        # Fetch the image
+        response = requests.get(image_url, stream=True)
+        response.raise_for_status()  # Raise an exception for bad status codes
+
+        # Get the content type from the original response
+        content_type = response.headers.get('Content-Type', 'image/jpeg')
+
+        # Create a file-like object from the image content
+        image_data = BytesIO(response.content)
+        
+        # Send the file with the original content type
+        return send_file(
+            image_data,
+            mimetype=content_type,
+            as_attachment=False
+        )
+
+    except requests.RequestException as e:
+        return f"Error fetching image: {str(e)}", 500
+    except Exception as e:
+        return f"Server error: {str(e)}", 500
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=PORT)
