@@ -1738,7 +1738,7 @@ const ChatWindow: React.FC = () => {
       >
         <div
           style={{
-            height: "calc(100vh - 100px)", // Responsive height minus input area
+            height: "calc(100vh - 200px)", // Responsive height minus input area
             maxHeight: "none", // Remove fixed maxHeight
             overflowY: "auto",
             padding: "1vw", // Relative padding
