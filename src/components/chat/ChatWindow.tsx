@@ -77,9 +77,9 @@ const ChatWindow: React.FC = () => {
   // const [selectedSpecialOption, setSelectedSpecialOption] = useState("Pint"); // Default to "Pint"
   // const [specialItemCount, setSpecialItemCount] = useState(1);
 
-  const API_URL = "http://85.209.93.93:4005/chat";
-  const API_GET_FROM_DB_URL = "http://85.209.93.93:4005/get_db_data";
-  const API_CHAT_VIA_INPUT_URL = "http://85.209.93.93:4005/chat_via_input";
+  const API_URL = "https://soundglide.com/backend/api/static/chat";
+  const API_GET_FROM_DB_URL = "https://soundglide.com/backend/api/static/get_db_data";
+  const API_CHAT_VIA_INPUT_URL = "https://soundglide.com/backend/api/static/chat_via_input";
 
   // const API_URL = process.env.REACT_APP_API_URL;
 
@@ -1024,19 +1024,20 @@ const ChatWindow: React.FC = () => {
             const data = line.slice(6).trim();
             newMessageContent += data;
             if (!data.includes("ChunkData:")) {
-              setMessages((prev) => {
-                const newMessages = [...prev];
-                const lastMessageIndex = newMessages.length - 1;
-                  newMessages[lastMessageIndex].content =
-                    newMessageContent.split("ChunkData:")[0] || "";
-                  newMessages[lastMessageIndex].content =
-                    newMessageContent.split("TYPE:")[0] || "";
-                  if (data.includes(KEY_ASK_AMOUNT)) {
-                    newMessages[lastMessageIndex].content =
-                      newMessageContent.split(KEY_ASK_AMOUNT + ":")[0] || "";
-                  }
-                return newMessages;
-              });
+              // const displayMessage: MessageInterface = {
+              //   content: `I need ${newAmount}`,
+              //   role: "user",
+              // };
+              // setMessages((prevMessages) => [...prevMessages, displayMessage]);
+              const displayMessage : MessageInterface = {
+                content: newMessageContent,
+                role: "assistant",
+              }
+              displayMessage.content = newMessageContent.split("ChunkData:")[0] || "";
+              displayMessage.content = newMessageContent.split("TYPE:")[0] || "";
+              if (data.includes(KEY_ASK_AMOUNT))
+                displayMessage.content = newMessageContent.split(KEY_ASK_AMOUNT + ":")[0] || "";
+              setMessages((prev) => [...prev, displayMessage]);
             }
           }
         });
@@ -1671,7 +1672,7 @@ const ChatWindow: React.FC = () => {
       >
         <div
           style={{
-            height: "calc(100vh - 100px)", // Responsive height minus input area
+            height: "calc(100vh - 200px)", // Responsive height minus input area
             maxHeight: "none", // Remove fixed maxHeight
             overflowY: "auto",
             padding: "1vw", // Relative padding
