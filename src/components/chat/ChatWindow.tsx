@@ -2,11 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import ChatInput from "./ChatInput";
 import ChatMessage from "./ChatMessage";
 import CheckoutModal from "./CheckoutModal";
-// import LoginModal from "./LoginModal";
 import DOMPurify from 'dompurify';
-// Remove validator import and add email validation function
-
-// import { sendMessageToAdmin } from './sendMessage';
 
 import {
   Modal,
@@ -281,29 +277,22 @@ const ChatWindow: React.FC = () => {
     };
 
     const handleLinkClick = () => {
-      const itemData = {
+      const params = new URLSearchParams({
         title: text,
-        image_urls: url,
+        image: url,
         category: category,
-        single_price: price,
-        subtitle: subtitle,
-        details: details,
-        directions: features,
-      };
-      sessionStorage.setItem("itemData", JSON.stringify(itemData));
-          // Open a new tab with only the title in the URL
-      const newTabUrl = `${window.location.origin}/details/${text}`;
-
-      // Open a new tab with the dynamic URL
-      const newTab = window.open(newTabUrl, "_blank");
-
-      // Send the itemData to the new tab using postMessage
-      if (newTab) {
-        newTab.onload = () => {
-          newTab.postMessage(window.location.origin); // Pass data to the new tab
-        };
-      }
-    }
+        price: price,
+        subtitle: subtitle || '',
+        details: details || '',
+        directions: features || ''
+      });
+      
+      // Use the correct base URL for your deployment
+      const baseUrl = window.location.origin || "https://elroy.co";
+      const newTabUrl = `${baseUrl}/drip-drop-deals/details/${encodeURIComponent(text)}?${params.toString()}`;
+      
+      window.open(newTabUrl, "_blank");
+    };
 
     return (
       <ImageListItem key={text} className="image-list-item" style={{ margin: "8px", width:"240px", border: "solid 1px #73AD21", borderRadius: "15px"}} >

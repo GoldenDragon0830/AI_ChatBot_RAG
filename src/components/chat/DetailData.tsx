@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import DOMPurify from "dompurify";
 import {
   Card,
@@ -13,16 +14,25 @@ import {
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 
 const DetailData: React.FC = () => {
-  // Retrieve the data from sessionStorage
-  const itemData = JSON.parse(sessionStorage.getItem("itemData") || "{}");
+  const location = useLocation();
+  const [itemData, setItemData] = useState<any>(null);
 
-  // Price extraction with fallback to "N/A"
-  // const priceMatch = itemData.single_price?.match(/\$?(\d+\.\d+)$/);
-  // const price = priceMatch ? `$${priceMatch[1]}` : "N/A";
+  useEffect(() => {
+    // Get data from URL parameters
+    const params = new URLSearchParams(location.search);
+    const data = {
+      title: params.get('title'),
+      image_urls: params.get('image'),
+      category: params.get('category'),
+      single_price: params.get('price'),
+      subtitle: params.get('subtitle'),
+      details: params.get('details'),
+      directions: params.get('directions')
+    };
+    setItemData(data);
+  }, [location]);
 
-  if (!itemData || !itemData.title) {
-    return <Typography variant="h6">No data available.</Typography>;
-  }
+  if (!itemData) return <div>Loading...</div>;
 
   return (
     <Grid container justifyContent="center" mt={4}>
