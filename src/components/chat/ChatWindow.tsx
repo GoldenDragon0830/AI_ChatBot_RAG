@@ -716,61 +716,61 @@ const ChatWindow: React.FC = () => {
                     setNameListData(updatedData);
                   }
                 } else if (Object.keys(jsonData[0])[0] === "option_name") {
-                  if (parsedData.length === 1) {
-                    console.log(parsedData);
+                  // // if (parsedData.length === 1) {
+                  // //   console.log(parsedData);
 
-                    const cartDataString = parsedData[0].value
+                  // //   const cartDataString = parsedData[0].value
 
-                    const typeMatch = cartDataString.match(/'type':\s*'([^']+)'/);
-                    const nameMatch = cartDataString.match(/'name':\s*'([^']+)'/);
-                    const descriptionMatch = cartDataString.match(
-                      /'description':\s*'([^']*)'/
-                    );
-                    const priceMatch = cartDataString.match(/'price':\s*([\d.]+)/);
-                    const optionKeywordMatch = cartDataString.match(
-                      /'option_keyword':\s*'([^']+)'/
-                    );
-                    const optionNameMatch = cartDataString.match(
-                      /'option_name':\s*'([^']+)'/
-                    );
-                    const optionPriceMatch = cartDataString.match(
-                      /'option_price':\s*'([^']+)'/
-                    );
+                  // //   const typeMatch = cartDataString.match(/'type':\s*'([^']+)'/);
+                  // //   const nameMatch = cartDataString.match(/'name':\s*'([^']+)'/);
+                  // //   const descriptionMatch = cartDataString.match(
+                  // //     /'description':\s*'([^']*)'/
+                  // //   );
+                  // //   const priceMatch = cartDataString.match(/'price':\s*([\d.]+)/);
+                  // //   const optionKeywordMatch = cartDataString.match(
+                  // //     /'option_keyword':\s*'([^']+)'/
+                  // //   );
+                  // //   const optionNameMatch = cartDataString.match(
+                  // //     /'option_name':\s*'([^']+)'/
+                  // //   );
+                  // //   const optionPriceMatch = cartDataString.match(
+                  // //     /'option_price':\s*'([^']+)'/
+                  // //   );
 
-                    // Construct the object manually
-                    const parsedCartData = {
-                      type: typeMatch ? typeMatch[1] : "",
-                      name: nameMatch ? nameMatch[1] : "",
-                      description: descriptionMatch ? descriptionMatch[1] : "",
-                      price: priceMatch ? priceMatch[1] : "",
-                      option_keyword: optionKeywordMatch
-                        ? optionKeywordMatch[1]
-                        : "",
-                      option_name: optionNameMatch ? optionNameMatch[1] : "",
-                      option_price: optionPriceMatch ? optionPriceMatch[1] : "",
-                    };
+                  // //   // Construct the object manually
+                  // //   const parsedCartData = {
+                  // //     type: typeMatch ? typeMatch[1] : "",
+                  // //     name: nameMatch ? nameMatch[1] : "",
+                  // //     description: descriptionMatch ? descriptionMatch[1] : "",
+                  // //     price: priceMatch ? priceMatch[1] : "",
+                  // //     option_keyword: optionKeywordMatch
+                  // //       ? optionKeywordMatch[1]
+                  // //       : "",
+                  // //     option_name: optionNameMatch ? optionNameMatch[1] : "",
+                  // //     option_price: optionPriceMatch ? optionPriceMatch[1] : "",
+                  // //   };
 
-                    // Update the cartData state
-                    setCartCount(cartCount + 1);
-                    setCartData((prevCartData) => [
-                      ...prevCartData,
-                      {
-                        ...parsedCartData,
-                        count: selectedItemCount, // Default count for new cart items
-                        optionList: []
-                      },
-                    ]);
-                    setSelectedOptions((prevOptions) => [
-                      ...prevOptions,
-                      parsedData[0].value,
-                    ]);
+                  // //   // Update the cartData state
+                  // //   setCartCount(cartCount + 1);
+                  // //   setCartData((prevCartData) => [
+                  // //     ...prevCartData,
+                  // //     {
+                  // //       ...parsedCartData,
+                  // //       count: selectedItemCount, // Default count for new cart items
+                  // //       optionList: []
+                  // //     },
+                  // //   ]);
+                  // //   setSelectedOptions((prevOptions) => [
+                  // //     ...prevOptions,
+                  // //     parsedData[0].value,
+                  // //   ]);
 
-                    setSelectedItemCount(1);
-                  } else {
-                    setChunkData(parsedData);
-                  }
+                  // //   setSelectedItemCount(1);
+                  // } else {
+                  //   setChunkData(parsedData);
+                  // }
                 } else {
-                  setChunkData(parsedData);
+                  setChunkData(parsedData);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
                 }
               } catch (e) {
                 console.error(e);
