@@ -517,7 +517,27 @@ const ChatWindow: React.FC = () => {
                   size="small"
                   color="success"
                   sx={{ marginLeft: "10px" }}
-                  onClick={handleOnClick}
+                  onClick={() => {
+                    if (displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text)) {
+                      handleOnClick();
+                    } else {
+                      setCartData((prevCartData) => [
+                        ...prevCartData,
+                        {
+                          type,
+                          name: text,
+                          description,
+                          price,
+                          option_keyword: "",
+                          option_name: "",
+                          option_price: "",
+                          count: generalCount,
+                          optionList: []
+                        },
+                      ]);
+                      setCartCount((prevCount) => prevCount + generalCount);
+                    }
+                  }}
                 >
                   <AddShoppingCartIcon fontSize="small" />
                 </IconButton>
@@ -716,58 +736,58 @@ const ChatWindow: React.FC = () => {
                     setNameListData(updatedData);
                   }
                 } else if (Object.keys(jsonData[0])[0] === "option_name") {
-                  // // if (parsedData.length === 1) {
-                  // //   console.log(parsedData);
+                  // if (parsedData.length === 1) {
+                  //   console.log(parsedData);
 
-                  // //   const cartDataString = parsedData[0].value
+                  //   const cartDataString = parsedData[0].value
 
-                  // //   const typeMatch = cartDataString.match(/'type':\s*'([^']+)'/);
-                  // //   const nameMatch = cartDataString.match(/'name':\s*'([^']+)'/);
-                  // //   const descriptionMatch = cartDataString.match(
-                  // //     /'description':\s*'([^']*)'/
-                  // //   );
-                  // //   const priceMatch = cartDataString.match(/'price':\s*([\d.]+)/);
-                  // //   const optionKeywordMatch = cartDataString.match(
-                  // //     /'option_keyword':\s*'([^']+)'/
-                  // //   );
-                  // //   const optionNameMatch = cartDataString.match(
-                  // //     /'option_name':\s*'([^']+)'/
-                  // //   );
-                  // //   const optionPriceMatch = cartDataString.match(
-                  // //     /'option_price':\s*'([^']+)'/
-                  // //   );
+                  //   const typeMatch = cartDataString.match(/'type':\s*'([^']+)'/);
+                  //   const nameMatch = cartDataString.match(/'name':\s*'([^']+)'/);
+                  //   const descriptionMatch = cartDataString.match(
+                  //     /'description':\s*'([^']*)'/
+                  //   );
+                  //   const priceMatch = cartDataString.match(/'price':\s*([\d.]+)/);
+                  //   const optionKeywordMatch = cartDataString.match(
+                  //     /'option_keyword':\s*'([^']+)'/
+                  //   );
+                  //   const optionNameMatch = cartDataString.match(
+                  //     /'option_name':\s*'([^']+)'/
+                  //   );
+                  //   const optionPriceMatch = cartDataString.match(
+                  //     /'option_price':\s*'([^']+)'/
+                  //   );
 
-                  // //   // Construct the object manually
-                  // //   const parsedCartData = {
-                  // //     type: typeMatch ? typeMatch[1] : "",
-                  // //     name: nameMatch ? nameMatch[1] : "",
-                  // //     description: descriptionMatch ? descriptionMatch[1] : "",
-                  // //     price: priceMatch ? priceMatch[1] : "",
-                  // //     option_keyword: optionKeywordMatch
-                  // //       ? optionKeywordMatch[1]
-                  // //       : "",
-                  // //     option_name: optionNameMatch ? optionNameMatch[1] : "",
-                  // //     option_price: optionPriceMatch ? optionPriceMatch[1] : "",
-                  // //   };
+                  //   // Construct the object manually
+                  //   const parsedCartData = {
+                  //     type: typeMatch ? typeMatch[1] : "",
+                  //     name: nameMatch ? nameMatch[1] : "",
+                  //     description: descriptionMatch ? descriptionMatch[1] : "",
+                  //     price: priceMatch ? priceMatch[1] : "",
+                  //     option_keyword: optionKeywordMatch
+                  //       ? optionKeywordMatch[1]
+                  //       : "",
+                  //     option_name: optionNameMatch ? optionNameMatch[1] : "",
+                  //     option_price: optionPriceMatch ? optionPriceMatch[1] : "",
+                  //   };
 
-                  // //   // Update the cartData state
-                  // //   setCartCount(cartCount + 1);
-                  // //   setCartData((prevCartData) => [
-                  // //     ...prevCartData,
-                  // //     {
-                  // //       ...parsedCartData,
-                  // //       count: selectedItemCount, // Default count for new cart items
-                  // //       optionList: []
-                  // //     },
-                  // //   ]);
-                  // //   setSelectedOptions((prevOptions) => [
-                  // //     ...prevOptions,
-                  // //     parsedData[0].value,
-                  // //   ]);
+                  //   // Update the cartData state
+                  //   setCartCount(cartCount + 1);
+                  //   setCartData((prevCartData) => [
+                  //     ...prevCartData,
+                  //     {
+                  //       ...parsedCartData,
+                  //       count: selectedItemCount, // Default count for new cart items
+                  //       optionList: []
+                  //     },
+                  //   ]);
+                  //   setSelectedOptions((prevOptions) => [
+                  //     ...prevOptions,
+                  //     parsedData[0].value,
+                  //   ]);
 
-                  // //   setSelectedItemCount(1);
+                  //   setSelectedItemCount(1);
                   // } else {
-                  //   setChunkData(parsedData);
+                    setChunkData(parsedData);
                   // }
                 } else {
                   setChunkData(parsedData);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
@@ -1336,12 +1356,19 @@ const ChatWindow: React.FC = () => {
                 margin: "5px",
                 color: `${selectedChip === title ? "#FFFFFF" : "#BABABA"}`,
                 backgroundColor: `${selectedChip === title ? "#73AD21" : "#FFFFFF"}`,
-                fontWeight: `${selectedChip === title ? "bold" : "normal"}`, // Add this line
-                fontSize: "14px"
+                fontWeight: `${selectedChip === title ? "bold" : "normal"}`,
+                fontSize: "14px",
+                '& .MuiChip-label': {
+                  paddingLeft: '4px',  // Reduce default padding between icon and label
+                },
+                '& svg': {
+                  marginLeft: '2px',
+                  marginRight: '-4px',  // Pull the label closer to the icon
+                }
               }}
               icon={
                 <MenuIcon
-                  color={selectedChip === title ? "#FFFFFF" : "#BABABA"} // Pass color dynamically
+                  color={selectedChip === title ? "#FFFFFF" : "#BABABA"}
                 />
               }
               variant={selectedChip === title ? "filled" : "outlined"} // Change variant when selected
@@ -1373,7 +1400,7 @@ const ChatWindow: React.FC = () => {
                   setMessages((prevMessage) => [...prevMessage, userMessage]);
                 }
               }}
-              label={title.replace(/_/g, " ")}
+              label={title.replace(/_/g, "\u2009")}
             >
             </Chip>
           );
