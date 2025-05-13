@@ -197,6 +197,44 @@ def get_keyword_array(message: str):
         print("No valid list found in the input string.")
         return []
 
+def get_options_by_ids_response(ids: list[int]):
+    """Generate a response with option_name data based on provided IDs."""
+    results_data = []
+    column_names = ["No", "type", "name", "price", "description", "option_keyword", "option_name", "option_price"]
+    
+    if not ids:
+        return results_data
+    
+    # Create placeholders for the SQL IN clause
+    # Format IDs as string literals in the format ('1', '2', '3', '4')
+    id_strings = [f"'{id}'" for id in ids]
+    id_list = f"{', '.join(id_strings)}"
+
+    query = f'SELECT * FROM "public"."csv" WHERE "No" IN ({id_list})'
+    
+    try:
+        cursor.execute(query, tuple(ids))
+        results = cursor.fetchall()
+        
+        # Format results similar to get_db_response
+        results_data = [
+            {
+                "option_name": row[2],
+                "description": row[4],
+                "price": row[3],
+                "type": row[5]
+            }
+            for row in results
+        ]
+        
+        print(f"Found {len(results_data)} records for IDs: {ids}")
+        
+    except psycopg2.Error as e:
+        print(f"Error executing query: {e}")
+        results_data = []
+    
+    return results_data
+
 
 def parse_product_data(page_content):
     """Parse the product data from the page content."""
@@ -248,6 +286,9 @@ def get_db_response(keyword: str, type: str, name: str):
     except psycopg2.Error as e:
         print(f"Error executing query: {e}")
         yield f'data: Error executing query\n\n'
+
+def get_default_response(index: int):
+    return 0
 
 def get_detect_title_list(record: str, keywords: str):
     """Detect relevant titles from a message and record."""
@@ -844,6 +885,22 @@ def sse_request_via_input():
     message = request.args.get('message', '')
     flag = request.args.get('flag', '')
     return Response(stream_with_context(get_response_via_input(message, flag)), content_type='text/event-stream')
+
+@app.route("/get_options_by_ids")
+def get_options_by_ids():
+    """Handle requests for option_name data by IDs."""
+    ids_param = request.args.get('ids', '')
+    
+    # Parse the IDs from the string parameter
+    try:
+        ids = [int(id_str) for id_str in ids_param.split(',') if id_str.strip()]
+        if not ids:
+            return Response(json.dumps({"error": "No valid IDs provided"}), content_type='application/json')
+    except ValueError:
+        return Response(json.dumps({"error": "Invalid ID format"}), content_type='application/json')
+    
+    results_data = get_options_by_ids_response(ids)
+    return Response(json.dumps(results_data), content_type='application/json')
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=PORT)

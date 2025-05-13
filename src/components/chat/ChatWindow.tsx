@@ -83,6 +83,8 @@ const GREETING_WORD =
 
 const drawerWidth = "70%";
 
+const DEFAULT_DATA = [1, 704, 453, 27, 379, 487, 339, 743, 566, 769, 500, 419, 936, 28, 702, 216];
+
 const ChatWindow: React.FC = () => {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
@@ -106,9 +108,7 @@ const ChatWindow: React.FC = () => {
   // const [selectedSpecialOption, setSelectedSpecialOption] = useState("Pint"); // Default to "Pint"
   // const [specialItemCount, setSpecialItemCount] = useState(1);
 
-  const API_URL = "https://soundglide.com/backend/api/v3/chat";
-  const API_GET_FROM_DB_URL = "https://soundglide.com/backend/api/v3/get_db_data";
-  const API_CHAT_VIA_INPUT_URL = "https://soundglide.com/backend/api/v3/chat_via_input";
+  const BACKEND_API_URL = "https://soundglide.com/backend/api/v3";
 
   // const API_URL = process.env.REACT_APP_API_URL;
 
@@ -651,7 +651,7 @@ const ChatWindow: React.FC = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `${API_GET_FROM_DB_URL}?keyword=${keyword}&type=${type}&name=${name}`,
+        `${BACKEND_API_URL}/get_db_data?keyword=${keyword}&type=${type}&name=${name}`,
         {
           method: "GET",
           headers: {
@@ -839,7 +839,7 @@ const ChatWindow: React.FC = () => {
 
     try {
       const response = await fetch(
-        `${isInput ? API_CHAT_VIA_INPUT_URL : API_URL}?message=${
+        `${BACKEND_API_URL}${isInput ? "/chat_via_input" : "/chat"}?message=${
           message.content
         }&history=${JSON.stringify(messages)}&flag=${flag}`,
         {
@@ -1401,8 +1401,7 @@ const ChatWindow: React.FC = () => {
                 }
               }}
               label={title.replace(/_/g, "\u2009")}
-            >
-            </Chip>
+            />
           );
         })}
       </Paper>
@@ -1478,8 +1477,7 @@ const ChatWindow: React.FC = () => {
                       setMessages((prevMessage) => [...prevMessage, userMessage]);
                     }
                   }}
-                >
-                </Chip>
+                />
               );
             })}
             <Button
@@ -1601,6 +1599,7 @@ const ChatWindow: React.FC = () => {
       </Paper>
       </Box>
       ) : null}
+      
       {Object.entries(groupedData).map(([groupKey, groupItems]) => (
         <Box key={groupKey} sx={{marginLeft: "20px", marginTop: "20px", height: "auto" }}>
           {(groupKey !== "undefined") && (nameListData.length > 1) ? (
@@ -1705,6 +1704,55 @@ const ChatWindow: React.FC = () => {
       </Dialog>
     </div>
   );
+
+  useEffect(() => {
+    // Fetch initial options data when component mounts
+    const fetchInitialOptions = async () => {
+      try {
+        const response = await fetch(
+          `${BACKEND_API_URL}/get_options_by_ids?ids=${DEFAULT_DATA.join(',')}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log(data)
+        // Format the data for the frontend
+        const parsedData: ChunkOption[] = data.map((item: any) => {
+          return {
+            type: "name",
+            name: item.name,
+            value: item.option_name,
+            description: item.description,
+            price: item.price,
+          };
+        });
+
+                    //         type: key,
+                    // value: item[key],
+                    // description: item[key_description],
+                    // price: item[key_price],
+                    // keyword: item[key_type],
+        console.log(parsedData)
+        
+        // Set the chunk data with the fetched options
+        setChunkData(parsedData);
+        
+      } catch (error) {
+        console.error("Failed to fetch initial options:", error);
+      }
+    };
+
+    fetchInitialOptions();
+  }, []); // Empty dependency array means this runs once when component mounts
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
