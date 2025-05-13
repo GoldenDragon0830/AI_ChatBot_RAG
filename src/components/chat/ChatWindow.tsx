@@ -8,7 +8,6 @@ import {
   useTheme,
   Dialog,
   DialogContent,
-  DialogActions,
   DialogTitle,
   Button,
   Box,
@@ -18,39 +17,33 @@ import {
   ListItemButton,
   AppBar,
   Typography,
-  Checkbox,
 } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
-import Avatar from "@mui/material/Avatar";
+
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import ButtonGroup from "@mui/material/ButtonGroup";
+
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
-import ChangeCircleIcon from "@mui/icons-material/ChangeCircle";
-import LoupeIcon from "@mui/icons-material/Loupe";
-import Snackbar from "@mui/material/Snackbar";
+
 import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
 import ImageList from "@mui/material/ImageList";
 import ImageListItem from "@mui/material/ImageListItem";
 import Chip from "@mui/material/Chip";
-import DinnerDiningIcon from "@mui/icons-material/DinnerDining";
-import BackspaceIcon from "@mui/icons-material/Backspace";
+
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
+import MenuBookIcon from '@mui/icons-material/MenuBook'
+import CloseIcon from '@mui/icons-material/CloseOutlined'
 
 import Card from "@mui/material/Card";
-import CardHeader from "@mui/material/CardHeader";
 import CardContent from "@mui/material/CardContent";
 import CardActions from "@mui/material/CardActions";
-import { green, red } from "@mui/material/colors";
-import { CheckBox, Description, LocalDining, UndoRounded } from "@mui/icons-material";
 
-const label = { inputProps: { "aria-label": "Checkbox demo" } };
 
 const displayOptionSoup = ["Beef Dumplings","Egg Drop Soup", "Hot And Sour Soup", "Thai Chicken Noodle Soup", "Tofu Vegetable Soup"];
 const displayOptionContinue = ["Subgum Wonton Soup", "Wonton Soup", "Egg Drop Wonton Soup"];
@@ -93,6 +86,10 @@ const ChatWindow: React.FC = () => {
   const [orderDetailDialogOpen, setOrderDetailDialogOpen] = useState(false);
   const [totalPrice, setTotalPrice] = useState("");
   const [currentAmount, setCurrentAmount] = useState(INITIAL_AMOUNT);
+    // Add these state variables
+  const [menuPdfOpen, setMenuPdfOpen] = useState(false);
+  const [numPages, setNumPages] = useState<number | null>(null);
+  const [pageNumber, setPageNumber] = useState(1);
 
   const [selectedChunk, setSelectedChunk] = useState<string | null>("ALL");
   const [chunkDataHistory, setChunkDataHistory] = useState<ChunkOption[][]>([]);
@@ -102,11 +99,6 @@ const ChatWindow: React.FC = () => {
 
 
   const [selectedOptionListData, setSelectedOptionListData] = useState<string[]>([]);
-
-  // const [showSpecialOptions, setShowSpecialOptions] = useState(false);
-  // const [specialOptions, setSpecialOptions] = useState<string[]>([]);
-  // const [selectedSpecialOption, setSelectedSpecialOption] = useState("Pint"); // Default to "Pint"
-  // const [specialItemCount, setSpecialItemCount] = useState(1);
 
   const BACKEND_API_URL = "https://soundglide.com/backend/api/v3";
 
@@ -152,6 +144,25 @@ const ChatWindow: React.FC = () => {
     "Sushi_or_sashimi",
     "Others",
   ];
+
+  // Add these handler functions
+  const handleMenuOpen = () => {
+    setMenuPdfOpen(true);
+  };
+
+  const handleMenuClose = () => {
+    setMenuPdfOpen(false);
+  };
+
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+    setNumPages(numPages);
+    setPageNumber(1);
+  };
+
+  const changePage = (offset: number) => {
+    setPageNumber(prevPageNumber => Math.min(Math.max(prevPageNumber + offset, 1), numPages || 1));
+  };
+
 
   const [chunkData, setChunkData] = useState<ChunkOption[]>([]);
   const [selectedChunkData, setSelectedChunkData] = useState<ChunkOption>()
@@ -1832,6 +1843,26 @@ const ChatWindow: React.FC = () => {
           />
         </div>
         <Badge
+          sx={{
+            "& .MuiBadge-badge": {
+              backgroundColor: "#FF3B30",
+              color: "white",
+              border: "2px solid #FF3B30",
+            },
+            position: "fixed",
+            bottom: "17vh", // Relative positioning
+            right: "5vw",
+          }}
+        >
+          <Fab
+            sx={{ backgroundColor: "#73AD21" }}
+            aria-label="add"
+            onClick={handleMenuOpen}
+          >
+            <MenuBookIcon sx={{ color: "white" }} />
+          </Fab>
+        </Badge>
+        <Badge
           badgeContent={cartCount}
           sx={{
             "& .MuiBadge-badge": {
@@ -1911,6 +1942,45 @@ const ChatWindow: React.FC = () => {
               </h4>
             </Paper>
           </AppBar>
+        </Drawer>
+
+        <Drawer
+          anchor="right"
+          open={menuPdfOpen}
+          onClose={handleMenuClose}
+          sx={{
+            '& .MuiDrawer-paper': {
+              width: '40%', // 1/3 of screen width
+              boxSizing: 'border-box',
+            },
+          }}
+        >
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            height: '100%',
+            padding: 2
+          }}>
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              mb: 2
+            }}>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#73AD21' }}>
+                West Side Wok Menu
+              </Typography>
+              <IconButton onClick={handleMenuClose}>
+                <CloseIcon />
+              </IconButton>
+            </Box>
+            <iframe
+              src="/west-side-wok/menu.pdf" // Replace with your PDF path
+              width="100%"
+              height="850px"
+              title="PDF Viewer"
+            ></iframe>
+          </Box>
         </Drawer>
       </Box>
     </Box>
