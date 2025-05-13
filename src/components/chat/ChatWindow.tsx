@@ -69,6 +69,7 @@ const GREETING_WORD = "Hi {displayName}, What would you like to order today?";
 const GREETING_WORD_LOGIN = "I'm Drip Drop Deals Order Assistant, Please enter your email address before getting started.";
 const INVALID_EMAIL = "The email address is invalid. Please re-enter your email address.";
 
+const CATEGORY_LIST = ["Clothing", "Womens", "Toys", "Shoes", "Electronics", "Computers", "Special Under $10", "Special Under $20"];
 
 const drawerWidth = 1400;
 
@@ -81,6 +82,7 @@ const ChatWindow: React.FC = () => {
   const [orderDetailDialogOpen, setOrderDetailDialogOpen] = useState(false);
   const [totalPrice, setTotalPrice] = useState("");
   const [currentAmount, setCurrentAmount] = useState(INITIAL_AMOUNT);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const [loginFlag, setLoginFlag] = useState<boolean>(false);
 
@@ -155,6 +157,7 @@ const ChatWindow: React.FC = () => {
   const [flag, setFlag] = useState(KEY_SELECT_PRODUCT);
   const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isFirst, setFirst] = useState(false);
 
   const style = {
     position: "absolute" as "absolute",
@@ -553,6 +556,13 @@ const ChatWindow: React.FC = () => {
   // }, [visibleLoginModal]);
 
   useEffect(() => {
+    const message: MessageInterface = {
+      content: CATEGORY_LIST.toString(),
+      role: "user",
+    };
+    handleSendMessage(message, KEY_SELECT_PRODUCT);
+  }, [])
+  useEffect(() => {
     if (containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
     }
@@ -593,7 +603,7 @@ const ChatWindow: React.FC = () => {
   ) => {
     setCurrentAmount(1);
     setShowAmountSelector(false);
-    if (showInChat) {
+    if (showInChat && isFirst) {
       setMessages((prevMessages) => [...prevMessages, message]);
     }
     setLoading(true);
@@ -662,10 +672,14 @@ const ChatWindow: React.FC = () => {
             if (data.includes("ChunkData:")) {
               try {
                 const jsonData = JSON.parse(data.split("ChunkData:")[1]);
-                const parsedData = Object.entries(jsonData).map(([keyword, dataArray]) => ({
-                  keyword,
-                  data: dataArray as ChunkData['data'],
-                }));
+                const parsedData = Object.entries(jsonData).map(([keyword, dataArray]) => {
+                  const limitedData = !isFirst ? (dataArray as ChunkData['data']).slice(0, 2) : (dataArray as ChunkData['data']);
+
+                  return {
+                    keyword,
+                    data: limitedData,
+                  }
+                });
 
                 setChunkData(prevChunkData => {
                   const updatedChunkData = [...prevChunkData];
@@ -728,27 +742,29 @@ const ChatWindow: React.FC = () => {
                 console.error(e);
               }
             }
-            setMessages((prev) => {
-              const newMessages = [...prev];
-              const lastMessageIndex = newMessages.length - 1;
-              if (
-                lastMessageIndex >= 0 &&
-                newMessages[lastMessageIndex].role === "assistant"
-              ) {
-                newMessages[lastMessageIndex].content =
-                  newMessageContent.split("ChunkData:")[0] || "";
-                if (data.includes(KEY_ASK_AMOUNT)) {
+            if (isFirst) {
+              setMessages((prev) => {
+                const newMessages = [...prev];
+                const lastMessageIndex = newMessages.length - 1;
+                if (
+                  lastMessageIndex >= 0 &&
+                  newMessages[lastMessageIndex].role === "assistant"
+                ) {
                   newMessages[lastMessageIndex].content =
-                    newMessageContent.split(KEY_ASK_AMOUNT + ":")[0] || "";
+                    newMessageContent.split("ChunkData:")[0] || "";
+                  if (data.includes(KEY_ASK_AMOUNT)) {
+                    newMessages[lastMessageIndex].content =
+                      newMessageContent.split(KEY_ASK_AMOUNT + ":")[0] || "";
+                  }
+                } else {
+                  newMessages.push({
+                    content: newMessageContent,
+                    role: "assistant",
+                  });
                 }
-              } else {
-                newMessages.push({
-                  content: newMessageContent,
-                  role: "assistant",
-                });
-              }
-              return newMessages;
-            });
+                return newMessages;
+              });
+            }
           }
         });
       }
@@ -777,6 +793,45 @@ const ChatWindow: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Add category button list component
+  const CategoryButtonList: React.FC = () => {
+    const handleCategoryClick = (category: string) => {
+      // Deselect if already selected, otherwise select new category
+      if (selectedCategory === category) {
+        setSelectedCategory(null);
+      } else {
+        setSelectedCategory(category);
+        const message: MessageInterface = {
+          content: category,
+          role: "user",
+        };
+        handleSendMessage(message, KEY_SELECT_PRODUCT);
+      }
+    };
+
+    return (
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2, mt: 1 }}>
+        {CATEGORY_LIST.map((category) => (
+          <Button
+            key={category}
+            variant={selectedCategory === category ? "contained" : "outlined"}
+            color="primary"
+            size="medium"
+            onClick={() => handleCategoryClick(category)}
+            sx={{ 
+              bgcolor: selectedCategory === category ? '#73AD21' : 'transparent',
+              borderColor: '#73AD21',
+              color: selectedCategory === category ? 'white' : '#73AD21',
+              '&:hover': { bgcolor: selectedCategory === category ? '#73AD21' : 'rgba(115, 173, 33, 0.1)' }
+            }}
+          >
+            {category}
+          </Button>
+        ))}
+      </Box>
+    );
   };
 
   const handleSetCurrentAmount = (amount: Number) => {
@@ -994,6 +1049,9 @@ const ChatWindow: React.FC = () => {
         />
         <span>The photos related to conversation will be displayed in the below list.</span>
       </div> */}
+      <Box sx={{ padding: "16px", backgroundColor: "#f5f5f5", borderRadius: "8px", margin: "10px" }}>
+        <CategoryButtonList />
+      </Box>
 
       <Divider />
       {uniqueChunkData.map((category) => (
@@ -1047,14 +1105,15 @@ const ChatWindow: React.FC = () => {
         aria-label="mailbox folders"
       >
         <Drawer
-          variant="permanent" // Always visible for desktop
+          variant="permanent"
           sx={{
-            display: { xs: "block" }, // Ensure visibility on desktop
+            display: { xs: "block" },
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
-              width: drawerWidth, // Percentage-based width
-              maxWidth: "900px", // Cap the maximum width for large screens
-              minWidth: "400px", // Minimum width for smaller desktop screens
+              width: drawerWidth,
+              maxWidth: "900px",
+              minWidth: "400px",
+              marginTop: "60px", // Add space for the category buttons
             },
           }}
           open
