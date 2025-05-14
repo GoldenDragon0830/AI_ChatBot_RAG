@@ -16,6 +16,9 @@ import {
   Drawer,
   ListItemButton,
   AppBar,
+  Switch,
+  Toolbar,
+  FormControlLabel,
   Typography,
 } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
@@ -1164,12 +1167,17 @@ const ChatWindow: React.FC = () => {
 
   const [open, setOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [fullScreenMenu, setFullScreenMenu] = useState(false);
 
   const handleCartOpen = () => setCartOpen(true);
   const handleCartClose = () => setCartOpen(false);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+
+  const toggleFullScreenMenu = () => {
+    setFullScreenMenu(prev => !prev);
+  };
 
   const handleAddCart = async () => {
     setCartCount(cartCount + 1);
@@ -1766,224 +1774,298 @@ const ChatWindow: React.FC = () => {
   }, []); // Empty dependency array means this runs once when component mounts
 
   return (
-    <Box sx={{ display: "flex", height: "100vh" }}>
-      {loading && (
-        <div
-          style={{
-            position: "fixed",
-            top: "50%",
-            left: "85%",
-            transform: "translate(-50%, -50%)",
-          }}
-        >
-          <CircularProgress />
-        </div>
-      )}
-      <Box
-        component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-        aria-label="mailbox folders"
-      >
-        <Drawer
-          variant="permanent" // Always visible for desktop
-          sx={{
-            display: { xs: "block" }, // Ensure visibility on desktop
-            "& .MuiDrawer-paper": {
-              boxSizing: "border-box",
-              width: drawerWidth, // Percentage-based width
-              maxWidth: "900px", // Cap the maximum width for large screens
-              minWidth: "400px", // Minimum width for smaller desktop screens
-            },
-          }}
-          open
-        >
-          {drawer}
-        </Drawer>
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: "none", sm: "block" },
-            "& .MuiDrawer-paper": {
-              boxSizing: "border-box",
-              width: drawerWidth,
-            },
-          }}
-          open
-        >
-          {drawer}
-        </Drawer>
-      </Box>
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: { xs: 1, md: 3 }, // Responsive padding
-          width: { xs: `calc(100% - ${drawerWidth})` }, // Remaining width for chatting area
-          minWidth: "300px", // Minimum width to ensure usability
-        }}
-      >
-        <div
-          style={{
-            height: "calc(100vh - 200px)", // Responsive height minus input area
-            maxHeight: "none", // Remove fixed maxHeight
-            overflowY: "auto",
-            padding: "1vw", // Relative padding
-            position: "relative",
-          }}
-          ref={containerRef}
-        >
-          {messages.map((message, index) => (
-            <ChatMessage key={index} {...message} />
-          ))}
-          
-          <ChatInput
-            onSendMessage={(message) =>
-              handleSendMessageViaInput(message.content, flag)
-            }
-          />
-        </div>
-        <Badge
-          sx={{
-            "& .MuiBadge-badge": {
-              backgroundColor: "#FF3B30",
-              color: "white",
-              border: "2px solid #FF3B30",
-            },
-            position: "fixed",
-            bottom: "17vh", // Relative positioning
-            right: "5vw",
-          }}
-        >
-          <Fab
-            sx={{ backgroundColor: "#73AD21" }}
-            aria-label="add"
-            onClick={handleMenuOpen}
-          >
-            <MenuBookIcon sx={{ color: "white" }} />
-          </Fab>
-        </Badge>
-        <Badge
-          badgeContent={cartCount}
-          sx={{
-            "& .MuiBadge-badge": {
-              backgroundColor: "#FF3B30",
-              color: "white",
-              border: "2px solid #FF3B30",
-            },
-            position: "fixed",
-            bottom: "10vh", // Relative positioning
-            right: "5vw",
-          }}
-        >
-          <Fab
-            sx={{ backgroundColor: "#73AD21" }}
-            aria-label="add"
-            onClick={handleCartOpen}
-          >
-            <AddShoppingCartIcon sx={{ color: "white" }} />
-          </Fab>
-        </Badge>
-
-        <Drawer
-          anchor="right"
-          open={cartOpen}
-          onClose={handleCartClose}
-          sx={{
-            "& .MuiDrawer-paper": {
-              boxSizing: "border-box",
-              width: "500px",
-            },
-          }}
-        >
-          <List
-            sx={{
-              position: "relative",
-              overflow: "auto",
-              marginBottom: "5vh",
-            }}
-          >
-            {cartData.map((item, index) => (
-              <ItemCart
-                key={index}
-                title={item.name}
-                price={item.price}
-                count={item.count}
-                optionList={item.optionList}
-              />
-            ))}
-          </List>
-
-          <AppBar
-            position="absolute"
-            sx={{
-              top: "auto",
-              height: "5vh", // Relative height
-              bottom: 0,
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: "#73AD21",
-            }}
-          >
-            <Paper
-              elevation={0}
-              sx={{ bgcolor: "transparent", color: "white", padding: 1 }}
+    <>
+        <Box sx={{ display: "flex", height: "100vh" }}>
+          {loading && (
+            <div
+              style={{
+                position: "fixed",
+                top: "50%",
+                left: "85%",
+                transform: "translate(-50%, -50%)",
+              }}
             >
-              <h4>
-                Total Items:{" "}
-                {cartData.reduce((sum, item) => sum + item.count, 0)} || Total
-                Price: $
-                {cartData
-                  .reduce((sum, item) => {
-                    const priceMatch = item.price;
-                    const price = priceMatch ? parseFloat(priceMatch) : 0;
-                    return sum + price * item.count;
-                  }, 0)
-                  .toFixed(2)}
-              </h4>
-            </Paper>
-          </AppBar>
-        </Drawer>
-
-        <Drawer
-          anchor="right"
-          open={menuPdfOpen}
-          onClose={handleMenuClose}
-          sx={{
-            '& .MuiDrawer-paper': {
-              width: '40%', // 1/3 of screen width
-              boxSizing: 'border-box',
-            },
-          }}
-        >
-          <Box sx={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            height: '100%',
-            padding: 2
-          }}>
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              mb: 2
-            }}>
-              <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#73AD21' }}>
-                West Side Wok Menu
-              </Typography>
-              <IconButton onClick={handleMenuClose}>
-                <CloseIcon />
-              </IconButton>
-            </Box>
-            <iframe
-              src="/west-side-wok/menu.pdf" // Replace with your PDF path
-              width="100%"
-              height="850px"
-              title="PDF Viewer"
-            ></iframe>
+              <CircularProgress />
+            </div>
+          )}
+          
+          <Box
+            component="nav"
+            sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+            aria-label="mailbox folders"
+          >
+            <Drawer
+              variant="permanent" // Always visible for desktop
+              sx={{
+                display: { xs: "block" }, // Ensure visibility on desktop
+                "& .MuiDrawer-paper": {
+                  boxSizing: "border-box",
+                  width: drawerWidth, // Percentage-based width
+                  maxWidth: "900px", // Cap the maximum width for large screens
+                  minWidth: "400px", // Minimum width for smaller desktop screens
+                },
+              }}
+              open
+            >
+              {drawer}
+            </Drawer>
+            
+            
+              <Drawer
+                variant="permanent"
+                sx={{
+                  display: { xs: "none", sm: "block" },
+                  "& .MuiDrawer-paper": {
+                    boxSizing: "border-box",
+                    width: drawerWidth,
+                  },
+                }}
+                open
+              >
+                <FormControlLabel
+                  control={
+                    <Switch 
+                      checked={fullScreenMenu}
+                      onChange={toggleFullScreenMenu}
+                      color="success"
+                      sx={{
+                        '& .MuiSwitch-switchBase': {
+                          transform: 'translateX(4px)',
+                          '&.Mui-checked': {
+                            transform: 'translateX(22px)',
+                          }
+                        },
+                        '& .MuiSwitch-thumb': {
+                          width: 20,
+                          height: 20,
+                        },
+                        '& .MuiSwitch-track': {
+                          borderRadius: 26 / 2,
+                          backgroundColor: '#73AD21',
+                          opacity: 0.5,
+                        },
+                        width: 58,
+                        height: 38,
+                        padding: '8px',
+                      }}
+                    />
+                  }
+                  label="PDF Menu"
+                  labelPlacement="start"
+                  sx={{ 
+                    position: 'relative',
+                    top: '10px',
+                    right: '10px',
+                    zIndex: 1200,
+                    marginBottom: '20px',
+                    marginRight: '10px',
+                    color: 'black',
+                    '& .MuiFormControlLabel-label': {
+                      fontWeight: 'bold',
+                      fontSize: '1rem',
+                      marginRight: '10px',
+                    }
+                  }}
+                />
+                {fullScreenMenu ? (
+                  <Box sx={{ 
+                    position: 'fixed', 
+                    top: 0, 
+                    left: 0, 
+                    right: 0, 
+                    bottom: 0,
+                    marginTop: '50px',
+                    width: '70%', 
+                    zIndex: 1300,
+                    bgcolor: 'white',
+                    display: 'flex',
+                    flexDirection: 'column'
+                  }}>
+                    <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+                      <Box sx={{ 
+                        flexGrow: 1, 
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        overflow: 'hidden', // Prevent scrolling
+                        p: 2
+                      }}>
+                        {/* Container for both page images */}
+                        <Box sx={{ 
+                          display: 'flex', 
+                          flexDirection: 'row',
+                          justifyContent: 'center',
+                          width: '100%',
+                          height: '100%',
+                          gap: 2 // Space between images
+                        }}>
+                          {/* First page image */}
+                          <Box sx={{ 
+                            flex: 1, 
+                            height: '100%',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            border: '1px solid #e0e0e0',
+                            borderRadius: 2,
+                            overflow: 'hidden',
+                            bgcolor: '#f9f9f9'
+                          }}>
+                            <img
+                              src="/west-side-wok/menu1.png" // Replace with your actual image path
+                              alt="Menu Page 1"
+                              style={{ 
+                                maxWidth: '100%', 
+                                maxHeight: '100%', 
+                                objectFit: 'contain'
+                              }}
+                            />
+                          </Box>
+                          
+                          {/* Second page image */}
+                          <Box sx={{ 
+                            flex: 1, 
+                            height: '100%',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            border: '1px solid #e0e0e0',
+                            borderRadius: 2,
+                            overflow: 'hidden',
+                            bgcolor: '#f9f9f9'
+                          }}>
+                            <img
+                              src="/west-side-wok/menu2.png" // Replace with your actual image path
+                              alt="Menu Page 2"
+                              style={{ 
+                                maxWidth: '100%', 
+                                maxHeight: '100%', 
+                                objectFit: 'contain'
+                              }}
+                            />
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Box>
+                  ) : (
+                    drawer
+                  )}
+              </Drawer>
           </Box>
-        </Drawer>
-      </Box>
-    </Box>
+          <Box
+            component="main"
+            sx={{
+              flexGrow: 1,
+              p: { xs: 1, md: 3 }, // Responsive padding
+              width: { xs: `calc(100% - ${drawerWidth})` }, // Remaining width for chatting area
+              minWidth: "300px", // Minimum width to ensure usability
+            }}
+          >
+            <div
+              style={{
+                height: "calc(100vh - 200px)", // Responsive height minus input area
+                maxHeight: "none", // Remove fixed maxHeight
+                overflowY: "auto",
+                padding: "1vw", // Relative padding
+                position: "relative",
+              }}
+              ref={containerRef}
+            >
+              {messages.map((message, index) => (
+                <ChatMessage key={index} {...message} />
+              ))}
+              
+              <ChatInput
+                onSendMessage={(message) =>
+                  handleSendMessageViaInput(message.content, flag)
+                }
+              />
+            </div>
+            <Badge
+              badgeContent={cartCount}
+              sx={{
+                "& .MuiBadge-badge": {
+                  backgroundColor: "#FF3B30",
+                  color: "white",
+                  border: "2px solid #FF3B30",
+                },
+                position: "fixed",
+                bottom: "10vh", // Relative positioning
+                right: "5vw",
+              }}
+            >
+              <Fab
+                sx={{ backgroundColor: "#73AD21" }}
+                aria-label="add"
+                onClick={handleCartOpen}
+              >
+                <AddShoppingCartIcon sx={{ color: "white" }} />
+              </Fab>
+            </Badge>
+
+            <Drawer
+              anchor="right"
+              open={cartOpen}
+              onClose={handleCartClose}
+              sx={{
+                "& .MuiDrawer-paper": {
+                  boxSizing: "border-box",
+                  width: "500px",
+                },
+              }}
+            >
+              <List
+                sx={{
+                  position: "relative",
+                  overflow: "auto",
+                  marginBottom: "5vh",
+                }}
+              >
+                {cartData.map((item, index) => (
+                  <ItemCart
+                    key={index}
+                    title={item.name}
+                    price={item.price}
+                    count={item.count}
+                    optionList={item.optionList}
+                  />
+                ))}
+              </List>
+
+              <AppBar
+                position="absolute"
+                sx={{
+                  top: "auto",
+                  height: "5vh", // Relative height
+                  bottom: 0,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "#73AD21",
+                }}
+              >
+                <Paper
+                  elevation={0}
+                  sx={{ bgcolor: "transparent", color: "white", padding: 1 }}
+                >
+                  <h4>
+                    Total Items:{" "}
+                    {cartData.reduce((sum, item) => sum + item.count, 0)} || Total
+                    Price: $
+                    {cartData
+                      .reduce((sum, item) => {
+                        const priceMatch = item.price;
+                        const price = priceMatch ? parseFloat(priceMatch) : 0;
+                        return sum + price * item.count;
+                      }, 0)
+                      .toFixed(2)}
+                  </h4>
+                </Paper>
+              </AppBar>
+            </Drawer>
+          </Box>
+        </Box>
+    </>
   );
 };
 
