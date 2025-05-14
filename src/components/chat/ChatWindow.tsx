@@ -1499,12 +1499,52 @@ const ChatWindow: React.FC = () => {
                 />
               );
             })}
+            <FormControlLabel
+              control={
+                <Switch 
+                  checked={fullScreenMenu}
+                  onChange={toggleFullScreenMenu}
+                  color="success"
+                  sx={{
+                    '& .MuiSwitch-switchBase': {
+                      transform: 'translateX(4px)',
+                      '&.Mui-checked': {
+                        transform: 'translateX(22px)',
+                      }
+                    },
+                    '& .MuiSwitch-thumb': {
+                      width: 20,
+                      height: 20,
+                    },
+                    '& .MuiSwitch-track': {
+                      borderRadius: 26 / 2,
+                      backgroundColor: '#73AD21',
+                      opacity: 0.5,
+                    },
+                    width: 58,
+                    height: 38,
+                    padding: '8px',
+                  }}
+                />
+              }
+              label="PDF Menu"
+              labelPlacement="start"
+              sx={{ 
+                color: 'black',
+                marginLeft: 'auto',
+                marginRight: '10px',
+                '& .MuiFormControlLabel-label': {
+                  fontWeight: 'bold',
+                  fontSize: '1rem',
+                  marginRight: '10px',
+                }
+              }}
+            />
             <Button
               variant="outlined"
               color="success"
               sx={{
                 color: "#73AD21",
-                marginLeft: "auto",
                 fontSize: "16px",
                 fontWeight: "bold",
                 border: "1px solid",
@@ -1618,8 +1658,89 @@ const ChatWindow: React.FC = () => {
       </Paper>
       </Box>
       ) : null}
-      
-      {Object.entries(groupedData).map(([groupKey, groupItems]) => (
+      {fullScreenMenu ? (
+      <Box sx={{ 
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        right: 0, 
+        bottom: 0,
+        marginTop: '150px',
+        width: '70%', 
+        height: '85%',
+        bgcolor: 'white',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+          <Box sx={{ 
+            flexGrow: 1, 
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            overflow: 'hidden', // Prevent scrolling
+            p: 2
+          }}>
+            {/* Container for both page images */}
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'row',
+              justifyContent: 'center',
+              width: '100%',
+              height: '100%',
+              gap: 2 // Space between images
+            }}>
+              {/* First page image */}
+              <Box sx={{ 
+                flex: 1, 
+                height: '100%',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                border: '1px solid #e0e0e0',
+                borderRadius: 2,
+                overflow: 'hidden',
+                bgcolor: '#f9f9f9'
+              }}>
+                <img
+                  src="/west-side-wok-dynamic/menu1.png" // Replace with your actual image path
+                  alt="Menu Page 1"
+                  style={{ 
+                    maxWidth: '100%', 
+                    maxHeight: '100%', 
+                    objectFit: 'contain'
+                  }}
+                />
+              </Box>
+              
+              {/* Second page image */}
+              <Box sx={{ 
+                flex: 1, 
+                height: '100%',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                border: '1px solid #e0e0e0',
+                borderRadius: 2,
+                overflow: 'hidden',
+                bgcolor: '#f9f9f9'
+              }}>
+                <img
+                  src="/west-side-wok-dynamic/menu2.png" // Replace with your actual image path
+                  alt="Menu Page 2"
+                  style={{ 
+                    maxWidth: '100%', 
+                    maxHeight: '100%', 
+                    objectFit: 'contain'
+                  }}
+                />
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+      ) : (
+        <>{Object.entries(groupedData).map(([groupKey, groupItems]) => (
         <Box key={groupKey} sx={{marginLeft: "20px", marginTop: "20px", height: "auto" }}>
           {(groupKey !== "undefined") && (nameListData.length > 1) ? (
             <Typography
@@ -1693,7 +1814,9 @@ const ChatWindow: React.FC = () => {
             })}
           </ImageList>
         </Box>
-      ))}
+      ))}</>
+      )}
+      
       <Dialog fullWidth open={detailDialog} onClose={handleDetailDialogClose}>
         <DialogTitle
           style={{
@@ -1822,135 +1945,7 @@ const ChatWindow: React.FC = () => {
                 }}
                 open
               >
-                <FormControlLabel
-                  control={
-                    <Switch 
-                      checked={fullScreenMenu}
-                      onChange={toggleFullScreenMenu}
-                      color="success"
-                      sx={{
-                        '& .MuiSwitch-switchBase': {
-                          transform: 'translateX(4px)',
-                          '&.Mui-checked': {
-                            transform: 'translateX(22px)',
-                          }
-                        },
-                        '& .MuiSwitch-thumb': {
-                          width: 20,
-                          height: 20,
-                        },
-                        '& .MuiSwitch-track': {
-                          borderRadius: 26 / 2,
-                          backgroundColor: '#73AD21',
-                          opacity: 0.5,
-                        },
-                        width: 58,
-                        height: 38,
-                        padding: '8px',
-                      }}
-                    />
-                  }
-                  label="PDF Menu"
-                  labelPlacement="start"
-                  sx={{ 
-                    position: 'relative',
-                    top: '10px',
-                    right: '10px',
-                    zIndex: 1200,
-                    marginBottom: '20px',
-                    marginRight: '10px',
-                    color: 'black',
-                    '& .MuiFormControlLabel-label': {
-                      fontWeight: 'bold',
-                      fontSize: '1rem',
-                      marginRight: '10px',
-                    }
-                  }}
-                />
-                {fullScreenMenu ? (
-                  <Box sx={{ 
-                    position: 'fixed', 
-                    top: 0, 
-                    left: 0, 
-                    right: 0, 
-                    bottom: 0,
-                    marginTop: '50px',
-                    width: '70%', 
-                    zIndex: 1300,
-                    bgcolor: 'white',
-                    display: 'flex',
-                    flexDirection: 'column'
-                  }}>
-                    <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
-                      <Box sx={{ 
-                        flexGrow: 1, 
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        overflow: 'hidden', // Prevent scrolling
-                        p: 2
-                      }}>
-                        {/* Container for both page images */}
-                        <Box sx={{ 
-                          display: 'flex', 
-                          flexDirection: 'row',
-                          justifyContent: 'center',
-                          width: '100%',
-                          height: '100%',
-                          gap: 2 // Space between images
-                        }}>
-                          {/* First page image */}
-                          <Box sx={{ 
-                            flex: 1, 
-                            height: '100%',
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            border: '1px solid #e0e0e0',
-                            borderRadius: 2,
-                            overflow: 'hidden',
-                            bgcolor: '#f9f9f9'
-                          }}>
-                            <img
-                              src="/west-side-wok/menu1.png" // Replace with your actual image path
-                              alt="Menu Page 1"
-                              style={{ 
-                                maxWidth: '100%', 
-                                maxHeight: '100%', 
-                                objectFit: 'contain'
-                              }}
-                            />
-                          </Box>
-                          
-                          {/* Second page image */}
-                          <Box sx={{ 
-                            flex: 1, 
-                            height: '100%',
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            border: '1px solid #e0e0e0',
-                            borderRadius: 2,
-                            overflow: 'hidden',
-                            bgcolor: '#f9f9f9'
-                          }}>
-                            <img
-                              src="/west-side-wok/menu2.png" // Replace with your actual image path
-                              alt="Menu Page 2"
-                              style={{ 
-                                maxWidth: '100%', 
-                                maxHeight: '100%', 
-                                objectFit: 'contain'
-                              }}
-                            />
-                          </Box>
-                        </Box>
-                      </Box>
-                    </Box>
-                  </Box>
-                  ) : (
-                    drawer
-                  )}
+                {drawer}
               </Drawer>
           </Box>
           <Box
