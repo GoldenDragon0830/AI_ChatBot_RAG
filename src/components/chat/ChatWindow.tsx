@@ -673,7 +673,7 @@ const ChatWindow: React.FC = () => {
               try {
                 const jsonData = JSON.parse(data.split("ChunkData:")[1]);
                 const parsedData = Object.entries(jsonData).map(([keyword, dataArray]) => {
-                  const limitedData = !isFirst ? (dataArray as ChunkData['data']).slice(0, 2) : (dataArray as ChunkData['data']);
+                  const limitedData = !isFirst ? (dataArray as ChunkData['data']).slice(0, 4) : (dataArray as ChunkData['data']);
 
                   return {
                     keyword,
