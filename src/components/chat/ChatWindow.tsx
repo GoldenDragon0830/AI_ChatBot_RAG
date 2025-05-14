@@ -69,7 +69,7 @@ const GREETING_WORD = "Hi {displayName}, What would you like to order today?";
 const GREETING_WORD_LOGIN = "I'm Drip Drop Deals Order Assistant, Please enter your email address before getting started.";
 const INVALID_EMAIL = "The email address is invalid. Please re-enter your email address.";
 
-const CATEGORY_LIST = ["Clothing", "Womens", "Toys", "Shoes", "Electronics", "Computers", "Special Under $10", "Special Under $20"];
+const CATEGORY_LIST = ["Clothing", "Womens", "Toys", "Shoes", "Electronics", "Computers", "Specials Under $10", "Specials Under $20"];
 
 const drawerWidth = 1400;
 
@@ -280,7 +280,7 @@ const ChatWindow: React.FC = () => {
     };
 
     const handleLinkClick = () => {
-      const params = new URLSearchParams({
+      const productData = {
         title: text,
         image: url,
         category: category,
@@ -288,20 +288,23 @@ const ChatWindow: React.FC = () => {
         subtitle: subtitle || '',
         details: details || '',
         directions: features || ''
-      });
+      };
       
-      // Use the correct base URL for your deployment
-      const baseUrl = window.location.origin || "https://elroy.co";
-      const newTabUrl = `${baseUrl}/drip-drop-deals/details/${encodeURIComponent(text)}?${params.toString()}`;
+      // Format URL with hyphens instead of spaces
+      const formattedTitle = text.replace(/\s+/g, '-');
       
-      window.open(newTabUrl, "_blank");
+      // Store data in localStorage
+      localStorage.setItem('productDetailData', JSON.stringify(productData));
+      
+      // Open in new tab
+      window.open(`/drip-drop-deals/details/${formattedTitle}`, '_blank');
     };
 
     return (
       <ImageListItem key={text} className="image-list-item" style={{ margin: "8px", width:"240px", border: "solid 1px #73AD21", borderRadius: "15px"}} >
         <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, backgroundColor: '#73AD21', padding: '4px 8px', borderRadius: 4 }}>
           <Typography variant="body2" style={{ color: 'white'  }}>
-            {price !== "N/A" ? "$"+price : "$Undefined"}
+            {price !== "N/A" ? "$"+price : "$0.00"}
           </Typography>
         </div>
         {
@@ -317,7 +320,7 @@ const ChatWindow: React.FC = () => {
               </div>
             )
           }
-        <img src={url || "/Apple.png"} alt={text} loading="lazy" onClick={handleOpen} />
+        <img src={url || "/Apple.png"} alt={text} loading="lazy" onClick={handleOpen} style={{ maxHeight: "300px"}}/>
         <div className="overlay">
           <IconButton
             color="primary"
@@ -407,7 +410,7 @@ const ChatWindow: React.FC = () => {
               sx={{ borderRadius: 2 }}
             />
             <Chip
-              label={price !== 'N/A' ? "$"+price : "$Undefined"}
+              label={price !== 'N/A' ? "$"+price : "$0.00"}
               sx={{
                 fontWeight: 'bold',
                 backgroundColor: "#73AD21",
@@ -557,11 +560,11 @@ const ChatWindow: React.FC = () => {
 
   useEffect(() => {
     const message: MessageInterface = {
-      content: CATEGORY_LIST.toString(),
+      content: CATEGORY_LIST.join(", "),
       role: "user",
     };
     handleSendMessage(message, KEY_SELECT_PRODUCT);
-  }, [])
+  }, []);
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
@@ -803,11 +806,7 @@ const ChatWindow: React.FC = () => {
         setSelectedCategory(null);
       } else {
         setSelectedCategory(category);
-        const message: MessageInterface = {
-          content: category,
-          role: "user",
-        };
-        handleSendMessage(message, KEY_SELECT_PRODUCT);
+        handleSendMessageViaInput(category, KEY_SELECT_PRODUCT);
       }
     };
 
@@ -897,6 +896,7 @@ const ChatWindow: React.FC = () => {
     };
 
     if(loginFlag){
+      setMessages((prevMessages) => [...prevMessages, message]);
       if (flag === KEY_ASK_AMOUNT){
         handleSendMessage(message, KEY_ANSWER_AMOUNT, true);    
       }
@@ -1141,7 +1141,7 @@ const ChatWindow: React.FC = () => {
           // flexGrow: 1,
           // p: { xs: 1, md: 3 }, // Responsive padding
           // width: { xs: `calc(100% - ${drawerWidth})` }, // Remaining width for chatting area
-          minWidth: "300px", // Minimum width to ensure usability
+          minWidth: "250px", // Minimum width to ensure usability
           // border: "solid 1px red",
           borderRadius: "20px",
           boxShadow: 5,
@@ -1150,7 +1150,7 @@ const ChatWindow: React.FC = () => {
       >
           <div
             style={{
-              height: "calc(100vh - 100px)", // Responsive height minus input area
+              height: "calc(100vh - 150px)", // Responsive height minus input area
               maxHeight: "none", // Remove fixed maxHeight
               overflowY: "auto",
               padding: "1vw", // Relative padding

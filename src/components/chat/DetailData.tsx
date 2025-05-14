@@ -18,19 +18,15 @@ const DetailData: React.FC = () => {
   const [itemData, setItemData] = useState<any>(null);
 
   useEffect(() => {
-    // Get data from URL parameters
-    const params = new URLSearchParams(location.search);
-    const data = {
-      title: params.get('title'),
-      image_urls: params.get('image'),
-      category: params.get('category'),
-      single_price: params.get('price'),
-      subtitle: params.get('subtitle'),
-      details: params.get('details'),
-      directions: params.get('directions')
-    };
-    setItemData(data);
-  }, [location]);
+    // Get data from localStorage instead of URL parameters
+    const storedData = localStorage.getItem('productDetailData');
+    if (storedData) {
+      const data = JSON.parse(storedData);
+      setItemData(data);
+      // Clear the data after retrieving it (optional)
+      // localStorage.removeItem('productDetailData');
+    }
+  }, []);
 
   if (!itemData) return <div>Loading...</div>;
 
@@ -45,12 +41,13 @@ const DetailData: React.FC = () => {
             variant="h5"
             fontWeight="bold"
             textAlign="center"
+            marginRight={3}
             flexGrow={1}
           >
             {itemData.title}
           </Typography>
           <Chip
-            label={itemData.single_price !== "N/A" ? "$"+itemData.single_price : "$Undefined"}
+            label={itemData.single_price !== "N/A" ? "$"+itemData.price : "$0.00"}
             sx={{
               fontWeight: "bold",
               backgroundColor: "#73AD21",
@@ -63,7 +60,7 @@ const DetailData: React.FC = () => {
         <CardMedia
           component="img"
           height="400"
-          image={itemData.image_urls}
+          image={itemData.image}
           alt={itemData.title}
           sx={{ borderRadius: 2, marginY: 2 }}
         />
