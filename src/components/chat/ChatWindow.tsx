@@ -347,7 +347,7 @@ const ChatWindow: React.FC = () => {
             maxWidth: "280px",
             minWidth: "200px",
             marginLeft: "1vw",
-            marginBottom: "1vh",
+            marginBottom: "2vh",
             cursor: "pointer",
             backgroundColor: selectedOptionListData.includes(text) ? "#F1F7E9" : "white",
             transition: "background-color 0.3s ease-in-out",
@@ -379,11 +379,11 @@ const ChatWindow: React.FC = () => {
                 {description}
               </Typography>
             ) : null}
-            <Box sx={{ display: "flex", marginBottom: "-20px", gap: 1, height: "30px" }}>
+            <Box sx={{ display: "flex", minHeight: 'auto',marginBottom: "-3px", gap: 1, height: "30px" }}>
               {displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text) ? (
-                <div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "2px" }}>
                   {/* Badge for Option 1 */}                    
-                    <Badge badgeContent={itemCount["Option 1"] || 0} // Dynamically display the count for Option 1 
+                    <Badge badgeContent={itemCount["Option 1"] || 0}
                       sx={{ "& .MuiBadge-badge": { backgroundColor: "#FF3B30", color: "white", border: "2px solid #FF3B30", } }} >
                       <Chip sx={{ color: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`, borderColor: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`, "& .MuiChip-label": { fontWeight: "bold",  }, "&:hover": { backgroundColor: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`,  }, marginRight: "5px", fontSize: "14px" }} size="small" label={(displayOptionSoup.includes(text) || displayOptionContinue.includes(text)) ? (text === "Beef Dumplings" ? "Steamed" : "Pint $5") : displayOptionDish.includes(text) ? "Small $9" : displayOptionChinaDish.includes(text) ? "Small $18" : undefined} variant="outlined" onClick={() => handleSelectOption("Option 1")} />
                     </Badge>
@@ -416,6 +416,7 @@ const ChatWindow: React.FC = () => {
                           label="More.."
                           variant="outlined"
                           onClick={onClick}
+                          sx={{ marginTop: { xs: "5px", sm: 0 } }}
                         />
                       ) : null
                     }
@@ -590,9 +591,10 @@ const ChatWindow: React.FC = () => {
     const total = chunkData
       .filter((item) => selectedOptionListData.includes(getItemOptionName(item.value)))
       .reduce((sum, item) => {
-        const optionPriceMatch = item.value.match(/'option_price':\s*([\d.]+)/);
+        // Extract option_price from the item.value string
+        const optionPriceMatch = item.value.match(/'option_price':\s*['"]?([\d.]+)['"]?/);
         const optionPrice = optionPriceMatch ? parseFloat(optionPriceMatch[1]) : 0;
-        return sum + optionPrice; // Add only the option_price
+        return sum + optionPrice;
       }, 0);
   
     setChunkTotalPrice(total); // Update the total price
