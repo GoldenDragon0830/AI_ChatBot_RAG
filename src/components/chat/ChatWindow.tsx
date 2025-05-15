@@ -629,14 +629,15 @@ const ChatWindow: React.FC = () => {
     }
   }, [messages]);
 
-  useEffect(() => {
+    useEffect(() => {
     // Calculate total price based on selected options
     const total = chunkData
       .filter((item) => selectedOptionListData.includes(getItemOptionName(item.value)))
       .reduce((sum, item) => {
-        const optionPriceMatch = item.value.match(/'option_price':\s*([\d.]+)/);
+        // Extract option_price from the item.value string
+        const optionPriceMatch = item.value.match(/'option_price':\s*['"]?([\d.]+)['"]?/);
         const optionPrice = optionPriceMatch ? parseFloat(optionPriceMatch[1]) : 0;
-        return sum + optionPrice; // Add only the option_price
+        return sum + optionPrice;
       }, 0);
   
     setChunkTotalPrice(total); // Update the total price
