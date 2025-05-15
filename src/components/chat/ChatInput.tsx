@@ -25,6 +25,10 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
     if (message.content.length !== 0) {
       onSendMessage(message);
       setMessage({ content: "", role: "user" });
+      const inputElement = document.querySelector('input[type="text"]') as HTMLInputElement;
+      if (inputElement) {
+        inputElement.value = '';
+      }
     }
   };
 

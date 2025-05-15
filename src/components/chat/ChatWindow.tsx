@@ -559,13 +559,13 @@ const ChatWindow: React.FC = () => {
   //   }
   // }, [visibleLoginModal]);
 
-  // useEffect(() => {
-  //   const message: MessageInterface = {
-  //     content: CATEGORY_LIST.join(", "),
-  //     role: "user",
-  //   };
-  //   handleSendMessage(message, KEY_SELECT_PRODUCT);
-  // }, []);
+  useEffect(() => {
+    const message: MessageInterface = {
+      content: CATEGORY_LIST.join(", "),
+      role: "user",
+    };
+    handleSendMessage(message, KEY_SELECT_PRODUCT);
+  }, []);
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
