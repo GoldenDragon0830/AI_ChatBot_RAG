@@ -52,6 +52,7 @@ import LinkIcon from '@mui/icons-material/Link';
 import { Details } from "@mui/icons-material";
 import { title } from "process";
 import { group } from "console";
+import { set } from "firebase/database";
 
 interface MessageInterface {
   content: string;
@@ -558,13 +559,13 @@ const ChatWindow: React.FC = () => {
   //   }
   // }, [visibleLoginModal]);
 
-  useEffect(() => {
-    const message: MessageInterface = {
-      content: CATEGORY_LIST.join(", "),
-      role: "user",
-    };
-    handleSendMessage(message, KEY_SELECT_PRODUCT);
-  }, []);
+  // useEffect(() => {
+  //   const message: MessageInterface = {
+  //     content: CATEGORY_LIST.join(", "),
+  //     role: "user",
+  //   };
+  //   handleSendMessage(message, KEY_SELECT_PRODUCT);
+  // }, []);
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
@@ -604,6 +605,7 @@ const ChatWindow: React.FC = () => {
     flag: string,
     showInChat: boolean = true
   ) => {
+    setFirst(true)
     setCurrentAmount(1);
     setShowAmountSelector(false);
     if (showInChat && isFirst) {
@@ -801,6 +803,7 @@ const ChatWindow: React.FC = () => {
   // Add category button list component
   const CategoryButtonList: React.FC = () => {
     const handleCategoryClick = (category: string) => {
+      setFirst(true);
       // Deselect if already selected, otherwise select new category
       if (selectedCategory === category) {
         setSelectedCategory(null);
@@ -896,7 +899,7 @@ const ChatWindow: React.FC = () => {
     };
 
     if(loginFlag){
-      setMessages((prevMessages) => [...prevMessages, message]);
+      // setMessages((prevMessages) => [...prevMessages, message]);
       if (flag === KEY_ASK_AMOUNT){
         handleSendMessage(message, KEY_ANSWER_AMOUNT, true);    
       }
