@@ -371,15 +371,15 @@ const ChatWindow: React.FC = () => {
               }
             }}
           >
-            <Typography variant="body2" sx={{ fontWeight: "bold", color: "block", fontSize: "20px", marginBottom: "5px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient:  "vertical", }} >
+            <Typography variant="body2" sx={{ fontWeight: "bold", color: "block", fontSize: "20px", marginBottom: "5px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient:  "vertical", }} onClick={onClick}>
               {text}
             </Typography>
             {type !== "option_name" ? ( <Typography variant="body2" sx={{ color: "gray", fontSize: "14px", marginBottom: "10px", height: "40px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, 
-                  WebkitBoxOrient: "vertical", }} >
+                  WebkitBoxOrient: "vertical", }} onClick={onClick}>
                 {description}
               </Typography>
             ) : null}
-            <Box sx={{ display: "flex", minHeight: 'auto',marginBottom: "-3px", gap: 1, height: "30px" }}>
+            <Box sx={{ display: "flex", minHeight: 'auto',marginBottom: "-3px", gap: 1, height: "5px" }} >
               {displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text) ? (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "2px" }}>
                   {/* Badge for Option 1 */}                    
@@ -434,7 +434,7 @@ const ChatWindow: React.FC = () => {
             }}
             disableSpacing
           >
-            <Typography variant="body2" style={{ color: "#73AD21", fontSize: "19px", fontWeight: "bold", marginLeft: "10px" }}>
+            <Typography variant="body2" style={{ color: "#73AD21", fontSize: "19px", fontWeight: "bold", marginLeft: "10px" }} onClick={onClick}>
               {"$" + parseFloat(price)}
             </Typography>
             {type === "name" && (
@@ -1149,16 +1149,16 @@ const ChatWindow: React.FC = () => {
       content: `I want to order ${oneOrderData}  ${text}`, //content: "I want to order" + typeData ? `type: ${typeData}` : "" + nameData ? `name: ${nameData}` : ""  + `, ${text}`,
       role: "user",
     };
-    if (flag === KEY_ASK_AMOUNT)
-      handleSendMessage(message, KEY_ANSWER_AMOUNT, true);
-    else {
+    // if (flag === KEY_ASK_AMOUNT)
+      // handleSendMessage(message, KEY_ANSWER_AMOUNT, true);
+    // else {
       // setChunkData([]);
       setOrderDetailDialogOpen(false);
       setFlag(KEY_SELECT_PRODUCT);
-      handleSendMessage(backMessage, KEY_SELECT_PRODUCT, false);
+      // handleSendMessage(backMessage, KEY_SELECT_PRODUCT, false);
       setFlag(KEY_SELECT_PRODUCT);
       setMessages((prevMessage) => [...prevMessage, message]);
-    }
+    // }
   };
 
   const [open, setOpen] = useState(false);
