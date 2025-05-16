@@ -559,13 +559,22 @@ const ChatWindow: React.FC = () => {
   //   }
   // }, [visibleLoginModal]);
 
+  // Define the ref outside useEffect to persist across renders
+  const hasInitialized = React.useRef(false);
+  
   useEffect(() => {
-    const message: MessageInterface = {
-      content: CATEGORY_LIST.join(", "),
-      role: "user",
-    };
-    handleSendMessage(message, KEY_SELECT_PRODUCT);
+    if (!hasInitialized.current) {
+      const message: MessageInterface = {
+        content: CATEGORY_LIST.join(", "),
+        role: "user",
+      };
+      handleSendMessage(message, KEY_SELECT_PRODUCT);
+      
+      // Mark as initialized so it won't run again
+      hasInitialized.current = true;
+    }
   }, []);
+  
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
@@ -1057,6 +1066,18 @@ const ChatWindow: React.FC = () => {
       </Box>
 
       <Divider />
+      {loading && (
+        <div
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "85%",
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          <CircularProgress />
+        </div>
+      )}
       {uniqueChunkData.map((category) => (
         <Box key={category.keyword} sx={{ marginTop: '20px', marginLeft: '10px' }}>
           <Fab variant="extended" size="medium" color="primary" sx={{ marginLeft: "10px", backgroundColor: "#73AD21", color: "white", '&:hover': { backgroundColor: "#f5f5f5" }, borderRadius: "15px", padding: "10px 20px 10px 20px"}} >
@@ -1090,18 +1111,6 @@ const ChatWindow: React.FC = () => {
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
-      {loading && (
-        <div
-          style={{
-            position: "fixed",
-            top: "50%",
-            left: "85%",
-            transform: "translate(-50%, -50%)",
-          }}
-        >
-          <CircularProgress />
-        </div>
-      )}
       <Box
         component="nav"
         sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
