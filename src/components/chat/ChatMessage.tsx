@@ -99,7 +99,14 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ content, role, imageUrl }) =>
           }}
           elevation={5}
         >
-          <Typography variant="body1">{content.replace(/_/g, " ")}</Typography>
+          <Typography variant="body1">
+            {content.split('\n').map((line, idx) => (
+              <React.Fragment key={idx}>
+                {line}
+                <br />
+              </React.Fragment>
+            ))}
+          </Typography>
         </Paper>
       </div>
     </Box>

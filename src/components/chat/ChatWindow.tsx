@@ -28,6 +28,7 @@ import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import AddIcon from "@mui/icons-material/Add";
+import PaymentIcon from '@mui/icons-material/Payment';
 import RemoveIcon from "@mui/icons-material/Remove";
 import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
@@ -41,6 +42,8 @@ import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArro
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import CardActions from "@mui/material/CardActions";
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
 
 const displayOptionSoup = ["Beef Dumplings","Egg Drop Soup", "Hot And Sour Soup", "Thai Chicken Noodle Soup", "Tofu Vegetable Soup"];
 const displayOptionContinue = ["Subgum Wonton Soup", "Wonton Soup", "Egg Drop Wonton Soup"];
@@ -71,7 +74,7 @@ const INITIAL_AMOUNT = 1;
 const GREETING_WORD =
   "I'm West Side Wok Order Assistant, What would you like to order today?";
 
-const drawerWidth = "70%";
+const drawerWidth = "75%";
 
 const DEFAULT_DATA = [1, 704, 453, 27, 379, 487, 339, 743, 566, 769, 500, 419, 936, 28, 702, 216];
 
@@ -164,6 +167,18 @@ const ChatWindow: React.FC = () => {
   const [flag, setFlag] = useState(KEY_SELECT_PRODUCT);
   const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+
+  // Add refs for payment dialog inputs
+  const cardNumberRef = useRef<HTMLInputElement>(null);
+  const expMonthRef = useRef<HTMLInputElement>(null);
+  const expYearRef = useRef<HTMLInputElement>(null);
+  const cvvRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const addressRef = useRef<HTMLInputElement>(null);
 
   const ItemCart: React.FC<{
     title: string;
@@ -343,8 +358,8 @@ const ChatWindow: React.FC = () => {
       <ImageListItem key={text} className="image-list-item">
         <Card
           sx={{
-            width: { xs: "10vw", md: "15vw" }, // Responsive width
-            maxWidth: "280px",
+            width: { xs: "20vw", md: "16vw" }, // Responsive width
+            maxWidth: "450px",
             minWidth: "200px",
             marginLeft: "1vw",
             marginBottom: "2vh",
@@ -1891,7 +1906,6 @@ const ChatWindow: React.FC = () => {
               {drawer}
             </Drawer>
             
-            
               <Drawer
                 variant="permanent"
                 sx={{
@@ -1988,36 +2002,297 @@ const ChatWindow: React.FC = () => {
 
               <AppBar
                 position="absolute"
+                elevation={0}
                 sx={{
                   top: "auto",
-                  height: "5vh", // Relative height
                   bottom: 0,
+                  width: "100%",
+                  background: "white",
+                  boxShadow: "0 -2px 12px rgba(0,0,0,0.04)",
+                  py: 2,
+                  px: 3,
+                  display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  backgroundColor: "#73AD21",
                 }}
               >
-                <Paper
-                  elevation={0}
-                  sx={{ bgcolor: "transparent", color: "white", padding: 1 }}
+                <Box
+                  sx={{
+                    width: "100%",
+                    display: "flex",
+                    flexDirection: { xs: "column", sm: "row" },
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 2,
+                  }}
                 >
-                  <h4>
-                    Total Items:{" "}
-                    {cartData.reduce((sum, item) => sum + item.count, 0)} || Total
-                    Price: $
-                    {cartData
-                      .reduce((sum, item) => {
-                        const priceMatch = item.price;
-                        const price = priceMatch ? parseFloat(priceMatch) : 0;
-                        return sum + price * item.count;
-                      }, 0)
-                      .toFixed(2)}
-                  </h4>
-                </Paper>
+                  <Box>
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ color: "#222", fontWeight: 600 }}
+                    >
+                      Total Items:{" "}
+                      <span style={{ color: "#73AD21" }}>
+                        {cartData.reduce((sum, item) => sum + item.count, 0)}
+                      </span>
+                    </Typography>
+                    <Typography
+                      variant="h6"
+                      sx={{ color: "#222", fontWeight: 700, mt: 0.5 }}
+                    >
+                      Total Price:{" "}
+                      <span style={{ color: "#73AD21" }}>
+                        $
+                        {cartData
+                          .reduce((sum, item) => {
+                            const priceMatch = item.price;
+                            const price = priceMatch ? parseFloat(priceMatch) : 0;
+                            return sum + price * item.count;
+                          }, 0)
+                          .toFixed(2)}
+                      </span>
+                    </Typography>
+                  </Box>
+                  <Button
+                    size="large"
+                    variant="contained"
+                    startIcon={<PaymentIcon fontSize="medium" />}
+                    sx={{
+                      background: "linear-gradient(90deg, #73AD21 0%, #4CAF50 100%)",
+                      color: "white",
+                      fontWeight: "bold",
+                      fontSize: "1.2rem",
+                      borderRadius: "30px",
+                      boxShadow: "0 4px 20px 0 rgba(76, 175, 80, 0.15)",
+                      px: 5,
+                      py: 1.5,
+                      transition: "transform 0.2s, box-shadow 0.2s",
+                      '&:hover': {
+                        background: "linear-gradient(90deg, #4CAF50 0%, #73AD21 100%)",
+                        transform: "scale(1.05)",
+                        boxShadow: "0 6px 30px 0 rgba(76, 175, 80, 0.25)",
+                      },
+                    }}
+                    onClick={() => {
+                      if (cartData.length > 0) {
+                        setCartOpen(false);
+                        setTimeout(() => setPaymentDialogOpen(true), 300);
+                      } else {
+                        setSnackbarOpen(true); // Show notification
+                      }
+                    }}
+                  >
+                    Pay Now
+                  </Button>
+                </Box>
               </AppBar>
             </Drawer>
           </Box>
+          <Dialog
+            open={paymentDialogOpen}
+            onClose={() => setPaymentDialogOpen(false)}
+            maxWidth="sm" // Changed from xs to sm
+            fullWidth
+            PaperProps={{
+              sx: { borderRadius: 3, minWidth: 400 } // Ensures a minimum width
+            }}
+          >
+            <DialogTitle sx={{ textAlign: "center", fontWeight: 1000, pb: 0 }}>
+              Payment
+            </DialogTitle>
+            <DialogContent>
+              <Box component="form" sx={{ mt: 1, px: 1 }}>
+                <FormControlLabel
+                  control={<Switch defaultChecked color="success" />}
+                  label="Pay In-store"
+                  sx={{ mb: 1, ml: 0 }}
+                />
+                <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500 }}>
+                  Card Info
+                </Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mb: 2 }}>
+                  <input
+                    type="text"
+                    placeholder="1234 5678 9012 3456"
+                    ref={cardNumberRef}
+                    style={{
+                      padding: 12,
+                      borderRadius: 6,
+                      border: "1px solid #e0e0e0",
+                      fontSize: 16,
+                      width: "100%",
+                      boxSizing: "border-box"
+                    }}
+                  />
+                  <Box sx={{ display: "flex", gap: 1 }}>
+                    <input
+                      type="text"
+                      placeholder="12"
+                      ref={expMonthRef}
+                      style={{
+                        flex: 1,
+                        padding: 12,
+                        borderRadius: 6,
+                        border: "1px solid #e0e0e0",
+                        fontSize: 16,
+                        width: "100%",
+                        boxSizing: "border-box"
+                      }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="2027"
+                      ref={expYearRef}
+                      style={{
+                        flex: 2,
+                        padding: 12,
+                        borderRadius: 6,
+                        border: "1px solid #e0e0e0",
+                        fontSize: 16,
+                        width: "100%",
+                        boxSizing: "border-box"
+                      }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="123"
+                      ref={cvvRef}
+                      style={{
+                        flex: 1,
+                        padding: 12,
+                        borderRadius: 6,
+                        border: "1px solid #e0e0e0",
+                        fontSize: 16,
+                        width: "100%",
+                        boxSizing: "border-box"
+                      }}
+                    />
+                  </Box>
+                </Box>
+                <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500 }}>
+                  Phone Number
+                </Typography>
+                <input
+                  type="text"
+                  placeholder="706 664-5169"
+                  ref={phoneRef}
+                  style={{
+                    width: "100%",
+                    padding: 12,
+                    borderRadius: 6,
+                    border: "1px solid #e0e0e0",
+                    fontSize: 16,
+                    marginBottom: 16,
+                    boxSizing: "border-box"
+                  }}
+                />
+                <FormControlLabel
+                  control={<Switch defaultChecked color="success" />}
+                  label="In-store Pick Up Order"
+                  sx={{ mb: 1, ml: 0 }}
+                />
+                <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500 }}>
+                  Delivery Address
+                </Typography>
+                <input
+                  type="text"
+                  placeholder="52 Grosvenor garden, 52 Grosvenor garden"
+                  ref={addressRef}
+                  style={{
+                    width: "100%",
+                    padding: 12,
+                    borderRadius: 6,
+                    border: "1px solid #e0e0e0",
+                    fontSize: 16,
+                    marginBottom: 16,
+                    boxSizing: "border-box"
+                  }}
+                />
+                <Box sx={{ display: "flex", alignItems: "center", mb: 2, mt: 1 }}>
+                  <span style={{ color: "#888" }}>
+                    <svg width="18" height="18" style={{ marginRight: 4, verticalAlign: "middle" }}>
+                      <path fill="#888" d="M9 1.5A7.5 7.5 0 1 0 9 16.5 7.5 7.5 0 1 0 9 1.5zm0 13.5A6 6 0 1 1 9 3a6 6 0 0 1 0 12zm-.75-9h1.5v4.5h-1.5zm0 6h1.5v1.5h-1.5z"/>
+                    </svg>
+                  </span>
+                  <Typography variant="caption" color="textSecondary">
+                    This form is fully encrypted to keep your information secure.
+                  </Typography>
+                </Box>
+                <Button
+                  type="button"
+                  variant="contained"
+                  fullWidth
+                  sx={{
+                    background: "#10bfae",
+                    color: "white",
+                    fontWeight: "bold",
+                    borderRadius: "8px",
+                    fontSize: "1rem",
+                    py: 1.2,
+                    mt: 1,
+                    '&:hover': { background: "#0ea896" }
+                  }}
+                  onClick={() => {
+                    // 1. Collect input values
+                    const cardNumber = cardNumberRef.current?.value || '';
+                    const expMonth = expMonthRef.current?.value || '';
+                    const expYear = expYearRef.current?.value || '';
+                    const cvv = cvvRef.current?.value || '';
+                    const phone = phoneRef.current?.value || '';
+                    const address = addressRef.current?.value || '';
+
+                    // 2. Format order info message
+                    const orderInfoMsg = `Order info to complete payment\n\nCard Number: ${cardNumber}\nExpiration: ${expMonth}/${expYear}\nCVV: ${cvv}\n\nPhone Number: ${phone}\nDelivery Address: ${address}`;
+
+                    // 3. Format cart summary
+                    let cartLines = cartData.map(item => {
+                      const price = parseFloat(item.price) || 0;
+                      return `${item.name} x${item.count} ($${(price * item.count).toFixed(2)})`;
+                    }).join('\n');
+                    const subtotal = cartData.reduce((sum, item) => {
+                      const price = parseFloat(item.price) || 0;
+                      return sum + price * item.count;
+                    }, 0);
+                    const tax = subtotal * 0.08875;
+                    const discount = subtotal * 0.1;
+                    const tip = 7;
+                    const total = subtotal + tax - discount + tip;
+                    const summaryMsg = `${cartLines}\n\nSubTotal: $${subtotal.toFixed(2)}\nTax: $${tax.toFixed(2)}\nDiscount: -$${discount.toFixed(2)}\nTip: $${tip.toFixed(2)}\nTotal: $${total.toFixed(2)}`;
+
+                    // 4. Add messages to chat
+                    setMessages(prev => {
+                      const arr = Array.isArray(prev) ? prev : [];
+                      return [
+                        ...arr,
+                        { content: orderInfoMsg, role: 'assistant' },
+                        { content: summaryMsg, role: 'assistant' }
+                      ];
+                    });
+                    setPaymentDialogOpen(false);
+                  }}
+                >
+                  Checkout
+                </Button>
+              </Box>
+            </DialogContent>
+          </Dialog>
         </Box>
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={3000}
+          onClose={() => setSnackbarOpen(false)}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        >
+          <MuiAlert
+            onClose={() => setSnackbarOpen(false)}
+            severity="warning"
+            elevation={6}
+            variant="filled"
+            sx={{ width: '100%' }}
+          >
+            please add product into cart
+          </MuiAlert>
+        </Snackbar>
     </>
   );
 };
