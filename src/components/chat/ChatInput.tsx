@@ -6,7 +6,7 @@ interface ChatInputProps {
   onSendMessage: (message: { content: string; role: "user" | "assistant" }) => void;
 }
 
-const drawerWidth = "75%";
+const drawerWidth = "73%";
 
 const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
   const [message, setMessage] = useState<{ content: string; role: "user" | "assistant" }>({

@@ -74,7 +74,7 @@ const INITIAL_AMOUNT = 1;
 const GREETING_WORD =
   "I'm West Side Wok Order Assistant, What would you like to order today?";
 
-const drawerWidth = "75%";
+const drawerWidth = "73%";
 
 const DEFAULT_DATA = [1, 704, 453, 27, 379, 487, 339, 743, 566, 769, 500, 419, 936, 28, 702, 216];
 
@@ -1649,7 +1649,7 @@ const ChatWindow: React.FC = () => {
         right: 0, 
         bottom: 0,
         marginTop: '150px',
-        width: '70%', 
+        width: '73%', 
         height: '85%',
         bgcolor: 'white',
         display: 'flex',
@@ -1723,77 +1723,92 @@ const ChatWindow: React.FC = () => {
         </Box>
       </Box>
       ) : (
-        <>{Object.entries(groupedData).map(([groupKey, groupItems]) => (
-        <Box key={groupKey} sx={{marginLeft: "20px", marginTop: "20px", height: "auto" }}>
-          {(groupKey !== "undefined") && (nameListData.length > 1) ? (
-            <Typography
-              sx={{
-                display: "flex",
-                marginLeft: "30px",
-                color: "#73AD21",
-                fontSize: "18px"
-              }}
-            >
-              <KeyboardDoubleArrowRightIcon />{groupKey}
-            </Typography>
-          ) : (
-            <div></div>
-          )}
-          <ImageList cols={4} style={{ padding: "8px" }}>
-            {groupItems.map((item, index) => {
-              const isSelected = selectedChunk === item.value; // Check if the name is selected
-              return (
-                <AmountItemButton
-                  key={index}
-                  text={getItemText(item)}
-                  type={item.type}
-                  value={item.value}
-                  price={item.price}
-                  description={item.description}
-                  style={{
-                    border: isSelected ? "2px solid #1976d2" : "none", // Highlight selected border
-                    backgroundColor: isSelected ? "#e3f2fd" : "white", // Highlight selected background
+        <Box sx={{ 
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          bottom: 0,
+          marginTop: '260px',
+          width: '73%', 
+          height: 'auto',
+          bgcolor: 'white',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'auto'
+        }}>
+          {Object.entries(groupedData).map(([groupKey, groupItems]) => (
+            <Box key={groupKey} sx={{marginLeft: "20px", marginTop: "20px", height: "auto" }}>
+              {(groupKey !== "undefined") && (nameListData.length > 1) ? (
+                <Typography
+                  sx={{
+                    display: "flex",
+                    marginLeft: "30px",
+                    color: "#73AD21",
+                    fontSize: "18px"
                   }}
-                  onClick={() => {
-                    if (item.type === "option_name") {
-                      let jsonString = item.value
-                        .replace(/'/g, '"') // Naively replace all single quotes with double quotes
-                        .replace(/(\bNone\b)/g, "null"); // Replace Python-style None with null
-                      // Add additional validation for keys (ensure double quotes around keys)
-                      jsonString = jsonString.replace(
-                        /"(\w+)":/g,
-                        (match, p1) => `"${p1}":`
-                      );
-                      // Parse JSON string
-                      const itemData = JSON.parse(jsonString);
-                      // Set the parsed data
-                      setSelectedItemData(itemData);
+                >
+                  <KeyboardDoubleArrowRightIcon />{groupKey}
+                </Typography>
+              ) : (
+                <div></div>
+              )}
+              <ImageList cols={4} style={{ padding: "8px" }}>
+                {groupItems.map((item, index) => {
+                  const isSelected = selectedChunk === item.value; // Check if the name is selected
+                  return (
+                    <AmountItemButton
+                      key={index}
+                      text={getItemText(item)}
+                      type={item.type}
+                      value={item.value}
+                      price={item.price}
+                      description={item.description}
+                      style={{
+                        border: isSelected ? "2px solid #1976d2" : "none", // Highlight selected border
+                        backgroundColor: isSelected ? "#e3f2fd" : "white", // Highlight selected background
+                      }}
+                      onClick={() => {
+                        if (item.type === "option_name") {
+                          let jsonString = item.value
+                            .replace(/'/g, '"') // Naively replace all single quotes with double quotes
+                            .replace(/(\bNone\b)/g, "null"); // Replace Python-style None with null
+                          // Add additional validation for keys (ensure double quotes around keys)
+                          jsonString = jsonString.replace(
+                            /"(\w+)":/g,
+                            (match, p1) => `"${p1}":`
+                          );
+                          // Parse JSON string
+                          const itemData = JSON.parse(jsonString);
+                          // Set the parsed data
+                          setSelectedItemData(itemData);
 
-                      handleDetailDialogOpen();
-                    } else {
-                      setSelectedChunk(item.value);
-                      setSelectedChunkData(item);
-                      if (item.type === "name") {
-                        setNameData(item.value);
-                      }
-                      const userMessage: MessageInterface = {
-                        content: item.value, // Send the text of the item as the user's message
-                        role: "user",
-                      };
-                      const backMessage: MessageInterface = {
-                        content:
-                          "type:" + typeData + "," + "name:" + item.value, // Send the text of the item as the user's message
-                        role: "user",
-                      };
-                      handleDisplayOption(backMessage, flag, false);
-                    }
-                  }}
-                />
-              );
-            })}
-          </ImageList>
+                          handleDetailDialogOpen();
+                        } else {
+                          setSelectedChunk(item.value);
+                          setSelectedChunkData(item);
+                          if (item.type === "name") {
+                            setNameData(item.value);
+                          }
+                          const userMessage: MessageInterface = {
+                            content: item.value, // Send the text of the item as the user's message
+                            role: "user",
+                          };
+                          const backMessage: MessageInterface = {
+                            content:
+                              "type:" + typeData + "," + "name:" + item.value, // Send the text of the item as the user's message
+                            role: "user",
+                          };
+                          handleDisplayOption(backMessage, flag, false);
+                        }
+                      }}
+                    />
+                  );
+                })}
+              </ImageList>
+            </Box>
+          ))}
         </Box>
-      ))}</>
       )}
       
       <Dialog fullWidth open={detailDialog} onClose={handleDetailDialogClose}>
@@ -1870,8 +1885,18 @@ const ChatWindow: React.FC = () => {
   }, []); // Empty dependency array means this runs once when component mounts
 
   return (
-    <>
-        <Box sx={{ display: "flex", height: "100vh" }}>
+    <div style={{ overflow: "hidden" }}>
+        <Box sx={{ display: "flex", height: "auto", overflow: "hidden" }}>
+          <img
+            src="/west-side-wok/Header.png"
+            alt="Header"
+            style={{
+              width: "100vw",
+              height: "auto", // or set a fixed height if you want
+            }} 
+          />
+        </Box>
+        <Box sx={{ display: "flex", height: "auto", overflow: "hidden" }}>
           {loading && (
             <div
               style={{
@@ -1884,41 +1909,12 @@ const ChatWindow: React.FC = () => {
               <CircularProgress />
             </div>
           )}
-          
           <Box
-            component="nav"
+            component="main"
             sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
             aria-label="mailbox folders"
           >
-            <Drawer
-              variant="permanent" // Always visible for desktop
-              sx={{
-                display: { xs: "block" }, // Ensure visibility on desktop
-                "& .MuiDrawer-paper": {
-                  boxSizing: "border-box",
-                  width: drawerWidth, // Percentage-based width
-                  maxWidth: "900px", // Cap the maximum width for large screens
-                  minWidth: "400px", // Minimum width for smaller desktop screens
-                },
-              }}
-              open
-            >
-              {drawer}
-            </Drawer>
-            
-              <Drawer
-                variant="permanent"
-                sx={{
-                  display: { xs: "none", sm: "block" },
-                  "& .MuiDrawer-paper": {
-                    boxSizing: "border-box",
-                    width: drawerWidth,
-                  },
-                }}
-                open
-              >
-                {drawer}
-              </Drawer>
+            {drawer}
           </Box>
           <Box
             component="main"
@@ -1927,15 +1923,19 @@ const ChatWindow: React.FC = () => {
               p: { xs: 1, md: 3 }, // Responsive padding
               width: { xs: `calc(100% - ${drawerWidth})` }, // Remaining width for chatting area
               minWidth: "300px", // Minimum width to ensure usability
+              overflow: "hidden", // Prevent page-level scrolling
+              maxHeight: "100vh", // Set maximum height to viewport height
+              display: "flex",
+              flexDirection: "column", // Stack children vertically
             }}
           >
             <div
               style={{
-                height: "calc(100vh - 200px)", // Responsive height minus input area
-                maxHeight: "none", // Remove fixed maxHeight
-                overflowY: "auto",
-                padding: "1vw", // Relative padding
-                position: "relative",
+                maxWidth: "100%",
+                overflowX: "hidden",
+                flex: 1, // Take up remaining space
+                overflowY: "auto", // Enable vertical scrolling only for messages
+                marginBottom: "80px", // Add space for the input box
               }}
               ref={containerRef}
             >
@@ -1971,123 +1971,123 @@ const ChatWindow: React.FC = () => {
               </Fab>
             </Badge>
 
-            <Drawer
-              anchor="right"
-              open={cartOpen}
-              onClose={handleCartClose}
+          </Box>
+          <Drawer
+            anchor="right"
+            open={cartOpen}
+            onClose={handleCartClose}
+            sx={{
+              "& .MuiDrawer-paper": {
+                boxSizing: "border-box",
+                width: "500px",
+              },
+            }}
+          >
+            <List
               sx={{
-                "& .MuiDrawer-paper": {
-                  boxSizing: "border-box",
-                  width: "500px",
-                },
+                position: "relative",
+                overflow: "auto",
+                marginBottom: "5vh",
               }}
             >
-              <List
-                sx={{
-                  position: "relative",
-                  overflow: "auto",
-                  marginBottom: "5vh",
-                }}
-              >
-                {cartData.map((item, index) => (
-                  <ItemCart
-                    key={index}
-                    title={item.name}
-                    price={item.price}
-                    count={item.count}
-                    optionList={item.optionList}
-                  />
-                ))}
-              </List>
+              {cartData.map((item, index) => (
+                <ItemCart
+                  key={index}
+                  title={item.name}
+                  price={item.price}
+                  count={item.count}
+                  optionList={item.optionList}
+                />
+              ))}
+            </List>
 
-              <AppBar
-                position="absolute"
-                elevation={0}
+            <AppBar
+              position="absolute"
+              elevation={0}
+              sx={{
+                top: "auto",
+                bottom: 0,
+                width: "100%",
+                background: "white",
+                boxShadow: "0 -2px 12px rgba(0,0,0,0.04)",
+                py: 2,
+                px: 3,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Box
                 sx={{
-                  top: "auto",
-                  bottom: 0,
                   width: "100%",
-                  background: "white",
-                  boxShadow: "0 -2px 12px rgba(0,0,0,0.04)",
-                  py: 2,
-                  px: 3,
                   display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
                   alignItems: "center",
-                  justifyContent: "center",
+                  justifyContent: "space-between",
+                  gap: 2,
                 }}
               >
-                <Box
+                <Box>
+                  <Typography
+                    variant="subtitle1"
+                    sx={{ color: "#222", fontWeight: 600 }}
+                  >
+                    Total Items:{" "}
+                    <span style={{ color: "#73AD21" }}>
+                      {cartData.reduce((sum, item) => sum + item.count, 0)}
+                    </span>
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    sx={{ color: "#222", fontWeight: 700, mt: 0.5 }}
+                  >
+                    Total Price:{" "}
+                    <span style={{ color: "#73AD21" }}>
+                      $
+                      {cartData
+                        .reduce((sum, item) => {
+                          const priceMatch = item.price;
+                          const price = priceMatch ? parseFloat(priceMatch) : 0;
+                          return sum + price * item.count;
+                        }, 0)
+                        .toFixed(2)}
+                    </span>
+                  </Typography>
+                </Box>
+                <Button
+                  size="large"
+                  variant="contained"
+                  startIcon={<PaymentIcon fontSize="medium" />}
                   sx={{
-                    width: "100%",
-                    display: "flex",
-                    flexDirection: { xs: "column", sm: "row" },
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 2,
+                    background: "linear-gradient(90deg, #73AD21 0%, #4CAF50 100%)",
+                    color: "white",
+                    fontWeight: "bold",
+                    fontSize: "1.2rem",
+                    borderRadius: "30px",
+                    boxShadow: "0 4px 20px 0 rgba(76, 175, 80, 0.15)",
+                    px: 5,
+                    py: 1.5,
+                    transition: "transform 0.2s, box-shadow 0.2s",
+                    '&:hover': {
+                      background: "linear-gradient(90deg, #4CAF50 0%, #73AD21 100%)",
+                      transform: "scale(1.05)",
+                      boxShadow: "0 6px 30px 0 rgba(76, 175, 80, 0.25)",
+                    },
+                  }}
+                  onClick={() => {
+                    if (cartData.length > 0) {
+                      setCartOpen(false);
+                      setTimeout(() => setPaymentDialogOpen(true), 300);
+                    } else {
+                      setSnackbarOpen(true); // Show notification
+                    }
                   }}
                 >
-                  <Box>
-                    <Typography
-                      variant="subtitle1"
-                      sx={{ color: "#222", fontWeight: 600 }}
-                    >
-                      Total Items:{" "}
-                      <span style={{ color: "#73AD21" }}>
-                        {cartData.reduce((sum, item) => sum + item.count, 0)}
-                      </span>
-                    </Typography>
-                    <Typography
-                      variant="h6"
-                      sx={{ color: "#222", fontWeight: 700, mt: 0.5 }}
-                    >
-                      Total Price:{" "}
-                      <span style={{ color: "#73AD21" }}>
-                        $
-                        {cartData
-                          .reduce((sum, item) => {
-                            const priceMatch = item.price;
-                            const price = priceMatch ? parseFloat(priceMatch) : 0;
-                            return sum + price * item.count;
-                          }, 0)
-                          .toFixed(2)}
-                      </span>
-                    </Typography>
-                  </Box>
-                  <Button
-                    size="large"
-                    variant="contained"
-                    startIcon={<PaymentIcon fontSize="medium" />}
-                    sx={{
-                      background: "linear-gradient(90deg, #73AD21 0%, #4CAF50 100%)",
-                      color: "white",
-                      fontWeight: "bold",
-                      fontSize: "1.2rem",
-                      borderRadius: "30px",
-                      boxShadow: "0 4px 20px 0 rgba(76, 175, 80, 0.15)",
-                      px: 5,
-                      py: 1.5,
-                      transition: "transform 0.2s, box-shadow 0.2s",
-                      '&:hover': {
-                        background: "linear-gradient(90deg, #4CAF50 0%, #73AD21 100%)",
-                        transform: "scale(1.05)",
-                        boxShadow: "0 6px 30px 0 rgba(76, 175, 80, 0.25)",
-                      },
-                    }}
-                    onClick={() => {
-                      if (cartData.length > 0) {
-                        setCartOpen(false);
-                        setTimeout(() => setPaymentDialogOpen(true), 300);
-                      } else {
-                        setSnackbarOpen(true); // Show notification
-                      }
-                    }}
-                  >
-                    Pay Now
-                  </Button>
-                </Box>
-              </AppBar>
-            </Drawer>
-          </Box>
+                  Pay Now
+                </Button>
+              </Box>
+            </AppBar>
+          </Drawer>
           <Dialog
             open={paymentDialogOpen}
             onClose={() => setPaymentDialogOpen(false)}
@@ -2293,7 +2293,7 @@ const ChatWindow: React.FC = () => {
             please add product into cart
           </MuiAlert>
         </Snackbar>
-    </>
+    </div>
   );
 };
 
