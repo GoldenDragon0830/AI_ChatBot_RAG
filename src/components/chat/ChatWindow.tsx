@@ -190,6 +190,9 @@ const ChatWindow: React.FC = () => {
   const [customTip, setCustomTip] = useState<string>('');
   const tipOptions = [3, 7, 10];
 
+  const [payInStore, setPayInStore] = useState(false);
+  const [inStorePickup, setInStorePickup] = useState(false);
+
   const ItemCart: React.FC<{
     title: string;
     price: string;
@@ -266,12 +269,12 @@ const ChatWindow: React.FC = () => {
             <DeleteForeverIcon sx={{ color: '#FF3B30', fontSize: 26 }} />
           </IconButton>
           <Box sx={{ display: 'flex', alignItems: 'center', border: '1.5px solid #73AD21', borderRadius: '8px', px: 1, py: 0.2, minWidth: 70, justifyContent: 'space-between' }}>
-            <IconButton size="small" color="success" onClick={handleIncrement}>
-              <AddIcon fontSize="small" />
-            </IconButton>
-            <Typography sx={{ fontWeight: 600, fontSize: 17, mx: 1 }}>{count}</Typography>
             <IconButton size="small" onClick={handleDecrement}>
               <RemoveIcon fontSize="small" />
+            </IconButton>
+            <Typography sx={{ fontWeight: 600, fontSize: 17, mx: 1 }}>{count}</Typography>
+            <IconButton size="small" color="success" onClick={handleIncrement}>
+              <AddIcon fontSize="small" />
             </IconButton>
           </Box>
           <Typography sx={{ fontWeight: 700, color: '#73AD21', fontSize: 18, minWidth: 60, textAlign: 'right', ml: 2 }}>
@@ -420,7 +423,7 @@ const ChatWindow: React.FC = () => {
               </Typography>
               {!displayOptionSoup.includes(text) && ( displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text) )?
                 (
-                  <ChevronRightIcon sx={{ color: '#000', fontSize: 28, ml: 1 }} />
+                  <ChevronRightIcon sx={{ color: '#000', fontSize: 28, ml: 1 }} onClick={onClick}/>
                 ) : null
               }
             </Box>
@@ -2086,10 +2089,10 @@ const ChatWindow: React.FC = () => {
           <Dialog
             open={paymentDialogOpen}
             onClose={() => setPaymentDialogOpen(false)}
-            maxWidth="sm" // Changed from xs to sm
+            maxWidth="sm"
             fullWidth
             PaperProps={{
-              sx: { borderRadius: 3, minWidth: 400 } // Ensures a minimum width
+              sx: { borderRadius: 3, minWidth: 400 }
             }}
           >
             <DialogTitle sx={{ textAlign: "center", fontWeight: 1000, pb: 0 }}>
@@ -2098,72 +2101,82 @@ const ChatWindow: React.FC = () => {
             <DialogContent>
               <Box component="form" sx={{ mt: 1, px: 1 }}>
                 <FormControlLabel
-                  control={<Switch defaultChecked color="success" />}
+                  control={
+                    <Switch 
+                      checked={payInStore}
+                      onChange={(e) => setPayInStore(e.target.checked)}
+                      color="success" 
+                    />
+                  }
                   label={<Typography sx={{ fontWeight: 700, fontSize: 20 }}>Pay In Store</Typography>}
                   sx={{ mb: 2, ml: 0 }}
                 />
-                <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500 }}>
-                  Card Info
-                </Typography>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mb: 2 }}>
-                  <input
-                    type="text"
-                    placeholder="5151 0072 9077 0883"
-                    ref={cardNumberRef}
-                    style={{
-                      padding: 12,
-                      borderRadius: 6,
-                      border: "1px solid #e0e0e0",
-                      fontSize: 16,
-                      width: "100%",
-                      boxSizing: "border-box"
-                    }}
-                  />
-                  <Box sx={{ display: "flex", gap: 1 }}>
-                    <input
-                      type="text"
-                      placeholder="12"
-                      ref={expMonthRef}
-                      style={{
-                        flex: 1,
-                        padding: 12,
-                        borderRadius: 6,
-                        border: "1px solid #e0e0e0",
-                        fontSize: 16,
-                        width: "100%",
-                        boxSizing: "border-box"
-                      }}
-                    />
-                    <input
-                      type="text"
-                      placeholder="2026"
-                      ref={expYearRef}
-                      style={{
-                        flex: 2,
-                        padding: 12,
-                        borderRadius: 6,
-                        border: "1px solid #e0e0e0",
-                        fontSize: 16,
-                        width: "100%",
-                        boxSizing: "border-box"
-                      }}
-                    />
-                    <input
-                      type="text"
-                      placeholder="265"
-                      ref={cvvRef}
-                      style={{
-                        flex: 1,
-                        padding: 12,
-                        borderRadius: 6,
-                        border: "1px solid #e0e0e0",
-                        fontSize: 16,
-                        width: "100%",
-                        boxSizing: "border-box"
-                      }}
-                    />
-                  </Box>
-                </Box>
+                {!payInStore && (
+                  <>
+                    <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500 }}>
+                      Card Info
+                    </Typography>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mb: 2 }}>
+                      <input
+                        type="text"
+                        placeholder="5151 0072 9077 0883"
+                        ref={cardNumberRef}
+                        style={{
+                          padding: 12,
+                          borderRadius: 6,
+                          border: "1px solid #e0e0e0",
+                          fontSize: 16,
+                          width: "100%",
+                          boxSizing: "border-box"
+                        }}
+                      />
+                      <Box sx={{ display: "flex", gap: 1 }}>
+                        <input
+                          type="text"
+                          placeholder="12"
+                          ref={expMonthRef}
+                          style={{
+                            flex: 1,
+                            padding: 12,
+                            borderRadius: 6,
+                            border: "1px solid #e0e0e0",
+                            fontSize: 16,
+                            width: "100%",
+                            boxSizing: "border-box"
+                          }}
+                        />
+                        <input
+                          type="text"
+                          placeholder="2026"
+                          ref={expYearRef}
+                          style={{
+                            flex: 2,
+                            padding: 12,
+                            borderRadius: 6,
+                            border: "1px solid #e0e0e0",
+                            fontSize: 16,
+                            width: "100%",
+                            boxSizing: "border-box"
+                          }}
+                        />
+                        <input
+                          type="text"
+                          placeholder="265"
+                          ref={cvvRef}
+                          style={{
+                            flex: 1,
+                            padding: 12,
+                            borderRadius: 6,
+                            border: "1px solid #e0e0e0",
+                            fontSize: 16,
+                            width: "100%",
+                            boxSizing: "border-box"
+                          }}
+                        />
+                      </Box>
+                    </Box>
+                  </>
+                )}
                 <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500 }}>
                   Phone Number
                 </Typography>
@@ -2182,27 +2195,37 @@ const ChatWindow: React.FC = () => {
                   }}
                 />
                 <FormControlLabel
-                  control={<Switch defaultChecked color="success" />}
+                  control={
+                    <Switch 
+                      checked={inStorePickup}
+                      onChange={(e) => setInStorePickup(e.target.checked)}
+                      color="success" 
+                    />
+                  }
                   label={<Typography sx={{ fontWeight: 700, fontSize: 18 }}>In Store Pick Up Order</Typography>}
                   sx={{ mb: 2, ml: 0 }}
                 />
-                <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500 }}>
-                  Delivery Address
-                </Typography>
-                <input
-                  type="text"
-                  placeholder="Street 32"
-                  ref={addressRef}
-                  style={{
-                    width: "100%",
-                    padding: 12,
-                    borderRadius: 6,
-                    border: "1px solid #e0e0e0",
-                    fontSize: 16,
-                    marginBottom: 16,
-                    boxSizing: "border-box"
-                  }}
-                />
+                {!inStorePickup && (
+                  <>
+                    <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500 }}>
+                      Delivery Address
+                    </Typography>
+                    <input
+                      type="text"
+                      placeholder="Street 32"
+                      ref={addressRef}
+                      style={{
+                        width: "100%",
+                        padding: 12,
+                        borderRadius: 6,
+                        border: "1px solid #e0e0e0",
+                        fontSize: 16,
+                        marginBottom: 16,
+                        boxSizing: "border-box"
+                      }}
+                    />
+                  </>
+                )}
                 <Box sx={{ display: "flex", alignItems: "center", mb: 2, mt: 1 }}>
                   <span style={{ color: "#888" }}>
                     <svg width="18" height="18" style={{ marginRight: 4, verticalAlign: "middle" }}>
@@ -2274,7 +2297,7 @@ const ChatWindow: React.FC = () => {
                       onChange={e => setCustomTip(e.target.value)}
                       placeholder="Custom"
                       style={{
-                        width: 80,
+                        width: 90,
                         marginLeft: 8,
                         padding: 8,
                         borderRadius: 6,
