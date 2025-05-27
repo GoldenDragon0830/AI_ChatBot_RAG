@@ -44,6 +44,11 @@ import CardContent from "@mui/material/CardContent";
 import CardActions from "@mui/material/CardActions";
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import { styled } from '@mui/material/styles';
+
 
 const displayOptionSoup = ["Beef Dumplings","Egg Drop Soup", "Hot And Sour Soup", "Thai Chicken Noodle Soup", "Tofu Vegetable Soup"];
 const displayOptionContinue = ["Subgum Wonton Soup", "Wonton Soup", "Egg Drop Wonton Soup"];
@@ -180,6 +185,11 @@ const ChatWindow: React.FC = () => {
   const phoneRef = useRef<HTMLInputElement>(null);
   const addressRef = useRef<HTMLInputElement>(null);
 
+  // Add state for tip selection
+  const [selectedTip, setSelectedTip] = useState<number | 'other'>(7);
+  const [customTip, setCustomTip] = useState<string>('');
+  const tipOptions = [3, 7, 10];
+
   const ItemCart: React.FC<{
     title: string;
     price: string;
@@ -224,53 +234,51 @@ const ChatWindow: React.FC = () => {
     }
 
     return (
-      <ListItem
-        secondaryAction={
-          <Box sx={{display: "flex", flexDirection: "column", alignItems: "center",}}>
+      <Box sx={{ display: 'flex', alignItems: 'center', px: 2, py: 1.5 }}>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography sx={{ fontWeight: 600, fontSize: 18, color: '#222', mb: 0.5, lineHeight: 1.2 }}>{title}</Typography>
+          {optionList.length > 0 && (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 0.5 }}>
+              {chunkArray(optionList, 3).map((row, rowIndex) => (
+                <Box key={rowIndex} sx={{ display: 'flex', flexDirection: 'row', gap: 0.5 }}>
+                  {row.map((option, index) => (
+                    <Chip
+                      key={index}
+                      label={option}
+                      size="small"
+                      sx={{
+                        color: '#73AD21',
+                        borderColor: '#73AD21',
+                        fontWeight: 500,
+                        fontSize: 13,
+                        height: 22,
+                        background: '#f7faf3',
+                      }}
+                    />
+                  ))}
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 120, justifyContent: 'flex-end' }}>
+          <IconButton size="small" onClick={handleRemove}>
+            <DeleteForeverIcon sx={{ color: '#FF3B30', fontSize: 26 }} />
+          </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center', border: '1.5px solid #73AD21', borderRadius: '8px', px: 1, py: 0.2, minWidth: 70, justifyContent: 'space-between' }}>
             <IconButton size="small" color="success" onClick={handleIncrement}>
               <AddIcon fontSize="small" />
             </IconButton>
-            <Typography>{count}</Typography>
-            <IconButton size="small" onClick={handleDecrement} >
+            <Typography sx={{ fontWeight: 600, fontSize: 17, mx: 1 }}>{count}</Typography>
+            <IconButton size="small" onClick={handleDecrement}>
               <RemoveIcon fontSize="small" />
             </IconButton>
           </Box>
-        }
-      >
-        <ListItemButton>
-          <ListItemText primary={title} secondary={
-              <Box>
-                <Typography variant="body2" color="secondary" component="span" >
-                  ${price}
-                </Typography>
-                <Box sx={{ display: "flex", flexDirection: "column", marginTop: 1 }}>
-                  {chunkArray(optionList, 3).map((row, rowIndex) => (
-                    <Box key={rowIndex} sx={{ display: "flex", flexDirection: "row", marginBottom: "4px" }}>
-                      {row.map((option, index) => (
-                        <Chip key={index} label={option} size="small" sx={{
-                            marginLeft: index === 0 ? 0 : "2px", // Add spacing only for chips after the first one
-                            color: "#73AD21", // Custom text color
-                            borderColor: "#73AD21", // Custom border color
-                            "& .MuiChip-label": {
-                              fontWeight: "bold", // Optional: Make the label bold
-                            },
-                            "&:hover": {
-                              backgroundColor: "#73AD21", // Optional: Add a hover effect with a lighter green
-                            },
-                          }}
-                        />
-                      ))}
-                    </Box>
-                  ))}
-                </Box>
-              </Box>
-            } />
-            
-        </ListItemButton>
-        <IconButton edge="end" aria-label="delete" onClick={(e) => { e.stopPropagation(); handleRemove(); }} >
-          <DeleteForeverIcon color="error" />
-        </IconButton>
-      </ListItem>
+          <Typography sx={{ fontWeight: 700, color: '#73AD21', fontSize: 18, minWidth: 60, textAlign: 'right', ml: 2 }}>
+            ${parseFloat(price).toFixed(2)}
+          </Typography>
+        </Box>
+      </Box>
     );
   };
 
@@ -290,6 +298,26 @@ const ChatWindow: React.FC = () => {
     const [itemCount, setItemCount] = useState<{ [key: string]: number }>({});
     const [selectedOption, setSelectedOption] = useState<string | null>("Option 1");
     const [generalCount, setGeneralCount] = useState<number>(1);
+
+    // Size labels
+    let option1Label = '';
+    let option2Label = '';
+    if (displayOptionSoup.includes(text) || displayOptionContinue.includes(text)) {
+      if (text === 'Beef Dumplings') {
+        option1Label = 'Steam';
+        option2Label = 'Fried';
+      } else {
+        option1Label = 'Pint';
+        option2Label = 'Quart';
+      }
+    } else if (displayOptionDish.includes(text)) {
+      option1Label = 'Small';
+      option2Label = 'Large';
+    } else if (displayOptionChinaDish.includes(text)) {
+      option1Label = 'Small';
+      option2Label = 'Large';
+    }
+
 
     const handleIncrease = (optionKey: string) => { 
       if (displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text)) {
@@ -386,11 +414,18 @@ const ChatWindow: React.FC = () => {
               }
             }}
           >
-            <Typography variant="body2" sx={{ fontWeight: "bold", color: "block", fontSize: "20px", marginBottom: "5px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient:  "vertical", }} onClick={onClick}>
-              {text}
-            </Typography>
-            {type !== "option_name" ? ( <Typography variant="body2" sx={{ color: "gray", fontSize: "14px", marginBottom: "10px", height: "40px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, 
-                  WebkitBoxOrient: "vertical", }} onClick={onClick}>
+            <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+              <Typography variant="body2" sx={{ fontWeight: "bold", color: "block", fontSize: "20px", marginBottom: "5px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient:  "vertical", flex: 1 }} onClick={onClick}>
+                {text}
+              </Typography>
+              {!displayOptionSoup.includes(text) && ( displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text) )?
+                (
+                  <ChevronRightIcon sx={{ color: '#000', fontSize: 28, ml: 1 }} />
+                ) : null
+              }
+            </Box>
+            {type !== "option_name" ? (
+              <Typography variant="body2" sx={{ color: "gray", fontSize: "14px", marginBottom: "10px", height: "40px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }} onClick={onClick}>
                 {description}
               </Typography>
             ) : null}
@@ -423,18 +458,6 @@ const ChatWindow: React.FC = () => {
                         onClick={() => handleSelectOption("Option 2")}
                       />
                     </Badge>
-                    {
-                      !displayOptionSoup.includes(text) ? (
-                        <Chip
-                          color="info"
-                          size="small"
-                          label="More.."
-                          variant="outlined"
-                          onClick={onClick}
-                          sx={{ marginTop: { xs: "5px", sm: 0 } }}
-                        />
-                      ) : null
-                    }
                 </div>
               ) : (
                 null
@@ -1648,7 +1671,7 @@ const ChatWindow: React.FC = () => {
         left: 0, 
         right: 0, 
         bottom: 0,
-        marginTop: '150px',
+        marginTop: '250px',
         width: '73%', 
         height: '85%',
         bgcolor: 'white',
@@ -1977,116 +2000,88 @@ const ChatWindow: React.FC = () => {
             open={cartOpen}
             onClose={handleCartClose}
             sx={{
-              "& .MuiDrawer-paper": {
-                boxSizing: "border-box",
-                width: "500px",
+              '& .MuiDrawer-paper': {
+                boxSizing: 'border-box',
+                width: '700px',
+                background: '#fff',
+                borderRadius: '18px 0 0 18px',
+                boxShadow: '0 2px 24px rgba(0,0,0,0.08)',
+                p: 0,
+                overflow: 'hidden',
               },
             }}
           >
-            <List
-              sx={{
-                position: "relative",
-                overflow: "auto",
-                marginBottom: "5vh",
-              }}
-            >
+            {/* Cart GIF at the top */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', pt: 4, pb: 2 }}>
+              <img src="/west-side-wok/cart.gif" alt="Cart" style={{ width: 200, height: 150, objectFit: 'contain', marginBottom: 8 }} />
+            </Box>
+            <Divider />
+            <List sx={{ px: 0, py: 0, minHeight: '320px', maxHeight: '60vh', overflowY: 'auto', bgcolor: '#fff' }}>
               {cartData.map((item, index) => (
-                <ItemCart
-                  key={index}
-                  title={item.name}
-                  price={item.price}
-                  count={item.count}
-                  optionList={item.optionList}
-                />
+                <React.Fragment key={index}>
+                  <ItemCart
+                    title={item.name}
+                    price={item.price}
+                    count={item.count}
+                    optionList={item.optionList}
+                  />
+                  {index < cartData.length - 1 && <Divider sx={{ mx: 2, my: 0.5 }} />}
+                </React.Fragment>
               ))}
             </List>
-
-            <AppBar
-              position="absolute"
-              elevation={0}
-              sx={{
-                top: "auto",
-                bottom: 0,
-                width: "100%",
-                background: "white",
-                boxShadow: "0 -2px 12px rgba(0,0,0,0.04)",
-                py: 2,
-                px: 3,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Box
+            {/* Bottom summary bar */}
+            <Box sx={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: 0,
+              bgcolor: '#fff',
+              borderTop: '1px solid #eee',
+              px: 0,
+              py: 3,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              boxShadow: '0 -2px 12px rgba(0,0,0,0.04)',
+            }}>
+              <Typography sx={{ fontSize: 18, color: '#222', fontWeight: 400, mb: 0.5 }}>
+                Total Items: <span style={{ color: '#73AD21', fontWeight: 600 }}>{cartData.reduce((sum, item) => sum + item.count, 0)}</span>
+                <span style={{ color: '#888', margin: '0 12px' }}>|</span>
+                Total Price: <span style={{ color: '#73AD21', fontWeight: 700 }}>
+                  ${cartData.reduce((sum, item) => {
+                    const price = parseFloat(item.price) || 0;
+                    return sum + price * item.count;
+                  }, 0).toFixed(2)}
+                </span>
+              </Typography>
+              <Button
                 sx={{
-                  width: "100%",
-                  display: "flex",
-                  flexDirection: { xs: "column", sm: "row" },
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 2,
+                  mt: 2,
+                  background: '#73AD21',
+                  color: '#fff',
+                  fontWeight: 600,
+                  fontSize: '1.2rem',
+                  borderRadius: '10px',
+                  py: 1.5,
+                  boxShadow: '0 2px 12px 0 rgba(76, 175, 80, 0.10)',
+                  textTransform: 'none',
+                  '&:hover': { background: '#5e8e1e' },
+                }}
+                onClick={() => {
+                  if (cartData.length > 0) {
+                    setCartOpen(false);
+                    setTimeout(() => setPaymentDialogOpen(true), 300);
+                  } else {
+                    setSnackbarOpen(true);
+                  }
                 }}
               >
-                <Box>
-                  <Typography
-                    variant="subtitle1"
-                    sx={{ color: "#222", fontWeight: 600 }}
-                  >
-                    Total Items:{" "}
-                    <span style={{ color: "#73AD21" }}>
-                      {cartData.reduce((sum, item) => sum + item.count, 0)}
-                    </span>
-                  </Typography>
-                  <Typography
-                    variant="h6"
-                    sx={{ color: "#222", fontWeight: 700, mt: 0.5 }}
-                  >
-                    Total Price:{" "}
-                    <span style={{ color: "#73AD21" }}>
-                      $
-                      {cartData
-                        .reduce((sum, item) => {
-                          const priceMatch = item.price;
-                          const price = priceMatch ? parseFloat(priceMatch) : 0;
-                          return sum + price * item.count;
-                        }, 0)
-                        .toFixed(2)}
-                    </span>
-                  </Typography>
-                </Box>
-                <Button
-                  size="large"
-                  variant="contained"
-                  startIcon={<PaymentIcon fontSize="medium" />}
-                  sx={{
-                    background: "linear-gradient(90deg, #73AD21 0%, #4CAF50 100%)",
-                    color: "white",
-                    fontWeight: "bold",
-                    fontSize: "1.2rem",
-                    borderRadius: "30px",
-                    boxShadow: "0 4px 20px 0 rgba(76, 175, 80, 0.15)",
-                    px: 5,
-                    py: 1.5,
-                    transition: "transform 0.2s, box-shadow 0.2s",
-                    '&:hover': {
-                      background: "linear-gradient(90deg, #4CAF50 0%, #73AD21 100%)",
-                      transform: "scale(1.05)",
-                      boxShadow: "0 6px 30px 0 rgba(76, 175, 80, 0.25)",
-                    },
-                  }}
-                  onClick={() => {
-                    if (cartData.length > 0) {
-                      setCartOpen(false);
-                      setTimeout(() => setPaymentDialogOpen(true), 300);
-                    } else {
-                      setSnackbarOpen(true); // Show notification
-                    }
-                  }}
-                >
-                  Pay Now
-                </Button>
-              </Box>
-            </AppBar>
+                {`Checkout: $${cartData.reduce((sum, item) => {
+                  const price = parseFloat(item.price) || 0;
+                  return sum + price * item.count;
+                }, 0).toFixed(2)}`}
+              </Button>
+            </Box>
           </Drawer>
           <Dialog
             open={paymentDialogOpen}
@@ -2104,8 +2099,8 @@ const ChatWindow: React.FC = () => {
               <Box component="form" sx={{ mt: 1, px: 1 }}>
                 <FormControlLabel
                   control={<Switch defaultChecked color="success" />}
-                  label="Pay In-store"
-                  sx={{ mb: 1, ml: 0 }}
+                  label={<Typography sx={{ fontWeight: 700, fontSize: 20 }}>Pay In Store</Typography>}
+                  sx={{ mb: 2, ml: 0 }}
                 />
                 <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500 }}>
                   Card Info
@@ -2113,7 +2108,7 @@ const ChatWindow: React.FC = () => {
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mb: 2 }}>
                   <input
                     type="text"
-                    placeholder="1234 5678 9012 3456"
+                    placeholder="5151 0072 9077 0883"
                     ref={cardNumberRef}
                     style={{
                       padding: 12,
@@ -2141,7 +2136,7 @@ const ChatWindow: React.FC = () => {
                     />
                     <input
                       type="text"
-                      placeholder="2027"
+                      placeholder="2026"
                       ref={expYearRef}
                       style={{
                         flex: 2,
@@ -2155,7 +2150,7 @@ const ChatWindow: React.FC = () => {
                     />
                     <input
                       type="text"
-                      placeholder="123"
+                      placeholder="265"
                       ref={cvvRef}
                       style={{
                         flex: 1,
@@ -2174,7 +2169,7 @@ const ChatWindow: React.FC = () => {
                 </Typography>
                 <input
                   type="text"
-                  placeholder="706 664-5169"
+                  placeholder="281-981-4561"
                   ref={phoneRef}
                   style={{
                     width: "100%",
@@ -2188,15 +2183,15 @@ const ChatWindow: React.FC = () => {
                 />
                 <FormControlLabel
                   control={<Switch defaultChecked color="success" />}
-                  label="In-store Pick Up Order"
-                  sx={{ mb: 1, ml: 0 }}
+                  label={<Typography sx={{ fontWeight: 700, fontSize: 18 }}>In Store Pick Up Order</Typography>}
+                  sx={{ mb: 2, ml: 0 }}
                 />
                 <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500 }}>
                   Delivery Address
                 </Typography>
                 <input
                   type="text"
-                  placeholder="52 Grosvenor garden, 52 Grosvenor garden"
+                  placeholder="Street 32"
                   ref={addressRef}
                   style={{
                     width: "100%",
@@ -2218,19 +2213,93 @@ const ChatWindow: React.FC = () => {
                     This form is fully encrypted to keep your information secure.
                   </Typography>
                 </Box>
+                <Typography sx={{ fontWeight: 600, fontSize: 18, mt: 2, mb: 1 }}>
+                  Tip your delivery partner
+                </Typography>
+                <Typography sx={{ color: '#888', fontSize: 14, mb: 2 }}>
+                  Thank you delivery partner by leaving them a tip. 100% of the tip will go to your delivery partner.
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+                  {tipOptions.map((tip) => (
+                    <Button
+                      key={tip}
+                      variant={selectedTip === tip ? 'contained' : 'outlined'}
+                      onClick={() => setSelectedTip(tip)}
+                      sx={{
+                        minWidth: 80,
+                        borderRadius: 2,
+                        fontWeight: 600,
+                        fontSize: 20,
+                        color: selectedTip === tip ? '#fff' : '#222',
+                        background: selectedTip === tip ? '#73AD21' : '#fff',
+                        borderColor: '#73AD21',
+                        borderWidth: 2,
+                        borderStyle: 'solid',
+                        boxShadow: selectedTip === tip ? '0 2px 8px 0 rgba(76, 175, 80, 0.10)' : 'none',
+                        '&:hover': { background: '#5e8e1e', color: '#fff' },
+                        position: 'relative',
+                      }}
+                    >
+                      ${tip}
+                      {tip === 7 && (
+                        <Typography sx={{ position: 'absolute', top: -18, left: '50%', transform: 'translateX(-50%)', color: '#73AD21', fontSize: 12, fontWeight: 700, background: '#fff', px: 0.5, borderRadius: 1 }}>Popular</Typography>
+                      )}
+                      <Typography sx={{ fontSize: 12, color: selectedTip === tip ? '#fff' : '#888', fontWeight: 400 }}>{tip === 3 ? '5%' : tip === 7 ? '10%' : '12%'}</Typography>
+                    </Button>
+                  ))}
+                  <Button
+                    variant={selectedTip === 'other' ? 'contained' : 'outlined'}
+                    onClick={() => setSelectedTip('other')}
+                    sx={{
+                      minWidth: 80,
+                      borderRadius: 2,
+                      fontWeight: 600,
+                      fontSize: 20,
+                      color: selectedTip === 'other' ? '#fff' : '#222',
+                      background: selectedTip === 'other' ? '#73AD21' : '#fff',
+                      borderColor: '#73AD21',
+                      borderWidth: 2,
+                      borderStyle: 'solid',
+                      boxShadow: selectedTip === 'other' ? '0 2px 8px 0 rgba(76, 175, 80, 0.10)' : 'none',
+                      '&:hover': { background: '#5e8e1e', color: '#fff' },
+                    }}
+                  >
+                    Other
+                  </Button>
+                  {selectedTip === 'other' && (
+                    <input
+                      type="number"
+                      min={0}
+                      value={customTip}
+                      onChange={e => setCustomTip(e.target.value)}
+                      placeholder="Custom"
+                      style={{
+                        width: 80,
+                        marginLeft: 8,
+                        padding: 8,
+                        borderRadius: 6,
+                        border: '1.5px solid #73AD21',
+                        fontSize: 18,
+                        fontWeight: 600,
+                        color: '#222',
+                        outline: 'none',
+                      }}
+                    />
+                  )}
+                </Box>
                 <Button
                   type="button"
                   variant="contained"
                   fullWidth
                   sx={{
-                    background: "#10bfae",
+                    background: "#73AD21",
                     color: "white",
                     fontWeight: "bold",
                     borderRadius: "8px",
-                    fontSize: "1rem",
-                    py: 1.2,
-                    mt: 1,
-                    '&:hover': { background: "#0ea896" }
+                    fontSize: "1.3rem",
+                    py: 1.5,
+                    mt: 2,
+                    '&:hover': { background: "#5e8e1e" }
                   }}
                   onClick={() => {
                     // 1. Collect input values
@@ -2240,9 +2309,10 @@ const ChatWindow: React.FC = () => {
                     const cvv = cvvRef.current?.value || '';
                     const phone = phoneRef.current?.value || '';
                     const address = addressRef.current?.value || '';
+                    const tipValue = selectedTip === 'other' ? parseFloat(customTip) || 0 : selectedTip;
 
                     // 2. Format order info message
-                    const orderInfoMsg = `Order info to complete payment\n\nCard Number: ${cardNumber}\nExpiration: ${expMonth}/${expYear}\nCVV: ${cvv}\n\nPhone Number: ${phone}\nDelivery Address: ${address}`;
+                    const orderInfoMsg = `Order info to complete payment\n\nCard Number: ${cardNumber}\nExpiration: ${expMonth}/${expYear}\nCVV: ${cvv}\n\nPhone Number: ${phone}\nDelivery Address: ${address}\nTip: $${tipValue}`;
 
                     // 3. Format cart summary
                     let cartLines = cartData.map(item => {
@@ -2255,9 +2325,8 @@ const ChatWindow: React.FC = () => {
                     }, 0);
                     const tax = subtotal * 0.08875;
                     const discount = subtotal * 0.1;
-                    const tip = 7;
-                    const total = subtotal + tax - discount + tip;
-                    const summaryMsg = `${cartLines}\n\nSubTotal: $${subtotal.toFixed(2)}\nTax: $${tax.toFixed(2)}\nDiscount: -$${discount.toFixed(2)}\nTip: $${tip.toFixed(2)}\nTotal: $${total.toFixed(2)}`;
+                    const total = subtotal + tax - discount + tipValue;
+                    const summaryMsg = `${cartLines}\n\nSubTotal: $${subtotal.toFixed(2)}\nTax: $${tax.toFixed(2)}\nDiscount: -$${discount.toFixed(2)}\nTip: $${tipValue.toFixed(2)}\nTotal: $${total.toFixed(2)}`;
 
                     // 4. Add messages to chat
                     setMessages(prev => {
