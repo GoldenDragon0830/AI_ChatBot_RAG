@@ -1285,6 +1285,7 @@ const ChatWindow: React.FC = () => {
   }
 
   const [detailDialog, setDetailDialog] = useState(false);
+  const [optionDialog, setOptionDialog] = useState(false);
   const [selectedItemData, setSelectedItemData] = useState<any>(null);
   const [selectedChip, setSelectedChip] = useState<string | null>("ALL");
   const [selectedNameChip, setSelectedNameChip] = useState<string | null>(
@@ -1311,6 +1312,14 @@ const ChatWindow: React.FC = () => {
 
   const handleDetailDialogClose = () => {
     setDetailDialog(false);
+  };
+
+  const handleOptionDialogOpen = () => {
+    setOptionDialog(true);
+  };
+
+  const handleOptionDialogClose = () => {
+    setOptionDialog(false);
   };
 
   useEffect(() => {
@@ -1781,7 +1790,7 @@ const ChatWindow: React.FC = () => {
               )}
               <ImageList cols={4} style={{ padding: "8px" }}>
                 {groupItems.map((item, index) => {
-                  const isSelected = selectedChunk === item.value; // Check if the name is selected
+                  const isSelected = selectedChunk === item.value;
                   return (
                     <AmountItemButton
                       key={index}
@@ -1791,38 +1800,36 @@ const ChatWindow: React.FC = () => {
                       price={item.price}
                       description={item.description}
                       style={{
-                        border: isSelected ? "2px solid #1976d2" : "none", // Highlight selected border
-                        backgroundColor: isSelected ? "#e3f2fd" : "white", // Highlight selected background
+                        border: isSelected ? "2px solid #1976d2" : "none",
+                        backgroundColor: isSelected ? "#e3f2fd" : "white",
                       }}
                       onClick={() => {
                         if (item.type === "option_name") {
                           let jsonString = item.value
-                            .replace(/'/g, '"') // Naively replace all single quotes with double quotes
-                            .replace(/(\bNone\b)/g, "null"); // Replace Python-style None with null
-                          // Add additional validation for keys (ensure double quotes around keys)
+                            .replace(/'/g, '"')
+                            .replace(/(\bNone\b)/g, "null");
                           jsonString = jsonString.replace(
                             /"(\w+)":/g,
                             (match, p1) => `"${p1}":`
                           );
-                          // Parse JSON string
                           const itemData = JSON.parse(jsonString);
-                          // Set the parsed data
                           setSelectedItemData(itemData);
-
                           handleDetailDialogOpen();
                         } else {
                           setSelectedChunk(item.value);
                           setSelectedChunkData(item);
                           if (item.type === "name") {
                             setNameData(item.value);
+                            // Show options dialog when clicking on a name item
+                            setOptionDialog(true);
                           }
                           const userMessage: MessageInterface = {
-                            content: item.value, // Send the text of the item as the user's message
+                            content: item.value,
                             role: "user",
                           };
                           const backMessage: MessageInterface = {
                             content:
-                              "type:" + typeData + "," + "name:" + item.value, // Send the text of the item as the user's message
+                              "type:" + typeData + "," + "name:" + item.value,
                             role: "user",
                           };
                           handleDisplayOption(backMessage, flag, false);
@@ -1860,7 +1867,8 @@ const ChatWindow: React.FC = () => {
               <p>Description: {selectedItemData.description}</p>
             </div>
           ) : (
-            <div></div>
+            <div>
+            </div>
           )}
         </DialogContent>
       </Dialog>
