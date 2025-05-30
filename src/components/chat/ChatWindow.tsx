@@ -1904,23 +1904,7 @@ const ChatWindow: React.FC = () => {
         </DialogTitle>
         <DialogContent sx={{ minHeight: 300, position: "relative" }}>
           {loading ? (
-                <Box
-                  sx={{
-                          display: "flex",
-                          alignItems: "center",
-                justifyContent: "center",
-                minHeight: 300,
-                position: "absolute",
-                top: 0,
-              left: 0,
-                          width: "100%",
-                height: "100%",
-                zIndex: 10,
-                background: "rgba(255,255,255,0.7)"
-              }}
-            >
-              <CircularProgress size={60} color="success" />
-                </Box>
+                <></>
           ) : (
             <Box sx={{ mt: 1 }}>
               {Object.entries(groupedOptionsData).map(([group, options]) => (
@@ -2343,216 +2327,249 @@ const ChatWindow: React.FC = () => {
 
   return (
     <div style={{ overflow: "hidden" }}>
-        <Box sx={{ display: "flex", height: "auto", overflow: "hidden" }}>
-          <img
-            src="/west-side-wok/Header.png"
-            alt="Header"
-            style={{
-              width: "100vw",
-              height: "auto", // or set a fixed height if you want
-            }} 
-          />
+      {loading && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            bgcolor: "rgba(0,0,0,0.18)",
+            zIndex: 2000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <CircularProgress size={70} color="success" />
         </Box>
-        <Box sx={{ display: "flex", height: "auto", overflow: "hidden" }}>
-          {loading && (
-            <div
-              style={{
-                position: "fixed",
-                top: "50%",
-                left: "85%",
-                transform: "translate(-50%, -50%)",
-              }}
-            >
-              <CircularProgress />
-            </div>
-          )}
-          <Box
-            component="main"
-            sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-            aria-label="mailbox folders"
-          >
-            {drawer}
-          </Box>
-          <Box
-            component="main"
-            sx={{
-              flexGrow: 1,
-              p: { xs: 1, md: 3 }, // Responsive padding
-              width: { xs: `calc(100% - ${drawerWidth})` }, // Remaining width for chatting area
-              minWidth: "300px", // Minimum width to ensure usability
-              overflow: "hidden", // Prevent page-level scrolling
-              maxHeight: "100vh", // Set maximum height to viewport height
-              display: "flex",
-              flexDirection: "column", // Stack children vertically
+      )}
+      <Box sx={{ display: "flex", height: "auto", overflow: "hidden" }}>
+        <img
+          src="/west-side-wok/Header.png"
+          alt="Header"
+          style={{
+            width: "100vw",
+            height: "auto", // or set a fixed height if you want
+          }} 
+        />
+      </Box>
+      <Box sx={{ display: "flex", height: "auto", overflow: "hidden" }}>
+        {/* {loading && (
+          <div
+            style={{
+              position: "fixed",
+              top: "50%",
+              left: "85%",
+              transform: "translate(-50%, -50%)",
             }}
           >
-            <div
-              style={{
-                maxWidth: "100%",
-                overflowX: "hidden",
-                flex: 1, // Take up remaining space
-                overflowY: "auto", // Enable vertical scrolling only for messages
-                marginBottom: "80px", // Add space for the input box
-              }}
-              ref={containerRef}
-            >
-              {messages.map((message, index) => (
-                <ChatMessage key={index} {...message} />
-              ))}
-              
-              <ChatInput
-                onSendMessage={(message) =>
-                  handleSendMessageViaInput(message.content, flag)
-                }
-              />
-            </div>
-            <Badge
-              badgeContent={cartCount}
-              sx={{
-                "& .MuiBadge-badge": {
-                  backgroundColor: "#FF3B30",
-                  color: "white",
-                  border: "2px solid #FF3B30",
-                },
-                position: "fixed",
-                bottom: "10vh", // Relative positioning
-                right: "5vw",
-              }}
-            >
-              <Fab
-                sx={{ backgroundColor: "#73AD21" }}
-                aria-label="add"
-                onClick={handleCartOpen}
-              >
-                <AddShoppingCartIcon sx={{ color: "white" }} />
-              </Fab>
-            </Badge>
-
-          </Box>
-          <Drawer
-            anchor="right"
-            open={cartOpen}
-            onClose={handleCartClose}
+            <CircularProgress />
+          </div>
+        )} */}
+        <Box
+          component="main"
+          sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+          aria-label="mailbox folders"
+        >
+          {drawer}
+        </Box>
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            p: { xs: 1, md: 3 }, // Responsive padding
+            width: { xs: `calc(100% - ${drawerWidth})` }, // Remaining width for chatting area
+            minWidth: "300px", // Minimum width to ensure usability
+            overflow: "hidden", // Prevent page-level scrolling
+            maxHeight: "100vh", // Set maximum height to viewport height
+            display: "flex",
+            flexDirection: "column", // Stack children vertically
+          }}
+        >
+          <div
+            style={{
+              maxWidth: "100%",
+              overflowX: "hidden",
+              flex: 1, // Take up remaining space
+              overflowY: "auto", // Enable vertical scrolling only for messages
+              marginBottom: "80px", // Add space for the input box
+            }}
+            ref={containerRef}
+          >
+            {messages.map((message, index) => (
+              <ChatMessage key={index} {...message} />
+            ))}
+            
+            <ChatInput
+              onSendMessage={(message) =>
+                handleSendMessageViaInput(message.content, flag)
+              }
+            />
+          </div>
+          <Badge
+            badgeContent={cartCount}
             sx={{
-              '& .MuiDrawer-paper': {
-                boxSizing: 'border-box',
-                width: '700px',
-                background: '#fff',
-                borderRadius: '18px 0 0 18px',
-                boxShadow: '0 2px 24px rgba(0,0,0,0.08)',
-                p: 0,
-                overflow: 'hidden',
+              "& .MuiBadge-badge": {
+                backgroundColor: "#FF3B30",
+                color: "white",
+                border: "2px solid #FF3B30",
               },
+              position: "fixed",
+              bottom: "10vh", // Relative positioning
+              right: "5vw",
             }}
           >
-            {/* Cart GIF at the top */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', pt: 4, pb: 2 }}>
-              <img src="/west-side-wok/cart.gif" alt="Cart" style={{ width: 200, height: 150, objectFit: 'contain', marginBottom: 8 }} />
-            </Box>
-            <Divider />
-            <List sx={{ px: 0, py: 0, minHeight: '320px', maxHeight: '60vh', overflowY: 'auto', bgcolor: '#fff' }}>
-              {cartData.map((item, index) => (
-                <React.Fragment key={index}>
-                  <ItemCart
-                    title={item.name}
-                    price={item.price}
-                    count={item.count}
-                    optionList={item.optionList}
-                  />
-                  {index < cartData.length - 1 && <Divider sx={{ mx: 2, my: 0.5 }} />}
-                </React.Fragment>
-              ))}
-            </List>
-            {/* Bottom summary bar */}
-            <Box sx={{
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              bottom: 0,
-              bgcolor: '#fff',
-              borderTop: '1px solid #eee',
-              px: 0,
-              py: 3,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              boxShadow: '0 -2px 12px rgba(0,0,0,0.04)',
-            }}>
-              <Typography sx={{ fontSize: 18, color: '#222', fontWeight: 400, mb: 0.5 }}>
-                Total Items: <span style={{ color: '#73AD21', fontWeight: 600 }}>{cartData.reduce((sum, item) => sum + item.count, 0)}</span>
-                <span style={{ color: '#888', margin: '0 12px' }}>|</span>
-                Total Price: <span style={{ color: '#73AD21', fontWeight: 700 }}>
-                  ${cartData.reduce((sum, item) => {
-                    const price = parseFloat(item.price) || 0;
-                    return sum + price * item.count;
-                  }, 0).toFixed(2)}
-                </span>
-              </Typography>
-              <Button
-                sx={{
-                  mt: 2,
-                  background: '#73AD21',
-                  color: '#fff',
-                  fontWeight: 600,
-                  fontSize: '1.2rem',
-                  borderRadius: '10px',
-                  py: 1.5,
-                  boxShadow: '0 2px 12px 0 rgba(76, 175, 80, 0.10)',
-                  textTransform: 'none',
-                  '&:hover': { background: '#5e8e1e' },
-                }}
-                onClick={() => {
-                  if (cartData.length > 0) {
-                    setCartOpen(false);
-                    setTimeout(() => setPaymentDialogOpen(true), 300);
-                  } else {
-                    setSnackbarOpen(true);
-                  }
-                }}
-              >
-                {`Checkout: $${cartData.reduce((sum, item) => {
+            <Fab
+              sx={{ backgroundColor: "#73AD21" }}
+              aria-label="add"
+              onClick={handleCartOpen}
+            >
+              <AddShoppingCartIcon sx={{ color: "white" }} />
+            </Fab>
+          </Badge>
+
+        </Box>
+        <Drawer
+          anchor="right"
+          open={cartOpen}
+          onClose={handleCartClose}
+          sx={{
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
+              width: '700px',
+              background: '#fff',
+              borderRadius: '18px 0 0 18px',
+              boxShadow: '0 2px 24px rgba(0,0,0,0.08)',
+              p: 0,
+              overflow: 'hidden',
+            },
+          }}
+        >
+          {/* Cart GIF at the top */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', pt: 4, pb: 2 }}>
+            <img src="/west-side-wok/cart.gif" alt="Cart" style={{ width: 200, height: 150, objectFit: 'contain', marginBottom: 8 }} />
+          </Box>
+          <Divider />
+          <List sx={{ px: 0, py: 0, minHeight: '320px', maxHeight: '60vh', overflowY: 'auto', bgcolor: '#fff' }}>
+            {cartData.map((item, index) => (
+              <React.Fragment key={index}>
+                <ItemCart
+                  title={item.name}
+                  price={item.price}
+                  count={item.count}
+                  optionList={item.optionList}
+                />
+                {index < cartData.length - 1 && <Divider sx={{ mx: 2, my: 0.5 }} />}
+              </React.Fragment>
+            ))}
+          </List>
+          {/* Bottom summary bar */}
+          <Box sx={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            bgcolor: '#fff',
+            borderTop: '1px solid #eee',
+            px: 0,
+            py: 3,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            boxShadow: '0 -2px 12px rgba(0,0,0,0.04)',
+          }}>
+            <Typography sx={{ fontSize: 18, color: '#222', fontWeight: 400, mb: 0.5 }}>
+              Total Items: <span style={{ color: '#73AD21', fontWeight: 600 }}>{cartData.reduce((sum, item) => sum + item.count, 0)}</span>
+              <span style={{ color: '#888', margin: '0 12px' }}>|</span>
+              Total Price: <span style={{ color: '#73AD21', fontWeight: 700 }}>
+                ${cartData.reduce((sum, item) => {
                   const price = parseFloat(item.price) || 0;
                   return sum + price * item.count;
-                }, 0).toFixed(2)}`}
-              </Button>
-            </Box>
-          </Drawer>
-          <Dialog
-            open={paymentDialogOpen}
-            onClose={() => setPaymentDialogOpen(false)}
-            maxWidth="sm"
-            fullWidth
-            PaperProps={{
-              sx: { borderRadius: 3, minWidth: 400 }
-            }}
-          >
-            <DialogTitle sx={{ textAlign: "center", fontWeight: 1000, pb: 0 }}>
-              Payment
-            </DialogTitle>
-            <DialogContent>
-              <Box component="form" sx={{ mt: 1, px: 1 }}>
-                <FormControlLabel
-                  control={
-                    <Switch 
-                      checked={payInStore}
-                      onChange={(e) => setPayInStore(e.target.checked)}
-                      color="success" 
+                }, 0).toFixed(2)}
+              </span>
+            </Typography>
+            <Button
+              sx={{
+                mt: 2,
+                background: '#73AD21',
+                color: '#fff',
+                fontWeight: 600,
+                fontSize: '1.2rem',
+                borderRadius: '10px',
+                py: 1.5,
+                boxShadow: '0 2px 12px 0 rgba(76, 175, 80, 0.10)',
+                textTransform: 'none',
+                '&:hover': { background: '#5e8e1e' },
+              }}
+              onClick={() => {
+                if (cartData.length > 0) {
+                  setCartOpen(false);
+                  setTimeout(() => setPaymentDialogOpen(true), 300);
+                } else {
+                  setSnackbarOpen(true);
+                }
+              }}
+            >
+              {`Checkout: $${cartData.reduce((sum, item) => {
+                const price = parseFloat(item.price) || 0;
+                return sum + price * item.count;
+              }, 0).toFixed(2)}`}
+            </Button>
+          </Box>
+        </Drawer>
+        <Dialog
+          open={paymentDialogOpen}
+          onClose={() => setPaymentDialogOpen(false)}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: { borderRadius: 3, minWidth: 400 }
+          }}
+        >
+          <DialogTitle sx={{ textAlign: "center", fontWeight: 1000, pb: 0 }}>
+            Payment
+          </DialogTitle>
+          <DialogContent>
+            <Box component="form" sx={{ mt: 1, px: 1 }}>
+              <FormControlLabel
+                control={
+                  <Switch 
+                    checked={payInStore}
+                    onChange={(e) => setPayInStore(e.target.checked)}
+                    color="success" 
+                  />
+                }
+                label={<Typography sx={{ fontWeight: 700, fontSize: 20 }}>Pay In Store</Typography>}
+                sx={{ mb: 2, ml: 0 }}
+              />
+              {!payInStore && (
+                <>
+                  <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500 }}>
+                    Card Info
+                  </Typography>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mb: 2 }}>
+                    <input
+                      type="text"
+                      placeholder="5151 0072 9077 0883"
+                      ref={cardNumberRef}
+                      style={{
+                        padding: 12,
+                        borderRadius: 6,
+                        border: "1px solid #e0e0e0",
+                        fontSize: 16,
+                        width: "100%",
+                        boxSizing: "border-box"
+                      }}
                     />
-                  }
-                  label={<Typography sx={{ fontWeight: 700, fontSize: 20 }}>Pay In Store</Typography>}
-                  sx={{ mb: 2, ml: 0 }}
-                />
-                {!payInStore && (
-                  <>
-                    <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500 }}>
-                      Card Info
-                    </Typography>
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mb: 2 }}>
+                    <Box sx={{ display: "flex", gap: 1 }}>
                       <input
                         type="text"
-                        placeholder="5151 0072 9077 0883"
-                        ref={cardNumberRef}
+                        placeholder="12"
+                        ref={expMonthRef}
                         style={{
+                          flex: 1,
                           padding: 12,
                           borderRadius: 6,
                           border: "1px solid #e0e0e0",
@@ -2561,261 +2578,246 @@ const ChatWindow: React.FC = () => {
                           boxSizing: "border-box"
                         }}
                       />
-                      <Box sx={{ display: "flex", gap: 1 }}>
-                        <input
-                          type="text"
-                          placeholder="12"
-                          ref={expMonthRef}
-                          style={{
-                            flex: 1,
-                            padding: 12,
-                            borderRadius: 6,
-                            border: "1px solid #e0e0e0",
-                            fontSize: 16,
-                            width: "100%",
-                            boxSizing: "border-box"
-                          }}
-                        />
-                        <input
-                          type="text"
-                          placeholder="2026"
-                          ref={expYearRef}
-                          style={{
-                            flex: 2,
-                            padding: 12,
-                            borderRadius: 6,
-                            border: "1px solid #e0e0e0",
-                            fontSize: 16,
-                            width: "100%",
-                            boxSizing: "border-box"
-                          }}
-                        />
-                        <input
-                          type="text"
-                          placeholder="265"
-                          ref={cvvRef}
-                          style={{
-                            flex: 1,
-                            padding: 12,
-                            borderRadius: 6,
-                            border: "1px solid #e0e0e0",
-                            fontSize: 16,
-                            width: "100%",
-                            boxSizing: "border-box"
-                          }}
-                        />
-                      </Box>
+                      <input
+                        type="text"
+                        placeholder="2026"
+                        ref={expYearRef}
+                        style={{
+                          flex: 2,
+                          padding: 12,
+                          borderRadius: 6,
+                          border: "1px solid #e0e0e0",
+                          fontSize: 16,
+                          width: "100%",
+                          boxSizing: "border-box"
+                        }}
+                      />
+                      <input
+                        type="text"
+                        placeholder="265"
+                        ref={cvvRef}
+                        style={{
+                          flex: 1,
+                          padding: 12,
+                          borderRadius: 6,
+                          border: "1px solid #e0e0e0",
+                          fontSize: 16,
+                          width: "100%",
+                          boxSizing: "border-box"
+                        }}
+                      />
                     </Box>
-                  </>
-                )}
-                <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500 }}>
-                  Phone Number
-                </Typography>
-                <input
-                  type="text"
-                  placeholder="281-981-4561"
-                  ref={phoneRef}
-                  style={{
-                    width: "100%",
-                    padding: 12,
-                    borderRadius: 6,
-                    border: "1px solid #e0e0e0",
-                    fontSize: 16,
-                    marginBottom: 16,
-                    boxSizing: "border-box"
-                  }}
-                />
-                <FormControlLabel
-                  control={
-                    <Switch 
-                      checked={inStorePickup}
-                      onChange={(e) => setInStorePickup(e.target.checked)}
-                      color="success" 
-                    />
-                  }
-                  label={<Typography sx={{ fontWeight: 700, fontSize: 18 }}>In Store Pick Up Order</Typography>}
-                  sx={{ mb: 2, ml: 0 }}
-                />
-                {!inStorePickup && (
-                  <>
-                    <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500 }}>
-                      Delivery Address
-                    </Typography>
-                    <input
-                      type="text"
-                      placeholder="Street 32"
-                      ref={addressRef}
-                      style={{
-                        width: "100%",
-                        padding: 12,
-                        borderRadius: 6,
-                        border: "1px solid #e0e0e0",
-                        fontSize: 16,
-                        marginBottom: 16,
-                        boxSizing: "border-box"
-                      }}
-                    />
-                  </>
-                )}
-                <Box sx={{ display: "flex", alignItems: "center", mb: 2, mt: 1 }}>
-                  <span style={{ color: "#888" }}>
-                    <svg width="18" height="18" style={{ marginRight: 4, verticalAlign: "middle" }}>
-                      <path fill="#888" d="M9 1.5A7.5 7.5 0 1 0 9 16.5 7.5 7.5 0 1 0 9 1.5zm0 13.5A6 6 0 1 1 9 3a6 6 0 0 1 0 12zm-.75-9h1.5v4.5h-1.5zm0 6h1.5v1.5h-1.5z"/>
-                    </svg>
-                  </span>
-                  <Typography variant="caption" color="textSecondary">
-                    This form is fully encrypted to keep your information secure.
+                  </Box>
+                </>
+              )}
+              <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500 }}>
+                Phone Number
+              </Typography>
+              <input
+                type="text"
+                placeholder="281-981-4561"
+                ref={phoneRef}
+                style={{
+                  width: "100%",
+                  padding: 12,
+                  borderRadius: 6,
+                  border: "1px solid #e0e0e0",
+                  fontSize: 16,
+                  marginBottom: 16,
+                  boxSizing: "border-box"
+                }}
+              />
+              <FormControlLabel
+                control={
+                  <Switch 
+                    checked={inStorePickup}
+                    onChange={(e) => setInStorePickup(e.target.checked)}
+                    color="success" 
+                  />
+                }
+                label={<Typography sx={{ fontWeight: 700, fontSize: 18 }}>In Store Pick Up Order</Typography>}
+                sx={{ mb: 2, ml: 0 }}
+              />
+              {!inStorePickup && (
+                <>
+                  <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500 }}>
+                    Delivery Address
                   </Typography>
-                </Box>
-                <Typography sx={{ fontWeight: 600, fontSize: 18, mt: 2, mb: 1 }}>
-                  Tip your delivery partner
+                  <input
+                    type="text"
+                    placeholder="Street 32"
+                    ref={addressRef}
+                    style={{
+                      width: "100%",
+                      padding: 12,
+                      borderRadius: 6,
+                      border: "1px solid #e0e0e0",
+                      fontSize: 16,
+                      marginBottom: 16,
+                      boxSizing: "border-box"
+                    }}
+                  />
+                </>
+              )}
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2, mt: 1 }}>
+                <span style={{ color: "#888" }}>
+                  <svg width="18" height="18" style={{ marginRight: 4, verticalAlign: "middle" }}>
+                    <path fill="#888" d="M9 1.5A7.5 7.5 0 1 0 9 16.5 7.5 7.5 0 1 0 9 1.5zm0 13.5A6 6 0 1 1 9 3a6 6 0 0 1 0 12zm-.75-9h1.5v4.5h-1.5zm0 6h1.5v1.5h-1.5z"/>
+                  </svg>
+                </span>
+                <Typography variant="caption" color="textSecondary">
+                  This form is fully encrypted to keep your information secure.
                 </Typography>
-                <Typography sx={{ color: '#888', fontSize: 14, mb: 2 }}>
-                  Thank you delivery partner by leaving them a tip. 100% of the tip will go to your delivery partner.
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-                  {tipOptions.map((tip) => (
-                    <Button
-                      key={tip}
-                      variant={selectedTip === tip ? 'contained' : 'outlined'}
-                      onClick={() => setSelectedTip(tip)}
-                      sx={{
-                        minWidth: 80,
-                        borderRadius: 2,
-                        fontWeight: 600,
-                        fontSize: 20,
-                        color: selectedTip === tip ? '#fff' : '#222',
-                        background: selectedTip === tip ? '#73AD21' : '#fff',
-                        borderColor: '#73AD21',
-                        borderWidth: 2,
-                        borderStyle: 'solid',
-                        boxShadow: selectedTip === tip ? '0 2px 8px 0 rgba(76, 175, 80, 0.10)' : 'none',
-                        '&:hover': { background: '#5e8e1e', color: '#fff' },
-                        position: 'relative',
-                      }}
-                    >
-                      ${tip}
-                      {tip === 7 && (
-                        <Typography sx={{ position: 'absolute', top: -18, left: '50%', transform: 'translateX(-50%)', color: '#73AD21', fontSize: 12, fontWeight: 700, background: '#fff', px: 0.5, borderRadius: 1 }}>Popular</Typography>
-                      )}
-                      <Typography sx={{ fontSize: 12, color: selectedTip === tip ? '#fff' : '#888', fontWeight: 400 }}>{tip === 3 ? '5%' : tip === 7 ? '10%' : '12%'}</Typography>
-                    </Button>
-                  ))}
+              </Box>
+              <Typography sx={{ fontWeight: 600, fontSize: 18, mt: 2, mb: 1 }}>
+                Tip your delivery partner
+              </Typography>
+              <Typography sx={{ color: '#888', fontSize: 14, mb: 2 }}>
+                Thank you delivery partner by leaving them a tip. 100% of the tip will go to your delivery partner.
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+                {tipOptions.map((tip) => (
                   <Button
-                    variant={selectedTip === 'other' ? 'contained' : 'outlined'}
-                    onClick={() => setSelectedTip('other')}
+                    key={tip}
+                    variant={selectedTip === tip ? 'contained' : 'outlined'}
+                    onClick={() => setSelectedTip(tip)}
                     sx={{
                       minWidth: 80,
                       borderRadius: 2,
                       fontWeight: 600,
                       fontSize: 20,
-                      color: selectedTip === 'other' ? '#fff' : '#222',
-                      background: selectedTip === 'other' ? '#73AD21' : '#fff',
+                      color: selectedTip === tip ? '#fff' : '#222',
+                      background: selectedTip === tip ? '#73AD21' : '#fff',
                       borderColor: '#73AD21',
                       borderWidth: 2,
                       borderStyle: 'solid',
-                      boxShadow: selectedTip === 'other' ? '0 2px 8px 0 rgba(76, 175, 80, 0.10)' : 'none',
+                      boxShadow: selectedTip === tip ? '0 2px 8px 0 rgba(76, 175, 80, 0.10)' : 'none',
                       '&:hover': { background: '#5e8e1e', color: '#fff' },
+                      position: 'relative',
                     }}
                   >
-                    Other
+                    ${tip}
+                    {tip === 7 && (
+                      <Typography sx={{ position: 'absolute', top: -18, left: '50%', transform: 'translateX(-50%)', color: '#73AD21', fontSize: 12, fontWeight: 700, background: '#fff', px: 0.5, borderRadius: 1 }}>Popular</Typography>
+                    )}
+                    <Typography sx={{ fontSize: 12, color: selectedTip === tip ? '#fff' : '#888', fontWeight: 400 }}>{tip === 3 ? '5%' : tip === 7 ? '10%' : '12%'}</Typography>
                   </Button>
-                  {selectedTip === 'other' && (
-                    <input
-                      type="number"
-                      min={0}
-                      value={customTip}
-                      onChange={e => setCustomTip(e.target.value)}
-                      placeholder="Custom"
-                      style={{
-                        width: 90,
-                        marginLeft: 8,
-                        padding: 8,
-                        borderRadius: 6,
-                        border: '1.5px solid #73AD21',
-                        fontSize: 18,
-                        fontWeight: 600,
-                        color: '#222',
-                        outline: 'none',
-                      }}
-                    />
-                  )}
-                </Box>
+                ))}
                 <Button
-                  type="button"
-                  variant="contained"
-                  fullWidth
+                  variant={selectedTip === 'other' ? 'contained' : 'outlined'}
+                  onClick={() => setSelectedTip('other')}
                   sx={{
-                    background: "#73AD21",
-                    color: "white",
-                    fontWeight: "bold",
-                    borderRadius: "8px",
-                    fontSize: "1.3rem",
-                    py: 1.5,
-                    mt: 2,
-                    '&:hover': { background: "#5e8e1e" }
-                  }}
-                  onClick={() => {
-                    // 1. Collect input values
-                    const cardNumber = cardNumberRef.current?.value || '';
-                    const expMonth = expMonthRef.current?.value || '';
-                    const expYear = expYearRef.current?.value || '';
-                    const cvv = cvvRef.current?.value || '';
-                    const phone = phoneRef.current?.value || '';
-                    const address = addressRef.current?.value || '';
-                    const tipValue = selectedTip === 'other' ? parseFloat(customTip) || 0 : selectedTip;
-
-                    // 2. Format order info message
-                    const orderInfoMsg = `Order info to complete payment\n\nCard Number: ${cardNumber}\nExpiration: ${expMonth}/${expYear}\nCVV: ${cvv}\n\nPhone Number: ${phone}\nDelivery Address: ${address}\nTip: $${tipValue}`;
-
-                    // 3. Format cart summary
-                    let cartLines = cartData.map(item => {
-                      const price = parseFloat(item.price) || 0;
-                      return `${item.name} x${item.count} ($${(price * item.count).toFixed(2)})`;
-                    }).join('\n');
-                    const subtotal = cartData.reduce((sum, item) => {
-                      const price = parseFloat(item.price) || 0;
-                      return sum + price * item.count;
-                    }, 0);
-                    const tax = subtotal * 0.08875;
-                    const discount = subtotal * 0.1;
-                    const total = subtotal + tax - discount + tipValue;
-                    const summaryMsg = `${cartLines}\n\nSubTotal: $${subtotal.toFixed(2)}\nTax: $${tax.toFixed(2)}\nDiscount: -$${discount.toFixed(2)}\nTip: $${tipValue.toFixed(2)}\nTotal: $${total.toFixed(2)}`;
-
-                    // 4. Add messages to chat
-                    setMessages(prev => {
-                      const arr = Array.isArray(prev) ? prev : [];
-                      return [
-                        ...arr,
-                        { content: orderInfoMsg, role: 'assistant' },
-                        { content: summaryMsg, role: 'assistant' }
-                      ];
-                    });
-                    setPaymentDialogOpen(false);
+                    minWidth: 80,
+                    borderRadius: 2,
+                    fontWeight: 600,
+                    fontSize: 20,
+                    color: selectedTip === 'other' ? '#fff' : '#222',
+                    background: selectedTip === 'other' ? '#73AD21' : '#fff',
+                    borderColor: '#73AD21',
+                    borderWidth: 2,
+                    borderStyle: 'solid',
+                    boxShadow: selectedTip === 'other' ? '0 2px 8px 0 rgba(76, 175, 80, 0.10)' : 'none',
+                    '&:hover': { background: '#5e8e1e', color: '#fff' },
                   }}
                 >
-                  Checkout
+                  Other
                 </Button>
+                {selectedTip === 'other' && (
+                  <input
+                    type="number"
+                    min={0}
+                    value={customTip}
+                    onChange={e => setCustomTip(e.target.value)}
+                    placeholder="Custom"
+                    style={{
+                      width: 90,
+                      marginLeft: 8,
+                      padding: 8,
+                      borderRadius: 6,
+                      border: '1.5px solid #73AD21',
+                      fontSize: 18,
+                      fontWeight: 600,
+                      color: '#222',
+                      outline: 'none',
+                    }}
+                  />
+                )}
               </Box>
-            </DialogContent>
-          </Dialog>
-        </Box>
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={3000}
+              <Button
+                type="button"
+                variant="contained"
+                fullWidth
+                sx={{
+                  background: "#73AD21",
+                  color: "white",
+                  fontWeight: "bold",
+                  borderRadius: "8px",
+                  fontSize: "1.3rem",
+                  py: 1.5,
+                  mt: 2,
+                  '&:hover': { background: "#5e8e1e" }
+                }}
+                onClick={() => {
+                  // 1. Collect input values
+                  const cardNumber = cardNumberRef.current?.value || '';
+                  const expMonth = expMonthRef.current?.value || '';
+                  const expYear = expYearRef.current?.value || '';
+                  const cvv = cvvRef.current?.value || '';
+                  const phone = phoneRef.current?.value || '';
+                  const address = addressRef.current?.value || '';
+                  const tipValue = selectedTip === 'other' ? parseFloat(customTip) || 0 : selectedTip;
+
+                  // 2. Format order info message
+                  const orderInfoMsg = `Order info to complete payment\n\nCard Number: ${cardNumber}\nExpiration: ${expMonth}/${expYear}\nCVV: ${cvv}\n\nPhone Number: ${phone}\nDelivery Address: ${address}\nTip: $${tipValue}`;
+
+                  // 3. Format cart summary
+                  let cartLines = cartData.map(item => {
+                    const price = parseFloat(item.price) || 0;
+                    return `${item.name} x${item.count} ($${(price * item.count).toFixed(2)})`;
+                  }).join('\n');
+                  const subtotal = cartData.reduce((sum, item) => {
+                    const price = parseFloat(item.price) || 0;
+                    return sum + price * item.count;
+                  }, 0);
+                  const tax = subtotal * 0.08875;
+                  const discount = subtotal * 0.1;
+                  const total = subtotal + tax - discount + tipValue;
+                  const summaryMsg = `${cartLines}\n\nSubTotal: $${subtotal.toFixed(2)}\nTax: $${tax.toFixed(2)}\nDiscount: -$${discount.toFixed(2)}\nTip: $${tipValue.toFixed(2)}\nTotal: $${total.toFixed(2)}`;
+
+                  // 4. Add messages to chat
+                  setMessages(prev => {
+                    const arr = Array.isArray(prev) ? prev : [];
+                    return [
+                      ...arr,
+                      { content: orderInfoMsg, role: 'assistant' },
+                      { content: summaryMsg, role: 'assistant' }
+                    ];
+                  });
+                  setPaymentDialogOpen(false);
+                }}
+              >
+                Checkout
+              </Button>
+            </Box>
+          </DialogContent>
+        </Dialog>
+      </Box>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <MuiAlert
           onClose={() => setSnackbarOpen(false)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          severity="warning"
+          elevation={6}
+          variant="filled"
+          sx={{ width: '100%' }}
         >
-          <MuiAlert
-            onClose={() => setSnackbarOpen(false)}
-            severity="warning"
-            elevation={6}
-            variant="filled"
-            sx={{ width: '100%' }}
-          >
-            please add product into cart
-          </MuiAlert>
-        </Snackbar>
+          please add product into cart
+        </MuiAlert>
+      </Snackbar>
     </div>
   );
 };
