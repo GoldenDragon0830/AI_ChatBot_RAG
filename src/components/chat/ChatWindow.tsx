@@ -20,6 +20,7 @@ import {
   Toolbar,
   FormControlLabel,
   Typography,
+  DialogActions,
 } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
@@ -193,6 +194,22 @@ const ChatWindow: React.FC = () => {
   const [payInStore, setPayInStore] = useState(false);
   const [inStorePickup, setInStorePickup] = useState(false);
 
+  // Add these new state variables near the other state declarations
+  const [optionsDialogOpen, setOptionsDialogOpen] = useState(false);
+  const [selectedNameForOptions, setSelectedNameForOptions] = useState<string | null>(null);
+  const [groupedOptionsData, setGroupedOptionsData] = useState<Record<string, ChunkOption[]>>({});
+
+  // Add these new handler functions
+  const handleOptionsDialogOpen = () => {
+    setOptionsDialogOpen(true);
+  };
+
+  const handleOptionsDialogClose = () => {
+    setOptionsDialogOpen(false);
+    setSelectedNameForOptions(null);
+    setGroupedOptionsData({});
+  };
+
   const ItemCart: React.FC<{
     title: string;
     price: string;
@@ -285,7 +302,7 @@ const ChatWindow: React.FC = () => {
     );
   };
 
-  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+  const [selectedOptions, setSelectedOptions] = useState<{ [group: string]: string[] }>({});
   const [chunkTotalPrice, setChunkTotalPrice] = useState(0);
   
 
@@ -1323,19 +1340,19 @@ const ChatWindow: React.FC = () => {
   };
 
   useEffect(() => {
-    if (nameListData.length > 0) {
-      setNameListDataHistory((prevHistory) => [...prevHistory, nameListData]); // Save current nameListData to history
+    // Only run this effect if we're not just showing options
+    if (nameListData.length > 0 && !optionsDialogOpen) {
+      setNameListDataHistory((prevHistory) => [...prevHistory, nameListData]);
       setSelectedNameChip("ALL");
-  
       handleGetResponseFromDB("all_option_name", typeData, nameData);
     }
-  
-    if (nameListData.length === 1) {
+
+    if (nameListData.length === 1 && !optionsDialogOpen) {
       const singleItemData = nameListData[0];
       setSelectedNameChip(singleItemData.value);
       handleGetResponseFromDB("all_option_name", typeData, nameData);
     }
-  }, [nameListData]);
+  }, [nameListData, optionsDialogOpen]); // Add optionsDialogOpen to dependencies
 
   let groupedData: Record<string, ChunkOption[]> = chunkData.reduce(
     (acc: Record<string, ChunkOption[]>, item) => {
@@ -1621,7 +1638,7 @@ const ChatWindow: React.FC = () => {
                 ]);
 
                 console.log("Cart updated:", parsedCartData);
-                setSelectedOptions([]);
+                setSelectedOptions({});
 
                 const messageText: MessageInterface = {
                   content: "Added to cart successfully! Would you like to add more items or options?",
@@ -1819,20 +1836,21 @@ const ChatWindow: React.FC = () => {
                           setSelectedChunk(item.value);
                           setSelectedChunkData(item);
                           if (item.type === "name") {
-                            setNameData(item.value);
-                            // Show options dialog when clicking on a name item
-                            setOptionDialog(true);
+                            setSelectedNameForOptions(item.value);
+                            handleOptionsDialogOpen();
+                            fetchOptionsForDialog(typeData, item.value); // Use the correct type and name
+                          } else {
+                            // For non-name items, keep the existing behavior
+                            const userMessage: MessageInterface = {
+                              content: item.value,
+                              role: "user",
+                            };
+                            const backMessage: MessageInterface = {
+                              content: "type:" + typeData + "," + "name:" + item.value,
+                              role: "user",
+                            };
+                            handleDisplayOption(backMessage, flag, false);
                           }
-                          const userMessage: MessageInterface = {
-                            content: item.value,
-                            role: "user",
-                          };
-                          const backMessage: MessageInterface = {
-                            content:
-                              "type:" + typeData + "," + "name:" + item.value,
-                            role: "user",
-                          };
-                          handleDisplayOption(backMessage, flag, false);
                         }
                       }}
                     />
@@ -1871,6 +1889,258 @@ const ChatWindow: React.FC = () => {
             </div>
           )}
         </DialogContent>
+      </Dialog>
+      <Dialog
+        open={optionsDialogOpen}
+        onClose={handleOptionsDialogClose}
+        maxWidth="xl"
+        fullWidth
+        PaperProps={{
+          sx: { borderRadius: 3 }
+        }}
+      >
+        <DialogTitle sx={{ textAlign: "left", fontWeight: 700, fontSize: 24, pb: 1 }}>
+          {selectedNameForOptions}
+        </DialogTitle>
+        <DialogContent sx={{ minHeight: 300, position: "relative" }}>
+          {loading ? (
+                <Box
+                  sx={{
+                          display: "flex",
+                          alignItems: "center",
+                justifyContent: "center",
+                minHeight: 300,
+                position: "absolute",
+                top: 0,
+              left: 0,
+                          width: "100%",
+                height: "100%",
+                zIndex: 10,
+                background: "rgba(255,255,255,0.7)"
+              }}
+            >
+              <CircularProgress size={60} color="success" />
+                </Box>
+          ) : (
+            <Box sx={{ mt: 1 }}>
+              {Object.entries(groupedOptionsData).map(([group, options]) => (
+                <Box key={group} sx={{ mb: 2 }}>
+                  <Box sx={{ fontWeight: 700, fontSize: 17, mb: 1, color: "#222" }}>
+                    {group}
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(5, 1fr)",
+                      gap: 1.5,
+                    }}
+                  >
+                    {options.map((opt, idx) => {
+                      // Extract option_name from opt.value
+                      let optionName = "";
+                      if (typeof opt.value === "string") {
+                        const match = opt.value.match(/'option_name':\s*'([^']+)'/i);
+                        optionName = match ? match[1] : opt.value;
+                      } else {
+                        optionName = opt.value;
+                      }
+
+                      // Extract option_price for display
+                      let optionPrice = "";
+                      if (typeof opt.value === "string") {
+                        const match = opt.value.match(/'option_price':\s*'([^']+)'/i);
+                        optionPrice = match ? match[1] : (opt.price || "");
+                      } else {
+                        optionPrice = opt.price || "";
+                      }
+
+                      // Multi-select: check if this option is selected
+                      const isSelected = (selectedOptions[group] || []).includes(optionName);
+
+                      return (
+                        <Button
+                          key={idx}
+                          variant={isSelected ? "contained" : "outlined"}
+                          sx={{
+                            borderColor: "#73AD21",
+                            color: isSelected ? "#fff" : "#222",
+                            background: isSelected ? "#73AD21" : "#fff",
+                            fontWeight: 500,
+                            fontSize: 15,
+                            borderRadius: 2,
+                            px: 2,
+                            py: 1,
+                            minWidth: 0,
+                            width: "100%",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            boxSizing: "border-box",
+                            "&:hover": {
+                              background: isSelected ? "#5e8e1e" : "#f7faf3",
+                              borderColor: "#73AD21",
+                            },
+                          }}
+                          onClick={() => {
+                            setSelectedOptions(prev => {
+                              const prevGroup = prev[group] || [];
+                              if (prevGroup.includes(optionName)) {
+                                // Deselect
+                                return {
+                                  ...prev,
+                                  [group]: prevGroup.filter(name => name !== optionName)
+                                };
+                              } else {
+                                // Select
+                                return {
+                                  ...prev,
+                                  [group]: [...prevGroup, optionName]
+                                };
+                              }
+                            });
+                          }}
+                        >
+                          <span style={{ fontWeight: 500 }}>{optionName}</span>
+                          <span style={{ color: isSelected ? "#fff" : "#73AD21", marginLeft: 8, fontWeight: 700, fontSize: 15 }}>
+                            ${parseFloat(optionPrice || "0").toFixed(2)}
+                          </span>
+                        </Button>
+                      );
+                    })}
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, pt: 1 }}>
+          <Button
+            variant="outlined"
+            sx={{
+              color: "#aaa",
+              borderColor: "#eee",
+              fontWeight: 600,
+              fontSize: 16,
+              borderRadius: 2,
+              px: 4,
+              py: 1,
+              background: "#f7f7f7",
+            }}
+            onClick={handleOptionsDialogClose}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            sx={{
+              background: "#73AD21",
+              color: "#fff",
+              fontWeight: 700,
+              fontSize: 16,
+              borderRadius: 2,
+              px: 4,
+              py: 1,
+              "&:hover": { background: "#5e8e1e" }
+            }}
+            onClick={() => {
+              // 1. Flatten selected options into a single list
+              const selectedList = Object.values(selectedOptions).flat();
+
+              // 2. Find the base item (type/name/description/price) from chunkData or context
+              // We'll use the first option's data as a base, or you can use selectedNameForOptions/typeData
+              let baseItem = null;
+              for (const group of Object.values(groupedOptionsData)) {
+                for (const opt of group) {
+                  let optionName = "";
+                  if (typeof opt.value === "string") {
+                    const match = opt.value.match(/'option_name':\s*'([^']+)'/i);
+                    optionName = match ? match[1] : opt.value;
+                  } else {
+                    optionName = opt.value;
+                  }
+                  if (selectedList.includes(optionName)) {
+                    baseItem = opt;
+                    break;
+                  }
+                }
+                if (baseItem) break;
+              }
+
+              // 3. Calculate total price for selected options
+              let totalPrice = 0;
+              selectedList.forEach(optionName => {
+                for (const group of Object.values(groupedOptionsData)) {
+                  for (const opt of group) {
+                    let name = "";
+                    if (typeof opt.value === "string") {
+                      const match = opt.value.match(/'option_name':\s*'([^']+)'/i);
+                      name = match ? match[1] : opt.value;
+                    } else {
+                      name = opt.value;
+                    }
+                    if (name === optionName) {
+                      // Extract price
+                      let price = "";
+                      if (typeof opt.value === "string") {
+                        const match = opt.value.match(/'option_price':\s*'([^']+)'/i);
+                        price = match ? match[1] : (opt.price || "");
+                      } else {
+                        price = opt.price || "";
+                      }
+                      totalPrice += parseFloat(price || "0");
+                    }
+                  }
+                }
+              });
+
+              // 4. Build the cart item
+              if (baseItem) {
+                // Extract info from baseItem.value
+                let type = "";
+                let name = "";
+                let description = "";
+                let price = "";
+                if (typeof baseItem.value === "string") {
+                  const typeMatch = baseItem.value.match(/'type':\s*'([^']+)'/i);
+                  const nameMatch = baseItem.value.match(/'name':\s*'([^']+)'/i);
+                  const descMatch = baseItem.value.match(/'description':\s*'([^']+)'/i);
+                  const priceMatch = baseItem.value.match(/'price':\s*'([^']+)'/i);
+                  type = typeMatch ? typeMatch[1] : "";
+                  name = nameMatch ? nameMatch[1] : "";
+                  description = descMatch ? descMatch[1] : "";
+                  price = priceMatch ? priceMatch[1] : "";
+                }
+
+                setCartData(prevCartData => [
+                  ...prevCartData,
+                  {
+                    type,
+                    name,
+                    description,
+                    price: (parseFloat(price || "0") + totalPrice).toFixed(2),
+                    option_keyword: "",
+                    option_name: "",
+                    option_price: "",
+                    count: 1,
+                    optionList: selectedList,
+                  }
+                ]);
+                setCartCount(prev => prev + 1);
+
+                setMessages(prev => [
+                  ...prev,
+                  { content: "Added to cart successfully! Would you like to add more items or options?", role: "assistant" }
+                ]);
+              }
+
+              setSelectedOptionListData(selectedList);
+              setOptionsDialogOpen(false);
+              setSelectedOptions({});
+            }}
+          >
+            Apply
+          </Button>
+        </DialogActions>
       </Dialog>
     </div>
   );
@@ -1917,6 +2187,159 @@ const ChatWindow: React.FC = () => {
 
     fetchInitialOptions();
   }, []); // Empty dependency array means this runs once when component mounts
+
+  // Add this new function to handle options display
+  const handleDisplayOptionsForName = async (name: string) => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `${BACKEND_API_URL}/get_options_by_name?name=${name}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "text/event-stream",
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error("Network response was not ok");
+      if (!response.body) throw new Error("Response body is null");
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        buffer += chunk;
+
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        lines.forEach((line) => {
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6).trim();
+            if (data.includes("ChunkData:")) {
+              try {
+                const jsonData = JSON.parse(data.split("ChunkData:")[1]);
+                const parsedData: ChunkOption[] = jsonData.map((item: any) => {
+                  const key = Object.keys(item)[0];
+                  const key_description = Object.keys(item)[1];
+                  const key_price = Object.keys(item)[2];
+                  const key_type = Object.keys(item)[3];
+
+                  return {
+                    type: key,
+                    value: item[key],
+                    description: item[key_description],
+                    price: item[key_price],
+                    keyword: item[key_type],
+                  };
+                });
+
+                // Group the options by option_keyword
+                const grouped = parsedData.reduce((acc: Record<string, ChunkOption[]>, item) => {
+                  const keyword = item.keyword || "Other";
+                  if (!acc[keyword]) {
+                    acc[keyword] = [];
+                  }
+                  acc[keyword].push(item);
+                  return acc;
+                }, {});
+
+                setGroupedOptionsData(grouped);
+              } catch (e) {
+                console.error(e);
+              }
+            }
+          }
+        });
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Add this function
+  const fetchOptionsForDialog = async (type: string, name: string) => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `${BACKEND_API_URL}/get_db_data?keyword=all_option_name&type=${type}&name=${name}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "text/event-stream",
+          },
+        }
+      );
+      if (!response.ok) throw new Error("Network response was not ok");
+      if (!response.body) throw new Error("Response body is null");
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        buffer += chunk;
+
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        lines.forEach((line) => {
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6).trim();
+            if (data.includes("ChunkData:")) {
+              try {
+                const jsonData = JSON.parse(data.split("ChunkData:")[1]);
+                const parsedData: ChunkOption[] = jsonData.map((item: any) => {
+                  const key = Object.keys(item)[0];
+                  const key_description = Object.keys(item)[1];
+                  const key_price = Object.keys(item)[2];
+                  const key_type = Object.keys(item)[3];
+
+                  return {
+                    type: key,
+                    value: item[key],
+                    description: item[key_description],
+                    price: item[key_price],
+                    keyword: item[key_type],
+                  };
+                });
+
+                // Group by option_keyword
+                const grouped = parsedData.reduce((acc: Record<string, ChunkOption[]>, item) => {
+                  const keyword = item.keyword || "Other";
+                  if (!acc[keyword]) acc[keyword] = [];
+                  acc[keyword].push(item);
+                  return acc;
+                }, {});
+
+                setGroupedOptionsData(grouped);
+              } catch (e) {
+                console.error(e);
+              }
+            }
+          }
+        });
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div style={{ overflow: "hidden" }}>
