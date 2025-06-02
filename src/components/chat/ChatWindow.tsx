@@ -640,7 +640,10 @@ const ChatWindow: React.FC = () => {
 
   useEffect(() => {
     if (containerRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+      // Scroll to the bottom of the container
+      const scrollHeight = containerRef.current.scrollHeight;
+      const height = containerRef.current.clientHeight;
+      containerRef.current.scrollTop = scrollHeight - height;
     }
   }, [messages]);
 
@@ -2383,7 +2386,7 @@ const ChatWindow: React.FC = () => {
             width: { xs: `calc(100% - ${drawerWidth})` }, // Remaining width for chatting area
             minWidth: "300px", // Minimum width to ensure usability
             overflow: "hidden", // Prevent page-level scrolling
-            maxHeight: "100vh", // Set maximum height to viewport height
+            maxHeight: "83vh", // Set maximum height to viewport height
             display: "flex",
             flexDirection: "column", // Stack children vertically
           }}
@@ -2393,14 +2396,18 @@ const ChatWindow: React.FC = () => {
               maxWidth: "100%",
               overflowX: "hidden",
               flex: 1, // Take up remaining space
-              overflowY: "auto", // Enable vertical scrolling only for messages
               marginBottom: "80px", // Add space for the input box
+              display: "flex",
+              flexDirection: "column-reverse", // Reverse the flex direction
+              minHeight: "100%", // Ensure container takes full height
             }}
             ref={containerRef}
           >
-            {messages.map((message, index) => (
-              <ChatMessage key={index} {...message} />
-            ))}
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {messages.map((message, index) => (
+                <ChatMessage key={index} {...message} />
+              ))}
+            </div>
             
             <ChatInput
               onSendMessage={(message) =>
@@ -2417,17 +2424,26 @@ const ChatWindow: React.FC = () => {
                 border: "2px solid #FF3B30",
               },
               position: "fixed",
-              bottom: "10vh", // Relative positioning
-              right: "5vw",
+              top: "14vh", // Relative positioning
+              right: "3vw",
             }}
           >
-            <Fab
-              sx={{ backgroundColor: "#73AD21" }}
+            <Button
+              sx={{ 
+                backgroundColor: "#73AD21",
+                py: 1.5,  
+                paddingLeft: '40px',
+                paddingRight: '40px',
+                fontSize: '1.3rem',
+                borderRadius: '10px',
+              }}
+              
+              size="large"
               aria-label="add"
               onClick={handleCartOpen}
             >
               <AddShoppingCartIcon sx={{ color: "white" }} />
-            </Fab>
+            </Button>
           </Badge>
 
         </Box>
