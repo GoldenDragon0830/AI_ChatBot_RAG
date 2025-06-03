@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import ChatInput from "./ChatInput";
 import ChatMessage from "./ChatMessage";
 
+// Material-UI Components
 import {
   CircularProgress,
   useMediaQuery,
@@ -21,30 +22,32 @@ import {
   Card,
   CardContent,
   Stack,
-  Chip
+  Chip,
+  IconButton,
+  ImageList,
+  ImageListItem,
+  ImageListItemBar,
+  Avatar,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemAvatar,
+  ButtonGroup,
+  Snackbar,
+  Divider,
+  Paper
 } from "@mui/material";
-import IconButton from "@mui/material/IconButton";
-import ImageList from "@mui/material/ImageList";
-import ImageListItem from "@mui/material/ImageListItem";
-import ImageListItemBar from "@mui/material/ImageListItemBar";
+
+// Material-UI Icons
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import DoneOutlineIcon from "@mui/icons-material/DoneOutline";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
-import Avatar from "@mui/material/Avatar";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
-import ListItemAvatar from "@mui/material/ListItemAvatar";
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import DoubleArrowTwoToneIcon from '@mui/icons-material/DoubleArrowTwoTone';
-import ButtonGroup from "@mui/material/ButtonGroup";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import ChangeCircleIcon from "@mui/icons-material/ChangeCircle";
 import LoupeIcon from "@mui/icons-material/Loupe";
-import Snackbar from "@mui/material/Snackbar";
-import Divider from "@mui/material/Divider";
-import Paper from '@mui/material/Paper';
 import { Category } from "@mui/icons-material";
 
 interface MessageInterface {
@@ -732,7 +735,6 @@ const ChatWindow: React.FC = () => {
       handleSendMessage(message, KEY_ANSWER_AMOUNT, true);    
     else { 
       setChunkData([]);
-      // setShowContinueSelector(false);
       setOrderDetailDialogOpen(false);
       
       setFlag(KEY_SELECT_PRODUCT);
@@ -752,7 +754,7 @@ const ChatWindow: React.FC = () => {
         seenImageUrls.add(item.image_urls);
         return true; // Include this item if its image URL is unique
       })
-    };
+    };    
   }).filter(Category => Category.data.length > 0);
 
   const [open, setOpen] = useState(false);
@@ -875,40 +877,23 @@ const ChatWindow: React.FC = () => {
 
   const drawer = (
     <div>
-      <InfoCard data={companyData}/>
-      <Divider />
-      {uniqueChunkData.map((category) => (
-        <Box key={category.keyword} sx={{ marginTop: '20px', marginLeft: '10px' }}>
-          <Fab variant="extended" size="medium" color="primary">
-            <DoubleArrowTwoToneIcon sx={{ mr: 1 }} />
-            {category.keyword}
-          </Fab>
-          <ImageList cols={isSmallScreen ? 2 : isMediumScreen ? 4 : 5} style={{ padding: "10px" }}>
-            {category.data.map((item, index) => (
-              item.image_urls === "" ? (
-                <AmountItemButton
-                  key={index}
-                  text={item.title}
-                  onClick={() => handleButtonClick(item.title, "")}
-                />
-              ) : (
-                <ItemButton
-                  key={index}
-                  text={item.title}
-                  url={item.image_urls.split(",")[0]}
-                  price={item.single_price}
-                  quantities={item.single_quantities}
-                  subtitle={item.subtitle}
-                  onClick={() => {
-                    setOrderData([item]);
-                    handleButtonClick(item.title, item.image_urls.split(",")[0]);
-                  }}
-                />
-              )
-            ))}
-          </ImageList>
-        </Box>
-      ))}
+      <Box sx={{ 
+        width: '100%', 
+        height: '80vh',
+        '& iframe': {
+          width: '100%',
+          height: '100%',
+          border: 'none'
+        }
+      }}>
+        <iframe
+          src="/docs/menu.pdf"
+          width="100%"
+          height="600px"
+          title="PDF Viewer"
+          style={{ border: "none" }}
+        ></iframe>
+      </Box>
     </div>
   );
 
@@ -919,35 +904,13 @@ const ChatWindow: React.FC = () => {
         sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
         aria-label="mailbox folders"
       >
-        {/* The implementation can be swapped with js to avoid SEO duplication of links. */}
-        <Drawer
-          variant="temporary"
-          ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
-          }}
-          sx={{
-            display: { xs: "block", sm: "none" },
-            "& .MuiDrawer-paper": {
-              boxSizing: "border-box",
-              width: drawerWidth,
-            },
-          }}
-        >
-          {drawer}
-        </Drawer>
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: "none", sm: "block" },
-            "& .MuiDrawer-paper": {
-              boxSizing: "border-box",
-              width: drawerWidth,
-            },
-          }}
-          open
-        >
-          {drawer}
-        </Drawer>
+        <iframe
+          src="/kosher/docs/menu.pdf"
+          width="100%"
+          height="870"
+          title="PDF Viewer"
+          style={{ border: "none" }}
+        ></iframe>
       </Box>
       <Box
         component="main"
