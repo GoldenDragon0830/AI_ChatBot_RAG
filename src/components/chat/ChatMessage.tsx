@@ -9,7 +9,7 @@ interface ChatMessageProps {
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ content, role, imageUrl }) => {
-  const isRequest = role === "user";
+  const isUser = role === "user";
   const [open, setOpen] = useState(false);
 
   const handleOpen = () => setOpen(true);
@@ -19,10 +19,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ content, role, imageUrl }) =>
     <Box
       sx={{
         display: "flex",
-        justifyContent: isRequest ? "flex-end" : "flex-start",
-        mb: { xs: 0.5, md: 1 }, // Responsive margin-bottom
+        justifyContent: isUser ? "flex-end" : "flex-start",
+        mb: { xs: 0.5, md: 1 },
         flexDirection: "column",
-        alignItems: isRequest ? "flex-end" : "flex-start",
+        alignItems: isUser ? "flex-end" : "flex-start",
       }}
     >
       {imageUrl && (
@@ -31,10 +31,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ content, role, imageUrl }) =>
           src={imageUrl}
           alt="Chat message visual"
           sx={{
-            maxWidth: { xs: "40vw", md: "25vw" }, // Responsive image width
-            maxHeight: "20vh", // Relative height
+            maxWidth: { xs: "40vw", md: "25vw" },
+            maxHeight: "20vh",
             borderRadius: 2,
-            mb: 0.5, // Responsive margin
+            mb: 0.5,
             boxShadow: 3,
           }}
           onClick={handleOpen}
@@ -53,16 +53,16 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ content, role, imageUrl }) =>
       <div
         style={{
           display: "flex",
-          flexDirection: isRequest ? "row-reverse" : "row",
+          flexDirection: isUser ? "row-reverse" : "row",
           alignItems: "flex-start",
-          marginBottom: "0.5vh", // Relative margin
+          marginBottom: "0.5vh",
         }}
       >
         <div
           style={{
             display: "flex",
             alignItems: "flex-start",
-            margin: isRequest ? "0 0 0 0.5vw" : "0 0.5vw 0 0",
+            margin: isUser ? "0 0 0 0.5vw" : "0 0.5vw 0 0",
           }}
         >
           <Badge
@@ -70,7 +70,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ content, role, imageUrl }) =>
             badgeInset="14%"
             color="success"
           >
-            {isRequest ? (
+            {isUser ? (
               <img
                 src="/limblengthening/user.png"
                 alt="logo"
@@ -87,13 +87,15 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ content, role, imageUrl }) =>
         </div>
         <Paper
           sx={{
-            backgroundColor: isRequest ? "#DCF4BB" : "#e0e0e0",
+            backgroundColor: isUser ? "#DCF4BB" : "#e0e0e0",
             color: "#000",
-            padding: { xs: 1, md: 2 }, // Responsive padding
+            padding: { xs: 1, md: 2 },
             borderRadius: 2,
-            maxWidth: { xs: "70vw", md: "50vw" }, // Responsive max width
-            borderTopRightRadius: isRequest ? 0 : 4,
-            borderBottomLeftRadius: isRequest ? 4 : 0,
+            maxWidth: { xs: "70vw", md: "50vw" },
+            borderTopLeftRadius: isUser ? 4 : 0,
+            borderTopRightRadius: isUser ? 0 : 4,
+            borderBottomLeftRadius: isUser ? 4 : 0,
+            borderBottomRightRadius: isUser ? 0 : 4,
             wordBreak: "break-word",
             overflowWrap: "break-word",
           }}

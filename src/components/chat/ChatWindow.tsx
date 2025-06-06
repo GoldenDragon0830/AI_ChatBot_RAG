@@ -1,6 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import ChatInput from "./ChatInput";
 import ChatMessage from "./ChatMessage";
+import ChatBubble from "./ChatBubble";
+
+import ImageIcon from '@mui/icons-material/Image';
+import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled';
 
 import {
   CircularProgress,
@@ -30,8 +34,13 @@ interface ChunkOption {
   keyword: string;
 }
 
-const GREETING_WORD =
-  "I'm Limb lengthening Assistant, What would you like to order today?";
+const GREETING_WORD = `
+  <div style="font-size: 1.3em; font-weight: bold; color: #73AD21;">
+    <span role="img" aria-label="robot">🤖</span>
+    I'm <span style="color:#3a3a3a;">Limb Lengthening Assistant</span>,<br/>
+    <span style="font-weight: normal;">What would you like to order today?</span>
+  </div>
+`;
 
 const drawerWidth = "73%";
 
@@ -40,6 +49,10 @@ const ChatWindow: React.FC = () => {
 
 
   const [selectedOptionListData, setSelectedOptionListData] = useState<string[]>([]);
+
+  const [assistantMedia, setAssistantMedia] = useState<{ images: string[]; videos: string[] }[]>([{ images: [], videos: [] }]);
+
+  
 
   // const API_URL = process.env.REACT_APP_API_URL;
 
@@ -60,6 +73,7 @@ const ChatWindow: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);  
 
@@ -132,8 +146,90 @@ const ChatWindow: React.FC = () => {
     }
   }, [messages]);
 
-  const handleSendMessageViaInput = (text: string) => {
+  useEffect(() => {
+    // Cleanup function to close EventSource when component unmounts
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+    };
+  }, []);
 
+  const handleSendMessageViaInput = async (text: string) => {
+    if (!text.trim()) return;
+
+    // Add user message to chat
+    setMessages(prev => [...prev, { content: text, role: "user" }]);
+    
+    // Set loading state
+    setLoading(true);
+    
+    try {
+      const response = await fetch(
+        `http://85.209.93.93:4004/chat?message=${encodeURIComponent(text)}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "text/event-stream",
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error("Network response was not ok");
+      if (!response.body) throw new Error("Response body is null");
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let newMessageContent = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        if(chunk.startsWith("data: ")){
+          const newMessageContent = chunk.slice(6).trim();
+          console.log(newMessageContent)
+          setMessages((prev) => {
+            const newMessages = [...prev];
+            const lastMessageIndex = newMessages.length - 1;
+
+            if (
+              lastMessageIndex >= 0 &&
+              newMessages[lastMessageIndex].role === "assistant"
+            ) {
+              // Update existing assistant message
+              newMessages[lastMessageIndex].content = newMessageContent;
+            } else {
+              // Create new assistant message
+              newMessages.push({ content: newMessageContent, role: "assistant" });
+            }
+            return newMessages;
+          });
+        } 
+      }
+    } catch (error) {
+      console.error("Chat Error:", error instanceof Error ? error.message : error);
+      setMessages((prev) => {
+        const newMessages = [...prev];
+        const lastMessageIndex = newMessages.length - 1;
+        if (
+          lastMessageIndex >= 0 &&
+          newMessages[lastMessageIndex].role === "assistant"
+        ) {
+          newMessages[lastMessageIndex].content = "Sorry, there was an error. Please try again.";
+        } else {
+          newMessages.push({
+            content: "Sorry, there was an error. Please try again.",
+            role: "assistant",
+          });
+        }
+        return newMessages;
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const [chatScreenMode, setChatScreenMode] = useState(false);
@@ -303,11 +399,11 @@ const ChatWindow: React.FC = () => {
                         fontWeight: `${selectedChip === title ? "bold" : "normal"}`,
                         fontSize: "14px",
                         '& .MuiChip-label': {
-                          paddingLeft: '4px',  // Reduce default padding between icon and label
+                          paddingLeft: '4px',
                         },
                         '& svg': {
                           marginLeft: '2px',
-                          marginRight: '-4px',  // Pull the label closer to the icon
+                          marginRight: '-4px',
                         }
                       }}
                       icon={
@@ -315,9 +411,11 @@ const ChatWindow: React.FC = () => {
                           color={selectedChip === title ? "#FFFFFF" : "#BABABA"}
                         />
                       }
-                      variant={selectedChip === title ? "filled" : "outlined"} // Change variant when selected
+                      variant={selectedChip === title ? "filled" : "outlined"}
                       key={index}
                       label={title.replace(/_/g, "\u2009")}
+                      clickable
+                      onClick={() => setSelectedChip(title)} // <-- Add this line
                     />
                   );
                 })}
@@ -331,7 +429,7 @@ const ChatWindow: React.FC = () => {
           left: 0, 
           right: 0, 
           bottom: 0,
-          marginTop: '260px',
+          marginTop: '180px',
           width: '73%', 
           height: 'auto',
           bgcolor: 'white',
@@ -339,25 +437,75 @@ const ChatWindow: React.FC = () => {
           flexDirection: 'column',
           overflow: 'auto'
         }}>
-          {Object.entries(groupedData).map(([groupKey, groupItems]) => (
-            <Box key={groupKey} sx={{marginLeft: "20px", marginTop: "20px", height: "auto" }}>
-              {(groupKey !== "undefined") && (nameListData.length > 1) ? (
-                <Typography
-                  sx={{
-                    display: "flex",
-                    marginLeft: "30px",
-                    color: "#73AD21",
-                    fontSize: "18px"
-                  }}
-                >
-                  <KeyboardDoubleArrowRightIcon />{groupKey}
-                </Typography>
-              ) : (
-                <div></div>
-              )}
+            <Box sx={{ flex: 1, overflowY: "auto", pt: 2, marginLeft: "40px" }}>
+              {messages
+                .filter((msg) => msg.role === "assistant")
+                .map((msg, idx) => (
+                  <React.Fragment key={idx}>
+                    <ChatBubble message={msg.content} align="left" />
+                    {/* <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: 'bold',
+                        background: 'linear-gradient(90deg, #73AD21, #56CCF2)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        display: 'flex',
+                        alignItems: 'center',                        
+                      }}
+                    >
+                      <ImageIcon sx={{ mr: 1, color: '#73AD21' }} />
+                      Pictures
+                    </Typography>
+                    <Box sx={{ display: "flex", gap: 2, mt: 1 }}>
+                      {image_links.slice(0, 5).map((link, i) => (
+                        <iframe
+                          key={i}
+                          src={getIframeSrc(link)}
+                          width="250px"
+                          height="auto"
+                          style={{ border: 0, borderRadius: 6 }}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          title={`iframe-pic-${i}`}
+                        />
+                      ))}
+                    </Box>
+
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: 'bold',
+                        background: 'linear-gradient(90deg, #FF512F, #DD2476)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        display: 'flex',
+                        alignItems: 'center',
+                        mb: 1,
+                        mt: 4
+                      }}
+                    >
+                      <PlayCircleFilledIcon sx={{ mr: 1, color: '#FF512F' }} />
+                      Videos
+                    </Typography>
+                    <Box sx={{ display: "flex", gap: 2, mt: 1 }}>
+                      {video_links.slice(0, 5).map((link, i) => (
+                        <iframe
+                          key={i}
+                          src={getIframeSrc(link)}
+                          width={250}
+                          height={200}
+                          style={{ border: 0, borderRadius: 6 }}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          title={`iframe-vid-${i}`}
+                        />
+                      ))}
+                    </Box> */}
+                  </React.Fragment>
+                ))}
             </Box>
-          ))}
-        </Box>
+          </Box>
       )}
     </div>
   );
@@ -385,7 +533,7 @@ const ChatWindow: React.FC = () => {
       )}
       <Box sx={{ display: "flex", height: "auto", overflow: "hidden" }}>
         <img
-          src="/limblengthening/Header.png"
+          src="/Header.png"
           alt="Header"
           style={{
             width: "100vw",
@@ -417,20 +565,21 @@ const ChatWindow: React.FC = () => {
             style={{
               maxWidth: "100%",
               overflowX: "hidden",
-              flex: 1, // Take up remaining space
-              marginBottom: "80px", // Add space for the input box
+              flex: 1,
+              marginBottom: "80px",
               display: "flex",
-              flexDirection: "column-reverse", // Reverse the flex direction
-              minHeight: "100%", // Ensure container takes full height
+              flexDirection: "column-reverse",
+              minHeight: "100%",
             }}
             ref={containerRef}
           >
             <div style={{ display: "flex", flexDirection: "column" }}>
-              {messages.map((message, index) => (
-                <ChatMessage key={index} {...message} />
-              ))}
+              {messages
+                .filter((msg) => msg.role === "user")
+                .map((msg, idx) => (
+                  <ChatBubble key={idx} message={msg.content} align="right" />
+                ))}
             </div>
-            
             <ChatInput
               onSendMessage={(message) =>
                 handleSendMessageViaInput(message.content)
