@@ -36,11 +36,14 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
       style={{
         display: "flex",
         position: "fixed",
+        marginLeft: "9px",
+        marginRight: "9px",
         bottom: 0,
         right: 0,
         left: drawerWidth, // Align with chatting area
         padding: "1vw", // Relative padding
         backgroundColor: "#F4F7FD",
+        boxShadow: "0 8px 8px rgba(80,80,80,0.6)",
         borderRadius: "30px",
       }}
     >

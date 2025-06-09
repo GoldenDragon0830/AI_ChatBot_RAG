@@ -2,6 +2,8 @@ import os
 import re
 import json
 import openai
+import psycopg2
+from flask import jsonify
 from flask import Flask, request, Response, stream_with_context
 from dotenv import load_dotenv
 from flask_cors import CORS
@@ -35,10 +37,26 @@ PINECONE_NAMESPACE = os.getenv("PINECONE_NAMESPACE")
 OPENAI_MODEL_NAME = os.getenv("OPENAI_MODEL_NAME")
 PORT = os.getenv("PORT")
 
+POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
+POSTGRES_DB = os.getenv("POSTGRES_DB", "csv")
+POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
+POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
+
 app = Flask(__name__)
 app.config["CORS_HEADERS"] = "Content-Type"
 CORS(app, supports_credentials=True, origins="*")
 
+# Connect to PostgreSQL
+conn = psycopg2.connect(
+    dbname=POSTGRES_DB,
+    user=POSTGRES_USER,
+    password=POSTGRES_PASSWORD,
+    host=POSTGRES_HOST,
+    port=POSTGRES_PORT,
+)
+cursor = conn.cursor()
+print("Connected to PostgreSQL database successfully!")
 
 def get_openai_response(prompt, message):
     """Helper function to get a response from OpenAI."""
@@ -72,6 +90,40 @@ def parse_product_data(page_content):
         product_data[current_key] = '\n'.join(current_value).strip()
 
     return product_data
+
+def get_db_response(category, type, subcategory):
+    result_data = []
+    query = ""
+    
+    # Ensure category and type are properly formatted for SQL
+    category = f"('{category}')" if isinstance(category, str) else category
+    type = f"('{type}')" if isinstance(type, str) else type
+
+    if not subcategory:  # Check if subcategory is empty or None
+        query = f'SELECT * FROM "limblengthening" WHERE "category" IN {category} AND "type" IN {type}'
+    else:
+        query = f'SELECT * FROM "limblengthening" WHERE "category" IN {category} AND "type" IN {type} AND "subcategory" IN ({subcategory})'
+
+    print(query)
+    try:
+        cursor.execute(query)
+        results = cursor.fetchall()
+
+        print("123123123",results)
+
+        result_data = [
+            {
+                "category": row[1],
+                "type": row[2],
+                "content": row[3]
+            }
+            for row in results
+        ]
+    except psycopg2.Error as e:
+        print(f"Error executing query: {e}")
+        result_data = []
+
+    return result_data
 
 def get_response(prefix: str, message: str):
     print(f'## CLIENT ----------> {message}')
@@ -174,29 +226,6 @@ def get_response(prefix: str, message: str):
         for key in chunk:
             if key == "answer":
                 all_content += chunk[key]
-                
-            # elif key == "context":
-            #     for document in chunk[key]:
-            #         if hasattr(document, 'page_content'):
-            #             fields = parse_page_content(document.page_content)
-            #             doc_type = fields.get("type")
-            #             if not video_chunk and doc_type == "video":
-            #                 video_chunk = {
-            #                     "id": fields.get("id", ""),
-            #                     "category": fields.get("category", ""),
-            #                     "type": doc_type,
-            #                     "content": fields.get("content", "")
-            #                 }
-            #             elif not image_chunk and doc_type == "image":
-            #                 image_chunk = {
-            #                     "id": fields.get("id", ""),
-            #                     "category": fields.get("category", ""),
-            #                     "type": doc_type,
-            #                     "content": fields.get("content", "")
-            #                 }
-            #     if video_chunk and image_chunk:
-            #         break
-
     yield f'data: {all_content}\n\n'
 
 @app.route("/chat")
@@ -204,7 +233,16 @@ def sse_request():
     """Handle chat requests."""
     message = request.args.get('message', '')
     flag = request.args.get('flag', '')
-    return Response(stream_with_context(get_response(flag, message)), content_type='text/event-stream')
+    return Response(get_response(flag, message))
 
+@app.route("/get_db_response")
+def db_request():
+    category = request.args.get('category', '')
+    type = request.args.get('type', '')
+    subcategory = request.args.get('subcategory', '')
+    
+    result_data = get_db_response(category=category, type=type, subcategory=subcategory)
+
+    return jsonify(result_data)
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=PORT)

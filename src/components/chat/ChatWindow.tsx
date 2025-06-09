@@ -11,10 +11,20 @@ import {
   Button,
   Box,
   Typography,
+  Avatar,
+  Card,
+  CardContent,
+  CardActions,
+  Stack,
+  Chip,
+  Paper,
+  Divider,
+  Dialog,
+  DialogContent,
+  iconButtonClasses,
+  MenuItem,
+  Select
 } from "@mui/material";
-import Divider from "@mui/material/Divider";
-import Paper from "@mui/material/Paper";
-import Chip from "@mui/material/Chip";
 
 import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
 import Snackbar from '@mui/material/Snackbar';
@@ -29,6 +39,10 @@ import Groups3Icon from '@mui/icons-material/Groups3';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import ContactMailIcon from '@mui/icons-material/ContactMail';
 import SupportAgentIcon from '@mui/icons-material/SupportAgent';
+import CloseIcon from '@mui/icons-material/Close'
+import IconButton from "@mui/material/IconButton";
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 interface MessageInterface {
   content: string;
@@ -48,7 +62,7 @@ const GREETING_WORD = `
   <div style="font-size: 1.3em; font-weight: bold; color: #73AD21;">
     <span role="img" aria-label="robot">🤖</span>
     I'm <span style="color:#3a3a3a;">Limb Lengthening Assistant</span>,<br/>
-    <span style="font-weight: normal;">What would you like to order today?</span>
+    <span style="font-weight: normal;">How can I help you today?</span>
   </div>
 `;
 
@@ -79,6 +93,53 @@ const ChatWindow: React.FC = () => {
     "Contact Us"
   ];
 
+  // Place these hooks at the top of your component if not already present:
+  const [selectedTime, setSelectedTime] = useState("2:00 PM - 3:00 PM");
+
+  // Static calendar for April 2025
+  const days = [
+    [null, 1, 2, 3, 4, 5, 6],
+    [7, 8, 9, 10, 11, 12, 13],
+    [14, 15, 16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25, 26, 27],
+    [28, 29, 30, null, null, null, null]
+  ];
+
+  const timeSlots = [
+    "2:00 PM - 3:00 PM",
+    "3:00 PM - 4:00 PM",
+    "4:00 PM - 5:00 PM",
+    "5:00 PM - 6:00 PM"
+  ];
+
+  // Example team data (replace avatar paths with your actual images)
+  const teamData = [
+    {
+      name: "S. Robert Rozbruch, MD, Chief",
+      avatar: "/limblengthening/images/rozbruch.jpg",
+      tags: ["Reconstruction", "Bone Repair", "ComplexFractures", "KnockKnees"],
+      desc: "Dr. Rozbruch is the Chief of the Limb Lengthening and Complex Reconstruction Service and Director of the Osseointegration Limb Replacement Center at Hospital for Special Surgery. He is a Professor of Clinical Orthopaedic Surgery at Weill Cornell Medical College, and...",
+    },
+    {
+      name: "Austin T. Fragomen, M.D.",
+      avatar: "/limblengthening/images/fragomen.jpg",
+      tags: ["Orthopedics", "Bone Correction", "Complex Reconstruction", "Bow Legs"],
+      desc: "A Professor of Clinical Orthopedic surgery at Weill Cornell Medical School and HSS, Dr. Fragomen has excelled as an educator. He is the director of the LLCRS fellowship program which includes recruitment and year-long training of exceptional young surgeons interested in p...",
+    },
+    {
+      name: "Taylor Reif, M.D.",
+      avatar: "/limblengthening/images/reif.jpg",
+      tags: ["Tumor Reconstruction", "Bone Preservation", "Bone Cancer Care", "Joint Preservation"],
+      desc: "Dr. Taylor Reif is a member of the Limb Lengthening and Complex Reconstruction Service at Hospital for Special Surgery. He specializes in the comprehensive surgical care of musculoskeletal tumors as well as the reconstruction of limbs affected by primary bone tumors, met...",
+    },
+    {
+      name: "Jason Shih Hoellwarth, M.D.",
+      avatar: "/limblengthening/images/hoellwarth.jpg",
+      tags: ["Limb Fixing", "Bone Repair", "Hip Disorders", "Child Bone Care", "Clubfoot Treatment"],
+      desc: "A Chicago-native, Dr. Hoellwarth graduated from Case Western Reserve University with a B.S. in biochemistry and psychology. He attended the Keck School of Medicine at the University of Southern California, leading the student-run free clinic, two high school mento...",
+    },
+  ];
+
   const [chunkData, setChunkData] = useState<ChunkOption[]>([]);
 
   const [loading, setLoading] = useState(false);
@@ -87,7 +148,15 @@ const ChatWindow: React.FC = () => {
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
-  const [selectedButton, setSelectedButton] = useState<string | null>(null);
+  const [selectedButton, setSelectedButton] = useState("Home");
+
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null); // Only for text
+  const [dbImages, setDbImages] = useState<any[]>([]);
+  const [dbVideos, setDbVideos] = useState<any[]>([]);
+  const [dbTexts, setDbTexts] = useState<any[]>([]);
+  const [openBookingDialog, setOpenBookingDialog] = useState(false);
+
 
   const styles = `
     @keyframes marquee {
@@ -167,6 +236,73 @@ const ChatWindow: React.FC = () => {
     };
   }, []);
 
+  // Helper to fetch and store DB responses
+  const fetchDbResponses = async (category: string, subcategory: string | null = null) => {
+    setLoading(true)
+    // Fetch images
+    const imageRes = await fetch(
+      `https://soundglide.com/backend/api/limb/get_db_response?category=${category}&type=image`
+    );
+    setDbImages(await imageRes.json());
+
+    // Fetch videos
+    const videoRes = await fetch(
+      `https://soundglide.com/backend/api/limb/get_db_response?category=${category}&type=video`
+    );
+    setDbVideos(await videoRes.json());
+
+    // Fetch texts (with subcategory if provided)
+    let textUrl = `https://soundglide.com/backend/api/limb/get_db_response?category=${category}&type=text`;
+    if (subcategory) textUrl += `&subcategory=${subcategory}`;
+    const textRes = await fetch(textUrl);
+    setDbTexts(await textRes.json());
+    setLoading(false)
+  };
+
+  // Handle category selection in Home tab
+  const handleCategorySelect = async (category: string) => {
+    setSelectedCategory(category);
+    if (category === "Bone Tumors") category = "bone_tumors"
+    else if (category === "Bowlegs") category = "bowlegs"
+    else if (category === "Femoral Anteversion") category = "femoral_anteversion"
+    else if (category === "Femoral Retroversion") category = "femoral_retroversion"
+    else if (category === "Knock Knees") category = "knock_knees"
+    else if (category === "Limb Lengthening") category = "limb_lengthening"
+    else if (category === "Osseointegration") category = "osseointegration"
+    else if (category === "Stature Lengthening") category = "stature_lengthening"
+    else if (category === "About Us") category = "about_us"
+    else if (category === "FAQs") category = "faqs"
+
+    setSelectedChip("Surgery"); // Switch tab to Surgery
+    await fetchDbResponses(category);
+  };
+
+  // Handle subcategory selection (for text type)
+  const handleSubcategorySelect = async (subcategory: string) => {
+    setSelectedSubcategory(subcategory);
+    if (selectedCategory) {
+      await fetchDbResponses(selectedCategory, subcategory);
+    }
+  };
+
+  const handleGetDBResponse = async (category: string, type: string, subcategory: string) => {
+    try {
+      const response = await fetch(
+        `https://soundglide.com/backend/api/limb/get_db_response?category=${category}&type=${type}&subcategory=${subcategory}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          }
+        }
+      )
+
+      console.log(response)
+    } catch (error) {
+
+    }
+  }
+
   const handleSendMessageViaInput = async (text: string) => {
     if (!text.trim()) return;
 
@@ -183,10 +319,12 @@ const ChatWindow: React.FC = () => {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Accept: "text/event-stream",
+            Accept: "application/json",
           },
         }
       );
+
+      console.log(response)
 
       if (!response.ok) throw new Error("Network response was not ok");
       if (!response.body) throw new Error("Response body is null");
@@ -245,7 +383,7 @@ const ChatWindow: React.FC = () => {
   };
 
   const [chatScreenMode, setChatScreenMode] = useState(false);
-  const [selectedChip, setSelectedChip] = useState<string | null>("Home");
+  const [selectedChip, setSelectedChip] = useState<string | null>();
   const [selectedNameChip, setSelectedNameChip] = useState<string | null>(
     "ALL"
   );
@@ -306,7 +444,7 @@ const ChatWindow: React.FC = () => {
             width: "100%", // Ensure it doesn't overflow its container
           }}
         >
-          <Paper
+          <Box
             sx={{
               height: "auto",
               display: "flex",
@@ -336,7 +474,7 @@ const ChatWindow: React.FC = () => {
               <BottomNavigationAction label="Schedule" value="Schedule" icon={<EventAvailableIcon />} />
               <BottomNavigationAction label="Contact" value="Contact" icon={<ContactMailIcon />} />
             </BottomNavigation>
-          </Paper>
+          </Box>
           <Button
             sx={{
               marginLeft: "30px",
@@ -352,6 +490,7 @@ const ChatWindow: React.FC = () => {
               setChatScreenMode(false);
             }}
             startIcon={<SupportAgentIcon />}
+            value="CustomerSupport"
           >
             Customer Support
           </Button>
@@ -411,6 +550,144 @@ const ChatWindow: React.FC = () => {
           display: 'flex',
           flexDirection: 'column'
         }}>
+          <Dialog
+            open={openBookingDialog}
+            onClose={() => setOpenBookingDialog(false)}
+            maxWidth="md"
+            fullWidth
+            PaperProps={{ sx: { borderRadius: 4 } }}
+          >
+            <DialogContent sx={{ p: 0 }}>
+              {/* Place your booking UI here */}
+              {/* For demo, you can use an <img> of your attached UI, or build the calendar/time picker as needed */}
+              <Box sx={{ display: 'flex', flexDirection: 'row', minHeight: 550 }}>
+                {/* Left panel */}
+                <Box sx={{ width: 240, bgcolor: '#FAD7B6', p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <EventAvailableIcon sx={{ mr: 1 }} />
+                      <Box>
+                        <Typography fontWeight={600}>Date & Time</Typography>
+                        <Typography fontSize={14}>April 14, 2025 - 2:00 PM</Typography>
+                      </Box>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <ContactMailIcon sx={{ mr: 1 }} />
+                      <Typography fontWeight={600}>Your Information</Typography>
+                    </Box>
+                  </Box>
+                  <Box>
+                    <Typography fontWeight={700} mb={1}>Get in Touch</Typography>
+                    <Typography fontSize={14}>+1 774 515 4207</Typography>
+                    <Typography fontSize={14}>intake@nexumhc.com</Typography>
+                  </Box>
+                </Box>
+                {/* Right panel */}
+                <Box sx={{ flex: 1, p: 4, position: 'relative' }}>
+                  <IconButton
+                    onClick={() => setOpenBookingDialog(false)}
+                    sx={{ position: 'absolute', top: 8, right: 8 }}
+                  >
+                    <CloseIcon />
+                  </IconButton>
+                  <Typography variant="h5" fontWeight={700} mb={2}>Book your session</Typography>
+                  <Box sx={{ width: "100%", maxWidth: 400, mx: "auto" }}>
+                    <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+                      <Select value="April" size="small" sx={{ minWidth: 100 }}>
+                        <MenuItem value="April">April</MenuItem>
+                      </Select>
+                      <Select value="2025" size="small" sx={{ minWidth: 80 }}>
+                        <MenuItem value="2025">2025</MenuItem>
+                      </Select>
+                      <IconButton size="small"><ChevronLeftIcon /></IconButton>
+                      <IconButton size="small"><ChevronRightIcon /></IconButton>
+                    </Box>
+                    <Box>
+                      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", mb: 1 }}>
+                        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
+                          <Typography key={d} align="center" fontWeight={600} fontSize={14}>{d}</Typography>
+                        ))}
+                      </Box>
+                      {days.map((week, i) => (
+                        <Box key={i} sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", mb: 0.5 }}>
+                          {week.map((day, j) => {
+                            const isSelected = day === 14;
+                            const isAvailable = isSelected;
+                            return (
+                              <Box
+                                key={j}
+                                sx={{
+                                  height: 36,
+                                  m: 0.5,
+                                  borderRadius: 1,
+                                  bgcolor: day
+                                    ? isSelected
+                                      ? "#4BB543"
+                                      : isAvailable
+                                      ? "#E6F4E6"
+                                      : "#FDE7E7"
+                                    : "transparent",
+                                  color: isSelected ? "white" : "#222",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  fontWeight: isSelected ? 700 : 400,
+                                  border: day && isSelected ? "2px solid #4BB543" : "1px solid #eee",
+                                  cursor: day && isAvailable ? "pointer" : "default",
+                                  opacity: day ? 1 : 0
+                                }}
+                              >
+                                {day ? day : ""}
+                              </Box>
+                            );
+                          })}
+                        </Box>
+                      ))}
+                    </Box>
+                    <Typography sx={{ mt: 2, mb: 1 }}>April 14, 2025 – 2:00 PM</Typography>
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+                      {timeSlots.map((slot) => (
+                        <Button
+                          key={slot}
+                          variant={selectedTime === slot ? "contained" : "outlined"}
+                          sx={{
+                            minWidth: 160,
+                            background: selectedTime === slot ? "#4BB543" : "white",
+                            color: selectedTime === slot ? "white" : "#4BB543",
+                            borderColor: "#4BB543",
+                            fontWeight: 600,
+                            mb: 1,
+                            '&:hover': {
+                              background: selectedTime === slot ? "#388e3c" : "#E6F4E6"
+                            }
+                          }}
+                          onClick={() => setSelectedTime(slot)}
+                        >
+                          {slot}
+                        </Button>
+                      ))}
+                    </Box>
+                  </Box>
+                  <Button
+                    variant="contained"
+                    sx={{
+                      background: "#F2B94B",
+                      color: "white",
+                      fontWeight: 600,
+                      borderRadius: 8,
+                      px: 4,
+                      position: 'absolute',
+                      bottom: 32,
+                      right: 32,
+                      '&:hover': { background: "#d39e36" }
+                    }}
+                  >
+                    Continue
+                  </Button>
+                </Box>
+              </Box>
+            </DialogContent>
+          </Dialog>
           <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
             {selectedChip === "Home" && (
               <Box sx={{
@@ -420,17 +697,209 @@ const ChatWindow: React.FC = () => {
                 p: 2,
                 marginTop: '20px' // Ensure some space from the top
               }}>
-                <Button variant="outlined" sx={{ m: 1, height: '100px', fontSize: '16px', padding: '20px', color: 'black', borderColor: '#73AD21', borderRadius: '10px' }}>All</Button>
-                <Button variant="outlined" sx={{ m: 1, height: '100px', fontSize: '16px', padding: '20px', color: 'black', borderColor: '#73AD21', borderRadius: '10px' }}>Bone Tumors</Button>
-                <Button variant="outlined" sx={{ m: 1, height: '100px', fontSize: '16px', padding: '20px', color: 'black', borderColor: '#73AD21', borderRadius: '10px' }}>Bowlegs</Button>
-                <Button variant="outlined" sx={{ m: 1, height: '100px', fontSize: '16px', padding: '20px', color: 'black', borderColor: '#73AD21', borderRadius: '10px' }}>Femoral Anteversion</Button>
-                <Button variant="outlined" sx={{ m: 1, height: '100px', fontSize: '16px', padding: '20px', color: 'black', borderColor: '#73AD21', borderRadius: '10px' }}>Femoral Retroversion</Button>
-                <Button variant="outlined" sx={{ m: 1, height: '100px', fontSize: '16px', padding: '20px', color: 'black', borderColor: '#73AD21', borderRadius: '10px' }}>Knock Knees</Button>
-                <Button variant="outlined" sx={{ m: 1, height: '100px', fontSize: '16px', padding: '20px', color: 'black', borderColor: '#73AD21', borderRadius: '10px' }}>Limb Lengthening</Button>
-                <Button variant="outlined" sx={{ m: 1, height: '100px', fontSize: '16px', padding: '20px', color: 'black', borderColor: '#73AD21', borderRadius: '10px' }}>Osseointegration</Button>
-                <Button variant="outlined" sx={{ m: 1, height: '100px', fontSize: '16px', padding: '20px', color: 'black', borderColor: '#73AD21', borderRadius: '10px' }}>Stature Lengthening</Button>
-                <Button variant="outlined" sx={{ m: 1, height: '100px', fontSize: '16px', padding: '20px', color: 'black', borderColor: '#73AD21', borderRadius: '10px' }}>About Us</Button>
-                <Button variant="outlined" sx={{ m: 1, height: '100px', fontSize: '16px', padding: '20px', color: 'black', borderColor: '#73AD21', borderRadius: '10px' }}>FAQs</Button>
+                {["All", "Bone Tumors", "Bowlegs", "Femoral Anteversion", "Femoral Retroversion", "Knock Knees", "Limb Lengthening", "Osseointegration", "Stature Lengthening", "About Us", "FAQs"].map((cat) => (
+                  <Button
+                    key={cat}
+                    variant={selectedCategory === cat ? "contained" : "outlined"}
+                    sx={{
+                      m: 1,
+                      height: '100px',
+                      fontSize: '16px',
+                      padding: '20px',
+                      color: selectedCategory === cat ? "white" : "black",
+                      backgroundColor: selectedCategory === cat ? "#73AD21" : "white",
+                      borderColor: '#73AD21',
+                      borderRadius: '10px',
+                      '&:hover': {
+                        backgroundColor: selectedCategory === cat ? "#5e8e1a" : "#f5f5f5"
+                      }
+                    }}
+                    onClick={() => handleCategorySelect(cat)}
+                  >
+                    {cat}
+                  </Button>
+                ))}
+              </Box>
+            )}
+            {selectedChip === "Surgery" && (
+              <Box sx={{ p: 2, margin: '10px' }}>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                  <HealthAndSafetyIcon sx={{ color: "#4BB543", fontSize: 32, mr: 1 }} />
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: 800,
+                      letterSpacing: 1,
+                      color: "#222",
+                      background: "linear-gradient(90deg, #E6F4E6 60%, #F2B94B 100%)",
+                      borderRadius: 2,
+                      px: 2,
+                      py: 0.5,
+                      boxShadow: "0 2px 8px rgba(80,80,80,0.06)"
+                    }}
+                  >
+                    Surgery Info
+                  </Typography>
+                </Box>
+                {dbTexts.length === 0 ? (
+                  <Typography>No text data available.</Typography>
+                ) : (
+                  dbTexts.map((item, idx) => (
+                    <Box key={idx} sx={{ mb: 2 }}>
+                      <Typography
+                        variant="body1"
+                        component="div"
+                        dangerouslySetInnerHTML={{ __html: item.content }}
+                      />
+                      {/* If you want subcategory selection, add buttons here */}
+                    </Box>
+                  ))
+                )}
+              </Box>
+            )}
+
+            {selectedChip === "Pictures" && (
+              <Box sx={{ p: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                  <ImageIcon sx={{ color: "#4BB543", fontSize: 32, mr: 1 }} />
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: 800,
+                      letterSpacing: 1,
+                      color: "#222",
+                      background: "linear-gradient(90deg, #E6F4E6 60%, #F2B94B 100%)",
+                      borderRadius: 2,
+                      px: 2,
+                      py: 0.5,
+                      boxShadow: "0 2px 8px rgba(80,80,80,0.06)"
+                    }}
+                  >
+                    Pictures
+                  </Typography>
+                </Box>
+                {dbImages.length === 0 ? (
+                  <Typography>No images available.</Typography>
+                ) : (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                    {dbImages.map((img, idx) => (
+                      <img key={idx} src={img.content} alt={img.category} style={{ width: 150, height: 150, objectFit: 'cover' }} />
+                    ))}
+                  </Box>
+                )}
+              </Box>
+            )}
+
+            {selectedChip === "Videos" && (
+              <Box sx={{ p: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                  <PlayCircleFilledIcon sx={{ color: "#4BB543", fontSize: 32, mr: 1 }} />
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: 800,
+                      letterSpacing: 1,
+                      color: "#222",
+                      background: "linear-gradient(90deg, #E6F4E6 60%, #F2B94B 100%)",
+                      borderRadius: 2,
+                      px: 2,
+                      py: 0.5,
+                      boxShadow: "0 2px 8px rgba(80,80,80,0.06)"
+                    }}
+                  >
+                    Videos
+                  </Typography>
+                </Box>
+                {dbVideos.length === 0 ? (
+                  <Typography>No videos available.</Typography>
+                ) : (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                    {dbVideos.map((vid, idx) => (
+                      <video key={idx} src={vid.content} controls style={{ width: 250 }} />
+                    ))}
+                  </Box>
+                )}
+              </Box>
+            )}
+
+            {selectedChip === "Team" && (
+              <Box sx={{ p: 2 }}>
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                  {teamData.map((member, idx) => (
+                    <Card
+                      key={idx}
+                      sx={{
+                        width: 600,
+                        minHeight: 320,
+                        border: '1.5px solid #F2B94B',
+                        borderRadius: 4,
+                        boxShadow: 'none',
+                        marginTop: '30px',
+                        marginLeft: '30px',
+                        mb: 3,
+                        mr: 3,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <CardContent>
+                        <Stack direction="row" spacing={2} alignItems="center" mb={1}>
+                          <Avatar src={member.avatar} sx={{ width: 56, height: 56 }} />
+                          <Typography variant="h6" fontWeight="bold">{member.name}</Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={1} flexWrap="wrap" mb={1}>
+                          {member.tags.map((tag, i) => (
+                            <Chip
+                              key={i}
+                              label={tag}
+                              sx={{
+                                background: "#F7F3F0",
+                                color: "#A97B3B",
+                                fontWeight: 500,
+                                fontSize: 14,
+                                mb: 0.5,
+                              }}
+                            />
+                          ))}
+                        </Stack>
+                        <Typography variant="body2" color="text.secondary">
+                          {member.desc}
+                        </Typography>
+                      </CardContent>
+                      <CardActions sx={{ justifyContent: 'flex-start', px: 2, pb: 2 }}>
+                        <Button
+                          variant="contained"
+                          sx={{
+                            background: "#4BB543",
+                            color: "white",
+                            fontWeight: 600,
+                            borderRadius: 8,
+                            mr: 2,
+                            px: 3,
+                            '&:hover': { background: "#388e3c" }
+                          }}
+                        >
+                          View Profile
+                        </Button>
+                        <Button
+                          variant="contained"
+                          sx={{
+                            background: "#F2B94B",
+                            color: "white",
+                            fontWeight: 600,
+                            borderRadius: 8,
+                            px: 3,
+                            '&:hover': { background: "#d39e36" }
+                          }}
+                          onClick={()=> setOpenBookingDialog(true)}
+                        >
+                          Book Appointment
+                        </Button>
+                      </CardActions>
+                    </Card>
+                  ))}
+                </Stack>
               </Box>
             )}
           </Box>
@@ -442,15 +911,16 @@ const ChatWindow: React.FC = () => {
           left: 0,
           right: 0,
           bottom: 0,
-          marginTop: '180px',
+          marginTop: '200px',
           width: '73%',
           height: 'auto',
           bgcolor: 'white',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'auto'
-        }}>
-          <Box sx={{ flex: 1, overflowY: "auto", pt: 2, marginLeft: "40px" }}>
+        }}
+        >
+          <Box sx={{ flex: 1, overflowY: "auto", pt: 2, marginLeft: "40px" }} ref={containerRef}>
             {messages
               .filter((msg) => msg.role === "assistant")
               .map((msg, idx) => (
@@ -513,6 +983,8 @@ const ChatWindow: React.FC = () => {
             overflow: "hidden", // Prevent page-level scrolling
             display: "flex",
             flexDirection: "column", // Stack children vertically
+            margin: "10px",
+            boxShadow: "0 8px 8px rgba(80,80,80,0.6)",
           }}
         >
           <div
@@ -527,7 +999,7 @@ const ChatWindow: React.FC = () => {
             }}
             ref={containerRef}
           >
-            <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", flexDirection: "column", height: "650px", boxShadow: "0 8px 8px rgba(80,80,80,0.6)", }}>
               {messages
                 .filter((msg) => msg.role === "user")
                 .map((msg, idx) => (

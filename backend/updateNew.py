@@ -368,7 +368,7 @@ def sse_request():
     """Handle chat requests."""
     message = request.args.get('message', '')
     flag = request.args.get('flag', '')
-    return Response(stream_with_context(get_response(message, flag)), content_type='text/event-stream')
+    return Response(stream_with_context(get_response(message, flag)), content_type='application/json')
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=PORT)
