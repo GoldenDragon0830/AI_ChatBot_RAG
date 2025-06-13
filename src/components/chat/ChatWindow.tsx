@@ -155,6 +155,7 @@ const ChatWindow: React.FC = () => {
   const [dbImages, setDbImages] = useState<any[]>([]);
   const [dbVideos, setDbVideos] = useState<any[]>([]);
   const [dbTexts, setDbTexts] = useState<any[]>([]);
+  const [dbSubCategorys, setDbSubCategorys] = useState<any[]>([]);
   const [openBookingDialog, setOpenBookingDialog] = useState(false);
 
 
@@ -256,6 +257,10 @@ const ChatWindow: React.FC = () => {
     if (subcategory) textUrl += `&subcategory=${subcategory}`;
     const textRes = await fetch(textUrl);
     setDbTexts(await textRes.json());
+
+    let subCategoryUrl = `https://soundglide.com/backend/api/limb/get_db_category?category=${category}&type=text`;
+    const subCategorys = await fetch(subCategoryUrl);
+    setDbSubCategorys(await subCategorys.json())
     setLoading(false)
   };
 
@@ -279,10 +284,27 @@ const ChatWindow: React.FC = () => {
 
   // Handle subcategory selection (for text type)
   const handleSubcategorySelect = async (subcategory: string) => {
+    setLoading(true);
     setSelectedSubcategory(subcategory);
-    if (selectedCategory) {
-      await fetchDbResponses(selectedCategory, subcategory);
-    }
+    // if (selectedCategory) {
+    //   await fetchDbResponses(selectedCategory, subcategory);
+    // }
+    let category = ""
+    if (selectedCategory === "Bone Tumors") category = "bone_tumors"
+    else if (selectedCategory === "Bowlegs") category = "bowlegs"
+    else if (selectedCategory === "Femoral Anteversion") category = "femoral_anteversion"
+    else if (selectedCategory === "Femoral Retroversion") category = "femoral_retroversion"
+    else if (selectedCategory === "Knock Knees") category = "knock_knees"
+    else if (selectedCategory === "Limb Lengthening") category = "limb_lengthening"
+    else if (selectedCategory === "Osseointegration") category = "osseointegration"
+    else if (selectedCategory === "Stature Lengthening") category = "stature_lengthening"
+    
+    // Fetch texts (with subcategory if provided)
+    let textUrl = `https://soundglide.com/backend/api/limb/get_db_response?category=${category}&type=text`;
+    if (subcategory) textUrl += `&subcategory=${subcategory}`;
+    const textRes = await fetch(textUrl);
+    setDbTexts(await textRes.json());
+    setLoading(false);
   };
 
   const handleGetDBResponse = async (category: string, type: string, subcategory: string) => {
@@ -304,6 +326,7 @@ const ChatWindow: React.FC = () => {
   }
 
   const handleSendMessageViaInput = async (text: string) => {
+    setChatScreenMode(false)
     if (!text.trim()) return;
 
     // Add user message to chat
@@ -688,7 +711,7 @@ const ChatWindow: React.FC = () => {
               </Box>
             </DialogContent>
           </Dialog>
-          <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+          <Box sx={{ flexGrow: 1, overflow: 'auto', maxHeight: selectedChip === "Surgery" ? 640 : 720, overflowY: 'auto'  }}>
             {selectedChip === "Home" && (
               <Box sx={{
                 display: 'grid',
@@ -697,7 +720,7 @@ const ChatWindow: React.FC = () => {
                 p: 2,
                 marginTop: '20px' // Ensure some space from the top
               }}>
-                {["All", "Bone Tumors", "Bowlegs", "Femoral Anteversion", "Femoral Retroversion", "Knock Knees", "Limb Lengthening", "Osseointegration", "Stature Lengthening", "About Us", "FAQs"].map((cat) => (
+                {["Bone Tumors", "Bowlegs", "Femoral Anteversion", "Femoral Retroversion", "Knock Knees", "Limb Lengthening", "Osseointegration", "Stature Lengthening", "About Us", "FAQs"].map((cat) => (
                   <Button
                     key={cat}
                     variant={selectedCategory === cat ? "contained" : "outlined"}
@@ -783,7 +806,7 @@ const ChatWindow: React.FC = () => {
                 ) : (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                     {dbImages.map((img, idx) => (
-                      <img key={idx} src={img.content} alt={img.category} style={{ width: 150, height: 150, objectFit: 'cover' }} />
+                      <img key={idx} src={img.content} alt={img.category} style={{ width: 320, height: 260, objectFit: 'cover' }} />
                     ))}
                   </Box>
                 )}
@@ -814,9 +837,43 @@ const ChatWindow: React.FC = () => {
                   <Typography>No videos available.</Typography>
                 ) : (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                    {dbVideos.map((vid, idx) => (
-                      <video key={idx} src={vid.content} controls style={{ width: 250 }} />
-                    ))}
+                    {dbVideos.map((vid, idx) => {
+                      const isYouTube = vid.content.includes("youtube.com") || vid.content.includes("youtu.be");
+                      const isInstagram = vid.content.includes("instagram.com");
+
+                      let thumbnailUrl = "";
+                      let videoLink = vid.content;
+
+                      if (isYouTube) {
+                        // Extract the video ID from the YouTube URL
+                        let videoId = vid.content.split('v=')[1] || vid.content.split('/').pop();
+                        const ampersandPosition = videoId.indexOf('&');
+                        if (ampersandPosition !== -1) {
+                          videoId = videoId.substring(0, ampersandPosition);
+                        }
+                        // Construct the YouTube thumbnail URL
+                        thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                      } else if (isInstagram) {
+                        // Fetch Instagram thumbnail using oEmbed
+                        fetch(`https://api.instagram.com/oembed?url=${vid.content}`)
+                          .then(response => response.json())
+                          .then(data => {
+                            thumbnailUrl = data.thumbnail_url;
+                          })
+                          .catch(error => console.error("Error fetching Instagram thumbnail:", error));
+                      }
+
+                      return (
+                        <div key={idx} style={{ width: 320, height: 240, position: 'relative' }}>
+                          {thumbnailUrl && (
+                            <img src={thumbnailUrl} alt={`Thumbnail for video ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          )}
+                          <a href={videoLink} target="_blank" rel="noopener noreferrer" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', textDecoration: 'none', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+                            <PlayCircleFilledIcon style={{ fontSize: 50 }} />
+                          </a>
+                        </div>
+                      );
+                    })}
                   </Box>
                 )}
               </Box>
@@ -903,6 +960,39 @@ const ChatWindow: React.FC = () => {
               </Box>
             )}
           </Box>
+          {selectedChip === "Surgery" && (
+            <Box sx={{ overflowX: 'auto', p: 2 }}>
+              {dbSubCategorys.length > 0 && (
+                <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, width: 'fit-content' }}>
+                  {dbSubCategorys
+                    .filter(subCat => subCat.category) // Filter out null categories
+                    .map((subCat, idx) => (
+                      <Button
+                        key={idx}
+                        variant={selectedSubcategory === subCat.category ? "contained" : "outlined"}
+                        sx={{
+                          textAlign: 'center',
+                          width: 'auto',
+                          color: selectedSubcategory === subCat.category ? "white" : "black",
+                          backgroundColor: selectedSubcategory === subCat.category ? "#73AD21" : "white",
+                          borderColor: '#73AD21',
+                          borderRadius: '20px',
+                          whiteSpace: 'nowrap', // Ensure text is on one line
+                          paddingLeft: '20px',
+                          paddingRight: '20px',
+                          '&:hover': {
+                            backgroundColor: selectedSubcategory === subCat.category ? "#5e8e1a" : "#f5f5f5"
+                          }
+                        }}
+                        onClick={() => handleSubcategorySelect(subCat.category)}
+                      >
+                        {subCat.category}
+                      </Button>
+                    ))}
+                </Box>
+              )}
+            </Box>
+          )}
         </Box>
       ) : (
         <Box sx={{
