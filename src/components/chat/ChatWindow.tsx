@@ -43,6 +43,11 @@ import CloseIcon from '@mui/icons-material/Close'
 import IconButton from "@mui/material/IconButton";
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
+import VideoLibraryTwoTone from "@mui/icons-material/VideoLibraryTwoTone";
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
+import AppointmentForm from "./AppointmentForm";
+import ContactForm from "./ContactForm";
 
 interface MessageInterface {
   content: string;
@@ -70,15 +75,8 @@ const drawerWidth = "73%";
 
 const ChatWindow: React.FC = () => {
   const [nameListData, setNameListData] = useState<ChunkOption[]>([]);
-
-
   const [selectedOptionListData, setSelectedOptionListData] = useState<string[]>([]);
-
   const [assistantMedia, setAssistantMedia] = useState<{ images: string[]; videos: string[] }[]>([{ images: [], videos: [] }]);
-
-
-
-  // const API_URL = process.env.REACT_APP_API_URL;
 
   const [messages, setMessages] = useState<MessageInterface[]>([
     { content: GREETING_WORD, role: "assistant" },
@@ -158,6 +156,21 @@ const ChatWindow: React.FC = () => {
   const [dbSubCategorys, setDbSubCategorys] = useState<any[]>([]);
   const [openBookingDialog, setOpenBookingDialog] = useState(false);
 
+  const [openImagePreview, setOpenImagePreview] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  const [openVideoPreview, setOpenVideoPreview] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
+
+  const handleImageClick = (imageSrc: string) => {
+    setSelectedImage(imageSrc);
+    setOpenImagePreview(true);
+  };
+
+  const handleVideoClick = (videoSrc: string) => {
+    setSelectedVideo(videoSrc);
+    setOpenVideoPreview(true);
+  };
 
   const styles = `
     @keyframes marquee {
@@ -711,7 +724,7 @@ const ChatWindow: React.FC = () => {
               </Box>
             </DialogContent>
           </Dialog>
-          <Box sx={{ flexGrow: 1, overflow: 'auto', maxHeight: selectedChip === "Surgery" ? 640 : 720, overflowY: 'auto'  }}>
+          <Box sx={{ flexGrow: 1, overflow: 'auto', maxHeight: selectedChip === "Surgery" ? "70vh" : "80vh", overflowY: 'auto'  }}>
             {selectedChip === "Home" && (
               <Box sx={{
                 display: 'grid',
@@ -806,12 +819,62 @@ const ChatWindow: React.FC = () => {
                 ) : (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                     {dbImages.map((img, idx) => (
-                      <img key={idx} src={img.content} alt={img.category} style={{ width: 320, height: 260, objectFit: 'cover' }} />
+                      <Box
+                        key={idx}
+                        sx={{
+                          position: 'relative',
+                          width: 320,
+                          height: 260,
+                          overflow: 'hidden',
+                          '&:hover .eye-icon': {
+                            opacity: 1,
+                          },
+                        }}
+                      >
+                        <img
+                          src={img.content}
+                          alt={img.category}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                        <IconButton
+                          className="eye-icon"
+                          sx={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            color: 'white',
+                            opacity: 0,
+                            transition: 'opacity 0.3s ease',
+                          }}
+                          onClick={() => handleImageClick(img.content)}
+                        >
+                          <VisibilityOutlined sx={{ fontSize: 40 }} />
+                        </IconButton>
+                      </Box>
                     ))}
                   </Box>
                 )}
               </Box>
             )}
+
+            {/* Image Preview Dialog */}
+            <Dialog
+              open={openImagePreview}
+              onClose={() => setOpenImagePreview(false)}
+              maxWidth="md"
+              fullWidth
+            >
+              <DialogContent sx={{ p: 0 }}>
+                {selectedImage && (
+                  <img
+                    src={selectedImage}
+                    alt="Preview"
+                    style={{ width: '100%', height: 'auto' }}
+                  />
+                )}
+              </DialogContent>
+            </Dialog>
 
             {selectedChip === "Videos" && (
               <Box sx={{ p: 2 }}>
@@ -852,32 +915,99 @@ const ChatWindow: React.FC = () => {
                           videoId = videoId.substring(0, ampersandPosition);
                         }
                         // Construct the YouTube thumbnail URL
-                        thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                        thumbnailUrl = `https://img.youtube.com/vi/${videoId}/2.jpg`;
+                        // Construct the YouTube embed URL
+                        videoLink = `https://www.youtube.com/embed/${videoId}`;
                       } else if (isInstagram) {
                         // Fetch Instagram thumbnail using oEmbed
                         fetch(`https://api.instagram.com/oembed?url=${vid.content}`)
                           .then(response => response.json())
                           .then(data => {
                             thumbnailUrl = data.thumbnail_url;
+                            videoLink = data.content;
                           })
                           .catch(error => console.error("Error fetching Instagram thumbnail:", error));
                       }
 
                       return (
-                        <div key={idx} style={{ width: 320, height: 240, position: 'relative' }}>
-                          {thumbnailUrl && (
-                            <img src={thumbnailUrl} alt={`Thumbnail for video ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          )}
-                          <a href={videoLink} target="_blank" rel="noopener noreferrer" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', textDecoration: 'none', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
-                            <PlayCircleFilledIcon style={{ fontSize: 50 }} />
-                          </a>
-                        </div>
+                        <Box
+                          key={idx}
+                          sx={{
+                            position: 'relative',
+                            width: 320,
+                            height: 240,
+                            overflow: 'hidden',
+                            '&:hover .eye-icon': {
+                              opacity: 1,
+                            },
+                          }}
+                        >
+                          <img
+                            src={thumbnailUrl || ""}
+                            alt={`Thumbnail for video ${idx}`}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'none' }}
+                            // onLoad={(e) => (e.currentTarget.style.display = 'block')}
+                            // onError={(e) => (e.currentTarget.style.display = 'none')}
+                          />
+                          <Box
+                            sx={{
+                              width: '100%',
+                              height: '100%',
+                              backgroundColor: '#e0e0e0', // Gray background
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                            }}
+                          >
+                            <VideoLibraryTwoTone sx={{ fontSize: 80, color: '#757575' }} />
+                          </Box>
+                          <IconButton
+                            className="eye-icon"
+                            sx={{
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              transform: 'translate(-50%, -50%)',
+                              color: 'white',
+                              opacity: 0,
+                              transition: 'opacity 0.3s ease',
+                            }}
+                            onClick={() => handleVideoClick(videoLink)}
+                          >
+                            <PlayCircleOutlineIcon sx={{ fontSize: 40 }} />
+                          </IconButton>
+                        </Box>
                       );
                     })}
                   </Box>
                 )}
               </Box>
             )}
+
+            {/* Video Preview Dialog */}
+            <Dialog
+              open={openVideoPreview}
+              onClose={() => setOpenVideoPreview(false)}
+              maxWidth="md"
+              fullWidth
+            >
+              <DialogContent sx={{ p: 0 }}>
+                {selectedVideo && (
+                  <iframe
+                    width="100%"
+                    height="480"
+                    src={selectedVideo}
+                    title="Video Preview"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
+                )}
+              </DialogContent>
+            </Dialog>
 
             {selectedChip === "Team" && (
               <Box sx={{ p: 2 }}>
@@ -957,6 +1087,18 @@ const ChatWindow: React.FC = () => {
                     </Card>
                   ))}
                 </Stack>
+              </Box>
+            )}
+
+            {selectedChip === "Schedule" && (
+              <Box sx={{ p: 2}}>
+                <AppointmentForm />
+              </Box>
+            )}
+
+            {selectedChip === "Contact" && (
+              <Box sx={{ p: 2 }}>
+                <ContactForm />
               </Box>
             )}
           </Box>
