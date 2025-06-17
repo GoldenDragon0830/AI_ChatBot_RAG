@@ -87,7 +87,7 @@ const ContactForm = () => {
 
       <form onSubmit={handleSubmit}>
         <Grid container spacing={4}>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={12}>
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <FormControl fullWidth>
@@ -97,6 +97,7 @@ const ContactForm = () => {
                     value={formData.doctor}
                     onChange={handleInputChange}
                     defaultValue=""
+                    color='success'
                   >
                     <MenuItem value="">Choose One</MenuItem>
                     <MenuItem value="Dr. Robert Rozbruch">Dr. Robert Rozbruch</MenuItem>
@@ -107,19 +108,19 @@ const ContactForm = () => {
                 </FormControl>
               </Grid>
               <Grid item xs={6}>
-                <TextField fullWidth label="First Name" required name='firstName' value={formData.firstName} onChange={handleInputChange}/>
+                <TextField color='success' fullWidth label="First Name" required name='firstName' value={formData.firstName} onChange={handleInputChange}/>
               </Grid>
               <Grid item xs={6}>
-                <TextField fullWidth label="Last Name" required name='lastName' value={formData.lastName} onChange={handleInputChange}/>
+                <TextField color='success' fullWidth label="Last Name" required name='lastName' value={formData.lastName} onChange={handleInputChange}/>
               </Grid>
               <Grid item xs={12}>
-                <TextField fullWidth label="Email" required name='email' value={formData.email} onChange={handleInputChange}/>
+                <TextField color='success' fullWidth label="Email" required name='email' value={formData.email} onChange={handleInputChange}/>
               </Grid>
               <Grid item xs={12}>
-                <TextField fullWidth label="Subject" required name='subject' value={formData.subject} onChange={handleInputChange}/>
+                <TextField color='success' fullWidth label="Subject" required name='subject' value={formData.subject} onChange={handleInputChange}/>
               </Grid>
               <Grid item xs={12}>
-                <TextField fullWidth label="Message" multiline rows={4} required name='message' value={formData.message} onChange={handleInputChange}/>
+                <TextField color='success' fullWidth label="Message" multiline rows={4} required name='message' value={formData.message} onChange={handleInputChange}/>
               </Grid>
               <Grid item xs={12}>
                 <Button
@@ -134,37 +135,6 @@ const ContactForm = () => {
                 </Button>
               </Grid>
             </Grid>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Box sx={{ pl: 2 }}>
-              <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>Contact Information</Typography>
-              {[
-                {
-                  name: "Dr. Robert Rozbruch",
-                  email: "rozbruchsr@hss.edu",
-                },
-                {
-                  name: "Dr. Austin Fragomen",
-                  email: "fragomena@hss.edu",
-                },
-                {
-                  name: "Dr. Taylor Reif",
-                  email: "reift@hss.edu",
-                },
-                {
-                  name: "Dr. Jason Hoellwarth",
-                  email: "hoellwarthj@hss.edu",
-                },
-              ].map((doctor, index) => (
-                <Box key={index} sx={{ mb: 3, p: 2, border: '1px solid #ddd', borderRadius: 2 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>{doctor.name}</Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                    <EmailIcon sx={{ mr: 1, color: '#73AD21' }} />
-                    <Typography>{doctor.email}</Typography>
-                  </Box>
-                </Box>
-              ))}
-            </Box>
           </Grid>
         </Grid>
       </form>

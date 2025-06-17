@@ -288,8 +288,6 @@ const ChatWindow: React.FC = () => {
     else if (category === "Limb Lengthening") category = "limb_lengthening"
     else if (category === "Osseointegration") category = "osseointegration"
     else if (category === "Stature Lengthening") category = "stature_lengthening"
-    else if (category === "About Us") category = "about_us"
-    else if (category === "FAQs") category = "faqs"
 
     setSelectedChip("Surgery"); // Switch tab to Surgery
     await fetchDbResponses(category);
@@ -418,8 +416,8 @@ const ChatWindow: React.FC = () => {
     }
   };
 
-  const [chatScreenMode, setChatScreenMode] = useState(false);
-  const [selectedChip, setSelectedChip] = useState<string | null>();
+  const [chatScreenMode, setChatScreenMode] = useState(true);
+  const [selectedChip, setSelectedChip] = useState<string | null>("Home");
   const [selectedNameChip, setSelectedNameChip] = useState<string | null>(
     "ALL"
   );
@@ -733,7 +731,7 @@ const ChatWindow: React.FC = () => {
                 p: 2,
                 marginTop: '20px' // Ensure some space from the top
               }}>
-                {["Bone Tumors", "Bowlegs", "Femoral Anteversion", "Femoral Retroversion", "Knock Knees", "Limb Lengthening", "Osseointegration", "Stature Lengthening", "About Us", "FAQs"].map((cat) => (
+                {["Bone Tumors", "Bowlegs", "Femoral Anteversion", "Femoral Retroversion", "Knock Knees", "Limb Lengthening", "Osseointegration", "Stature Lengthening"].map((cat) => (
                   <Button
                     key={cat}
                     variant={selectedCategory === cat ? "contained" : "outlined"}

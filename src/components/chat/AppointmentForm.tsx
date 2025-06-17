@@ -112,7 +112,7 @@ const AppointmentForm = () => {
       </Typography>
       <form onSubmit={handleSubmit}>
         <Grid container spacing={4}>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={12}>
             <Grid container spacing={2}>
               {/* Form Fields */}
               <Grid item xs={12}>
@@ -123,6 +123,7 @@ const AppointmentForm = () => {
                     defaultValue=""
                     value={formData.doctor}
                     onChange={handleInputChange}
+                    color='success'
                     >
                     <MenuItem value="">Choose one</MenuItem>
                     <MenuItem value="Dr. Robert Rozbruch">Dr. Robert Rozbruch</MenuItem>
@@ -198,6 +199,7 @@ const AppointmentForm = () => {
                 <FormControl fullWidth>
                   <FormLabel>Patient Preference</FormLabel>
                   <Select 
+                    color='success'
                     defaultValue=""
                     name='patientPreference'
                     onChange={handleInputChange}
@@ -210,16 +212,16 @@ const AppointmentForm = () => {
                 </FormControl>
               </Grid>
               <Grid item xs={6}>
-                <TextField fullWidth label="First Name"  name='firstName' value={formData.firstName} onChange={handleInputChange}/>
+                <TextField fullWidth color='success' label="First Name"  name='firstName' value={formData.firstName} onChange={handleInputChange}/>
               </Grid>
               <Grid item xs={6}>
-                <TextField fullWidth label="Last Name" name='lastName' value={formData.lastName} onChange={handleInputChange}/>
+                <TextField fullWidth color='success' label="Last Name" name='lastName' value={formData.lastName} onChange={handleInputChange}/>
               </Grid>
               <Grid item xs={12}>
-                <TextField fullWidth label="Email" name='email' value={formData.email} onChange={handleInputChange} />
+                <TextField fullWidth color='success' label="Email" name='email' value={formData.email} onChange={handleInputChange} />
               </Grid>
               <Grid item xs={12}>
-                <TextField fullWidth label="Phone" name='phone' value={formData.phone} onChange={handleInputChange}/>
+                <TextField fullWidth color='success' label="Phone" name='phone' value={formData.phone} onChange={handleInputChange}/>
               </Grid>
               <Grid item xs={12}>
                 <Button
@@ -234,47 +236,6 @@ const AppointmentForm = () => {
                 </Button>
               </Grid>
             </Grid>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Box sx={{ pl: 2 }}>
-              <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>Contact Information</Typography>
-              {[
-                {
-                  name: "Dr. Robert Rozbruch",
-                  phone: "347-808-4739",
-                  emails: ["deano@hss.edu", "morar@hss.edu"],
-                },
-                {
-                  name: "Dr. Austin Fragomen",
-                  phone: "347-763-6079",
-                  emails: ["fragomena@hss.edu"],
-                },
-                {
-                  name: "Dr. Taylor Reif",
-                  phone: "347-472-1110",
-                  emails: ["Robertsonsh@hss.edu"],
-                },
-                {
-                  name: "Dr. Jason Hoellwarth",
-                  phone: "213-652-9630",
-                  emails: ["hoellwarthj@HSS.EDU"],
-                },
-              ].map((doctor, index) => (
-                <Box key={index} sx={{ mb: 3, p: 2, border: '1px solid #ddd', borderRadius: 2 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>{doctor.name}</Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                    <PhoneIcon sx={{ mr: 1, color: '#73AD21' }} />
-                    <Typography>{doctor.phone}</Typography>
-                  </Box>
-                  {doctor.emails.map((email, idx) => (
-                    <Box key={idx} sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                      <EmailIcon sx={{ mr: 1, color: '#73AD21' }} />
-                      <Typography>{email}</Typography>
-                    </Box>
-                  ))}
-                </Box>
-              ))}
-            </Box>
           </Grid>
         </Grid>
       </form>
