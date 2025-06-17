@@ -11,6 +11,9 @@ import {
   FormLabel,
   Typography,
   Grid,
+  Snackbar,
+  Alert,
+  CircularProgress
 } from '@mui/material';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
@@ -29,7 +32,13 @@ const ContactForm = () => {
     message: ''
   });
 
+  const [emailSent, setEmailSent] = useState(false); // State to track email sent status
+  const [notificationOpen, setNotificationOpen] = useState(false); // State to manage notification visibility
+  const [loading, setLoading] = useState(false); 
+
+
   const sendEmail = (formData: any) => {
+    setLoading(true)
     const templateParams = {
       firstName: formData.firstName,
       lastName: formData.lastName,
@@ -42,9 +51,14 @@ const ContactForm = () => {
     emailjs.send(EMAIL_SERVICE_ID, EMAIL_TEMPLATE_ID, templateParams, EMAIL_USER_PUBLIC_KEY)
       .then((response) => {
         console.log('SUCCESS!', response.status, response.text);
+        setEmailSent(true);
+        setNotificationOpen(true);
       }, (error) => {
         console.log('FAILED...', error);
-      });
+      })
+      .finally(() => {
+        setLoading(false);
+      });;
   }
 
   const handleInputChange = (e: any) => {
@@ -60,6 +74,10 @@ const ContactForm = () => {
     e.preventDefault();
     sendEmail(formData);
   };
+
+  const handleNotificationClose = () => {
+    setNotificationOpen(false);
+  }
 
   return (
     <Box sx={{ p: 3, bgcolor: 'white', borderRadius: 2, boxShadow: 3, maxWidth: 900, mx: 'auto' }}>
@@ -104,8 +122,15 @@ const ContactForm = () => {
                 <TextField fullWidth label="Message" multiline rows={4} required name='message' value={formData.message} onChange={handleInputChange}/>
               </Grid>
               <Grid item xs={12}>
-                <Button type="submit" variant="contained" color="success" fullWidth>
-                  Submit
+                <Button
+                  type='submit'
+                  variant="contained"
+                  color="success"
+                  fullWidth
+                  disabled={emailSent || loading}
+                  startIcon={loading ? <CircularProgress size={20} /> : null} // Display loading icon
+                >
+                  {loading ? 'Sending...' : 'Submit'}
                 </Button>
               </Grid>
             </Grid>
@@ -143,6 +168,16 @@ const ContactForm = () => {
           </Grid>
         </Grid>
       </form>
+      <Snackbar
+        open={notificationOpen}
+        autoHideDuration={6000}
+        onClose={handleNotificationClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }} // Positioning the Snackbar
+      >
+        <Alert onClose={handleNotificationClose} severity="success" sx={{ width: '100%' }}>
+          Email sent successfully!
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
