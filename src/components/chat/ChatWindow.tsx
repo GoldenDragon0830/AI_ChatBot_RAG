@@ -49,6 +49,21 @@ import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import AppointmentForm from "./AppointmentForm";
 import ContactForm from "./ContactForm";
 
+const DefaultThumbnail = () => (
+  <Box
+    sx={{
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#f0f0f0', // Light gray background
+      color: '#9e9e9e', // Gray color for the icon
+    }}
+  >
+    <PlayCircleOutlineIcon sx={{ fontSize: 60 }} />
+  </Box>
+);
 interface MessageInterface {
   content: string;
   imageUrl?: string; // Optional imageUrl property
@@ -168,7 +183,28 @@ const ChatWindow: React.FC = () => {
   };
 
   const handleVideoClick = (videoSrc: string) => {
-    setSelectedVideo(videoSrc);
+    let embedUrl = "";
+  
+    if (videoSrc.includes("youtube.com")) {
+      const videoId = videoSrc.split("v=")[1];
+      embedUrl = `https://www.youtube.com/embed/${videoId}`;
+    } else if (videoSrc.includes("instagram.com")) {
+      let videoId = "";
+      let isReel = false;
+      if (videoSrc.includes("/reel/")) {
+        videoId = videoSrc.split("/reel/")[1]?.split(/[/?#]/)[0];
+        isReel = true;
+      } else if (videoSrc.includes("/p/")) {
+        videoId = videoSrc.split("/p/")[1]?.split(/[/?#]/)[0];
+      }
+      if (videoId) {
+        embedUrl = isReel
+          ? `https://www.instagram.com/reel/${videoId}/embed`
+          : `https://www.instagram.com/p/${videoId}/embed`;
+      }
+    }
+    console.log(embedUrl)
+    setSelectedVideo(embedUrl);
     setOpenVideoPreview(true);
   };
 
@@ -829,6 +865,9 @@ const ChatWindow: React.FC = () => {
                           },
                         }}
                       >
+                        <Typography variant="subtitle1" sx={{ position: 'absolute', top: 0, left: 0, zIndex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', color: 'white', padding: '4px' }}>
+                          {img.subcategory}
+                        </Typography>
                         <img
                           src={img.content}
                           alt={img.category}
@@ -898,88 +937,48 @@ const ChatWindow: React.FC = () => {
                   <Typography>No videos available.</Typography>
                 ) : (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                    {dbVideos.map((vid, idx) => {
-                      const isYouTube = vid.content.includes("youtube.com") || vid.content.includes("youtu.be");
-                      const isInstagram = vid.content.includes("instagram.com");
-
-                      let thumbnailUrl = "";
-                      let videoLink = vid.content;
-
-                      if (isYouTube) {
-                        // Extract the video ID from the YouTube URL
-                        let videoId = vid.content.split('v=')[1] || vid.content.split('/').pop();
-                        const ampersandPosition = videoId.indexOf('&');
-                        if (ampersandPosition !== -1) {
-                          videoId = videoId.substring(0, ampersandPosition);
-                        }
-                        // Construct the YouTube thumbnail URL
-                        thumbnailUrl = `https://img.youtube.com/vi/${videoId}/2.jpg`;
-                        // Construct the YouTube embed URL
-                        videoLink = `https://www.youtube.com/embed/${videoId}`;
-                      } else if (isInstagram) {
-                        // Fetch Instagram thumbnail using oEmbed
-                        fetch(`https://api.instagram.com/oembed?url=${vid.content}`)
-                          .then(response => response.json())
-                          .then(data => {
-                            thumbnailUrl = data.thumbnail_url;
-                            videoLink = data.content;
-                          })
-                          .catch(error => console.error("Error fetching Instagram thumbnail:", error));
-                      }
-
-                      return (
-                        <Box
-                          key={idx}
-                          sx={{
-                            position: 'relative',
-                            width: 320,
-                            height: 240,
-                            overflow: 'hidden',
-                            '&:hover .eye-icon': {
-                              opacity: 1,
-                            },
-                          }}
-                        >
+                    {dbVideos.map((vid, idx) => (
+                      <Box
+                        key={idx}
+                        sx={{
+                          position: 'relative',
+                          width: 320,
+                          height: 240,
+                          overflow: 'hidden',
+                          '&:hover .eye-icon': {
+                            opacity: 1,
+                          },
+                        }}
+                      >
+                        <Typography variant="subtitle1" sx={{ position: 'absolute', top: 0, left: 0, zIndex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', color: 'white', padding: '4px' }}>
+                          {vid.subcategory}
+                        </Typography>
+                        {vid.thumbnail ? (
                           <img
-                            src={thumbnailUrl || ""}
+                            src={vid.thumbnail}
                             alt={`Thumbnail for video ${idx}`}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'none' }}
-                            // onLoad={(e) => (e.currentTarget.style.display = 'block')}
-                            // onError={(e) => (e.currentTarget.style.display = 'none')}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                           />
-                          <Box
-                            sx={{
-                              width: '100%',
-                              height: '100%',
-                              backgroundColor: '#e0e0e0', // Gray background
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                            }}
-                          >
-                            <VideoLibraryTwoTone sx={{ fontSize: 80, color: '#757575' }} />
-                          </Box>
-                          <IconButton
-                            className="eye-icon"
-                            sx={{
-                              position: 'absolute',
-                              top: '50%',
-                              left: '50%',
-                              transform: 'translate(-50%, -50%)',
-                              color: 'white',
-                              opacity: 0,
-                              transition: 'opacity 0.3s ease',
-                            }}
-                            onClick={() => handleVideoClick(videoLink)}
-                          >
-                            <PlayCircleOutlineIcon sx={{ fontSize: 40 }} />
-                          </IconButton>
-                        </Box>
-                      );
-                    })}
+                        ) : (
+                          <DefaultThumbnail />
+                        )}
+                        <IconButton
+                          className="eye-icon"
+                          sx={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            color: 'white',
+                            opacity: 0,
+                            transition: 'opacity 0.3s ease',
+                          }}
+                          onClick={() => handleVideoClick(vid.content)}
+                        >
+                          <PlayCircleOutlineIcon sx={{ fontSize: 40 }} />
+                        </IconButton>
+                      </Box>
+                    ))}
                   </Box>
                 )}
               </Box>
