@@ -251,9 +251,9 @@ def get_db_response(keyword: str, type: str, name: str):
     # Define the query based on the keyword
     if keyword == "all_option_keyword":
         if type == "":
-            query = f'SELECT DISTINCT name, description, price, type FROM csv'
+            query = f'SELECT DISTINCT * FROM csv'
         else:
-            query = f'SELECT DISTINCT name, description, price FROM csv WHERE type=%s'
+            query = f'SELECT DISTINCT * FROM csv WHERE type=%s'
     elif keyword == "all_option_name":
         if type == "":
             query = f'SELECT DISTINCT * FROM csv WHERE name=%s'

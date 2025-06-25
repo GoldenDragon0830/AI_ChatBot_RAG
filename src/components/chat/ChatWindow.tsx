@@ -316,9 +316,73 @@ const ChatWindow: React.FC = () => {
     );
   };
 
+
   const [selectedOptions, setSelectedOptions] = useState<{ [group: string]: string[] }>({});
   const [chunkTotalPrice, setChunkTotalPrice] = useState(0);
   
+  const fetchMenuData = async (menu: string) => {
+    setMenuDisplayData([]); // clear while loading
+    try {
+      const response = await fetch(
+        `${BACKEND_API_URL}/get_db_data?keyword=all_option_keyword&type=${menu.toLowerCase()}&name=`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "text/event-stream",
+          },
+        }
+      );
+      if (!response.ok) throw new Error("Network response was not ok");
+      if (!response.body) throw new Error("Response body is null");
+  
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+  
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+  
+        const chunk = decoder.decode(value);
+        buffer += chunk;
+  
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+  
+        lines.forEach((line) => {
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6).trim();
+            if (data.includes("ChunkData:")) {
+              try {
+                const jsonData = JSON.parse(data.split("ChunkData:")[1]);
+                const parsedData: ChunkOption[] = jsonData.map((item: any) => {
+                  const key = Object.keys(item)[0];
+                  const key_description = Object.keys(item)[1];
+                  const key_price = Object.keys(item)[2];
+                  const key_type = Object.keys(item)[3];
+  
+                  return {
+                    type: key,
+                    value: item[key],
+                    description: item[key_description],
+                    price: item[key_price],
+                    keyword: item[key_type],
+                  };
+                });
+                console.log(parsedData)
+                setMenuDisplayData(parsedData);
+              } catch (e) {
+                console.error(e);
+              }
+            }
+          }
+        });
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const AmountItemButton: React.FC<{
     text: string;
@@ -1338,6 +1402,8 @@ const ChatWindow: React.FC = () => {
   const [optionDialog, setOptionDialog] = useState(false);
   const [selectedItemData, setSelectedItemData] = useState<any>(null);
   const [selectedChip, setSelectedChip] = useState<string | null>("ALL");
+  const [selectedMenu, setSelectedMenu] = useState<string>(""); // for horizontal menu bar
+  const [menuDisplayData, setMenuDisplayData] = useState<ChunkOption[]>([]);
   const [selectedNameChip, setSelectedNameChip] = useState<string | null>(
     "ALL"
   );
@@ -1386,6 +1452,16 @@ const ChatWindow: React.FC = () => {
       handleGetResponseFromDB("all_option_name", typeData, nameData);
     }
   }, [nameListData, optionsDialogOpen]); // Add optionsDialogOpen to dependencies
+
+  useEffect(() => {
+    const firstMenu = menuList.find(m => m !== "ALL");
+    if (firstMenu) {
+      setSelectedMenu(firstMenu);
+      setTypeData(firstMenu);
+      setNameData("");
+      fetchMenuData(firstMenu);
+    }
+  }, []);
 
   let groupedData: Record<string, ChunkOption[]> = chunkData.reduce(
     (acc: Record<string, ChunkOption[]>, item) => {
@@ -1754,70 +1830,92 @@ const ChatWindow: React.FC = () => {
         display: 'flex',
         flexDirection: 'column'
       }}>
-        <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
-          <Box sx={{ 
-            flexGrow: 1, 
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            overflow: 'hidden', // Prevent scrolling
-            p: 2
-          }}>
-            {/* Container for both page images */}
-            <Box sx={{ 
-              display: 'flex', 
+        <Box sx={{ 
+          width: '100%', 
+          bgcolor: 'white', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center', 
+          p: 0, 
+          mt: 2 
+        }}>
+          {/* Horizontal menu bar */}
+          <Box
+            sx={{
+              display: 'flex',
               flexDirection: 'row',
-              justifyContent: 'center',
+              overflowX: 'auto', // horizontal scroll
+              overflowY: 'hidden',
+              whiteSpace: 'nowrap',
+              borderBottom: '2px solid #eee',
               width: '100%',
-              height: '100%',
-              gap: 2 // Space between images
-            }}>
-              {/* First page image */}
-              <Box sx={{ 
-                flex: 1, 
-                height: '100%',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                border: '1px solid #e0e0e0',
-                borderRadius: 2,
-                overflow: 'hidden',
-                bgcolor: '#f9f9f9'
-              }}>
-                <img
-                  src="/west-side-wok/menu1.png" // Replace with your actual image path
-                  alt="Menu Page 1"
-                  style={{ 
-                    maxWidth: '100%', 
-                    maxHeight: '100%', 
-                    objectFit: 'contain'
-                  }}
-                />
-              </Box>
-              
-              {/* Second page image */}
-              <Box sx={{ 
-                flex: 1, 
-                height: '100%',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                border: '1px solid #e0e0e0',
-                borderRadius: 2,
-                overflow: 'hidden',
-                bgcolor: '#f9f9f9'
-              }}>
-                <img
-                  src="/west-side-wok/menu2.png" // Replace with your actual image path
-                  alt="Menu Page 2"
-                  style={{ 
-                    maxWidth: '100%', 
-                    maxHeight: '100%', 
-                    objectFit: 'contain'
-                  }}
-                />
-              </Box>
-            </Box>
+              justifyContent: 'flex-start',
+              mb: 2,
+              px: 2,
+              scrollbarWidth: 'thin',
+              '&::-webkit-scrollbar': {
+                height: '6px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: '#eee',
+                borderRadius: '3px',
+              },
+            }}
+          >
+            {menuList.filter(m => m !== "ALL").map((menu, idx) => (
+              <Button
+                key={menu}
+                onClick={() => {
+                  setSelectedMenu(menu);
+                  setTypeData(menu);
+                  setNameData("");
+                  // Fetch menu data for this menu
+                  fetchMenuData(menu);
+                }}
+                sx={{
+                  color: selectedMenu === menu ? "#B71C1C" : "#444",
+                  fontWeight: selectedMenu === menu ? 300 : 200,
+                  borderBottom: selectedMenu === menu ? "3px solid #B71C1C" : "3px solid transparent",
+                  borderRadius: 0,
+                  fontSize: 12,
+                  background: "none",
+                  minWidth: 120,
+                  px: 2,
+                  py: 1,
+                  textTransform: "none",
+                  whiteSpace: 'normal',
+                  display: 'inline-block',
+                }}
+              >
+                {menu.replace(/_/g, " ").replace(/side dishes/i, "Side Dishes")}
+              </Button>
+            ))}
+          </Box>
+          {/* Menu items list */}
+          <Box sx={{ width: '100%', maxWidth: 600, mx: 'auto', mt: 2 }}>
+            <Typography variant="h5" sx={{ fontWeight: 700, color: "#B71C1C", mb: 2, ml: 1 }}>
+              {selectedMenu.replace(/_/g, " ")} Menu
+            </Typography>
+            <Divider sx={{ mb: 1 }} />
+            {menuDisplayData.length === 0 ? (
+              <Typography sx={{ color: "#888", textAlign: "center", mt: 4 }}>No items found.</Typography>
+            ) : (
+              menuDisplayData.map((item, idx) => (
+                <Box key={idx} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1, borderBottom: '1px solid #eee' }}>
+                  <Box>
+                    <Typography sx={{ fontWeight: 500, fontSize: 17, color: "#222" }}>
+                      {item.price}
+                    </Typography>
+                    {item.keyword && (
+                      <Typography sx={{ color: "#888", fontSize: 14 }}>{item.description}</Typography>
+                    )}
+                  </Box>
+                  <Typography sx={{ fontWeight: 600, fontSize: 17, color: "#222" }}>
+                    ${parseFloat(item.keyword).toFixed(2)}
+                  </Typography>
+                </Box>
+              ))
+            )}
           </Box>
         </Box>
       </Box>
