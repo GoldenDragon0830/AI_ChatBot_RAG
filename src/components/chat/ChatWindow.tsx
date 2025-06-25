@@ -21,6 +21,7 @@ import {
   FormControlLabel,
   Typography,
   DialogActions,
+  CardHeader,
 } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
@@ -203,6 +204,19 @@ const ChatWindow: React.FC = () => {
   const handleOptionsDialogOpen = () => {
     setOptionsDialogOpen(true);
   };
+
+  const SushiBowlIcon = ({ color = "#222" }) => (
+    <svg width="18" height="18" viewBox="0 0 32 32" style={{ marginRight: 6, display: "block" }}>
+      <g>
+        <ellipse cx="12" cy="24" rx="8" ry="4" fill={color} />
+        <rect x="4" y="22" width="16" height="2" fill={color} />
+        <polygon points="18,10 28,14 18,18" fill="#fff" stroke={color} strokeWidth="1.5"/>
+        <circle cx="21" cy="13" r="1" fill={color}/>
+        <circle cx="23" cy="14" r="1" fill={color}/>
+        <circle cx="20" cy="15" r="1" fill={color}/>
+      </g>
+    </svg>
+  );
 
   const handleOptionsDialogClose = () => {
     setOptionsDialogOpen(false);
@@ -415,7 +429,7 @@ const ChatWindow: React.FC = () => {
             backgroundColor: selectedOptionListData.includes(text) ? "#F1F7E9" : "white",
             transition: "background-color 0.3s ease-in-out",
             border: "1px solid",
-            borderColor: "#73AD21",
+            borderColor: "#D1D1D1",
             borderRadius: "20px",
           }}
         > 
@@ -438,51 +452,21 @@ const ChatWindow: React.FC = () => {
               <Typography variant="body2" sx={{ fontWeight: "bold", color: "block", fontSize: "20px", marginBottom: "5px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient:  "vertical", flex: 1 }} onClick={onClick}>
                 {text}
               </Typography>
-              {!displayOptionSoup.includes(text) && ( displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text) )?
+                         
+              <Typography variant="body2" style={{ color: "black", fontSize: "19px", fontWeight: "bold", marginLeft: "10px", justifyContent: "center" }} onClick={onClick}>
+                {"$" + parseFloat(price)}
+              </Typography>
+              {/* {!displayOptionSoup.includes(text) && ( displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text) )?
                 (
                   <ChevronRightIcon sx={{ color: '#000', fontSize: 28, ml: 1 }} onClick={onClick}/>
                 ) : null
-              }
+              } */}
             </Box>
             {type !== "option_name" ? (
               <Typography variant="body2" sx={{ color: "gray", fontSize: "14px", marginBottom: "10px", height: "40px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }} onClick={onClick}>
                 {description}
               </Typography>
             ) : null}
-            <Box sx={{ display: "flex", minHeight: 'auto',marginBottom: "-3px", gap: 1, height: "5px" }} >
-              {displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text) ? (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "2px" }}>
-                  {/* Badge for Option 1 */}                    
-                    <Badge badgeContent={itemCount["Option 1"] || 0}
-                      sx={{ "& .MuiBadge-badge": { backgroundColor: "#FF3B30", color: "white", border: "2px solid #FF3B30", } }} >
-                      <Chip sx={{ color: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`, borderColor: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`, "& .MuiChip-label": { fontWeight: "bold",  }, "&:hover": { backgroundColor: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`,  }, marginRight: "5px", fontSize: "14px" }} size="small" label={(displayOptionSoup.includes(text) || displayOptionContinue.includes(text)) ? (text === "Beef Dumplings" ? "Steamed" : "Pint $5") : displayOptionDish.includes(text) ? "Small $9" : displayOptionChinaDish.includes(text) ? "Small $18" : undefined} variant="outlined" onClick={() => handleSelectOption("Option 1")} />
-                    </Badge>
-                    {/* Badge for Option 2 */}
-                    <Badge badgeContent={itemCount["Option 2"] || 0} sx={{  "& .MuiBadge-badge": { backgroundColor: "#FF3B30",  color: "white",  border: "2px solid #FF3B30",  } }} >
-                      <Chip
-                        sx={{
-                          color: `${selectedOption === "Option 2" ? "#73AD21" : "#BABABA"}`, // Custom text color
-                          borderColor: `${selectedOption === "Option 2" ? "#73AD21" : "#BABABA"}`, // Custom border color
-                          "& .MuiChip-label": {
-                            fontWeight: "bold", // Optional: Make the label bold
-                          },
-                          "&:hover": {
-                            backgroundColor: `${selectedOption === "Option 2" ? "#73AD21" : "#BABABA"}`, // Optional: Add a hover effect with a lighter green
-                          },
-                          marginRight: "5px",
-                          fontSize: "14px"
-                        }}
-                        size="small"
-                        label={(displayOptionSoup.includes(text) || displayOptionContinue.includes(text)) ? (text === "Beef Dumplings" ? "Fried" : "Quart $10") : displayOptionDish.includes(text) ? "Large $16" : displayOptionChinaDish.includes(text) ? "Large $24" : undefined}
-                        variant="outlined"
-                        onClick={() => handleSelectOption("Option 2")}
-                      />
-                    </Badge>
-                </div>
-              ) : (
-                null
-              )}
-            </Box>
           </CardContent>
           <CardActions
             sx={{
@@ -492,16 +476,13 @@ const ChatWindow: React.FC = () => {
             }}
             disableSpacing
           >
-            <Typography variant="body2" style={{ color: "#73AD21", fontSize: "19px", fontWeight: "bold", marginLeft: "10px" }} onClick={onClick}>
-              {"$" + parseFloat(price)}
-            </Typography>
             {type === "name" && (
               <Box
                 sx={{
                   display: "flex",
                   flexDirection: "row",
                   alignItems: "center",
-                  justifyContent: "space-between",
+                  justifyContent: "fill-content",
                 }}
               >
                   <Box
@@ -514,7 +495,7 @@ const ChatWindow: React.FC = () => {
                       borderColor: "#BABABA"
                     }}
                   >
-                                    <IconButton
+                  <IconButton
                     size="small"
                     color="inherit"
                     onClick={() =>
@@ -542,12 +523,61 @@ const ChatWindow: React.FC = () => {
                     <AddIcon fontSize="small" />
                   </IconButton>
                 </Box>
-                <IconButton
-                  size="small"
-                  color="success"
-                  sx={{ marginLeft: "10px" }}
+                <Box sx={{ display: "flex", minHeight: 'auto', gap: 1, marginLeft: 2 }} >
+                  {displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text) ? (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "2px" }}>
+                      {/* Badge for Option 1 */}                    
+                        <Badge badgeContent={itemCount["Option 1"] || 0}
+                          sx={{ "& .MuiBadge-badge": { backgroundColor: "#FF3B30", color: "white", border: "2px solid #FF3B30", } }} >
+                          <Chip sx={{ color: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`, borderColor: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`, "& .MuiChip-label": { fontWeight: "bold",  }, "&:hover": { backgroundColor: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`,  }, marginRight: "5px", fontSize: "14px" }} size="small" label={(displayOptionSoup.includes(text) || displayOptionContinue.includes(text)) ? (text === "Beef Dumplings" ? "Steamed" : "Pint") : displayOptionDish.includes(text) ? "Small" : displayOptionChinaDish.includes(text) ? "Small" : undefined} variant="outlined" onClick={() => handleSelectOption("Option 1")} />
+                        </Badge>
+                        {/* Badge for Option 2 */}
+                        <Badge badgeContent={itemCount["Option 2"] || 0} sx={{  "& .MuiBadge-badge": { backgroundColor: "#FF3B30",  color: "white",  border: "2px solid #FF3B30",  } }} >
+                          <Chip
+                            sx={{
+                              color: `${selectedOption === "Option 2" ? "#73AD21" : "#BABABA"}`, // Custom text color
+                              borderColor: `${selectedOption === "Option 2" ? "#73AD21" : "#BABABA"}`, // Custom border color
+                              "& .MuiChip-label": {
+                                fontWeight: "bold", // Optional: Make the label bold
+                              },
+                              "&:hover": {
+                                backgroundColor: `${selectedOption === "Option 2" ? "#73AD21" : "#BABABA"}`, // Optional: Add a hover effect with a lighter green
+                              },
+                              marginRight: "5px",
+                              fontSize: "14px"
+                            }}
+                            size="small"
+                            label={(displayOptionSoup.includes(text) || displayOptionContinue.includes(text)) ? (text === "Beef Dumplings" ? "Fried" : "Quart") : displayOptionDish.includes(text) ? "Large" : displayOptionChinaDish.includes(text) ? "Large" : undefined}
+                            variant="outlined"
+                            onClick={() => handleSelectOption("Option 2")}
+                          />
+                        </Badge>
+                    </div>
+                  ) : (
+                    null
+                  )}
+                </Box>
+                <Fab
+                  size="medium"
+                  sx={{
+                    ml: 2,
+                    background: "#fff",
+                    boxShadow: "0 4px 16px 0 rgba(0,0,0,0.15)",
+                    width: 40,
+                    height: 40,
+                    minHeight: 40,
+                    '&:hover': {
+                      background: "#fff",
+                      boxShadow: "0 6px 20px 0 rgba(0,0,0,0.18)",
+                    },
+                  }}
                   onClick={() => {
-                    if (displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text)) {
+                    if (
+                      displayOptionSoup.includes(text) ||
+                      displayOptionContinue.includes(text) ||
+                      displayOptionDish.includes(text) ||
+                      displayOptionChinaDish.includes(text)
+                    ) {
                       handleOnClick();
                     } else {
                       setCartData((prevCartData) => [
@@ -561,15 +591,15 @@ const ChatWindow: React.FC = () => {
                           option_name: "",
                           option_price: "",
                           count: generalCount,
-                          optionList: []
+                          optionList: [],
                         },
                       ]);
                       setCartCount((prevCount) => prevCount + generalCount);
                     }
                   }}
                 >
-                  <AddShoppingCartIcon fontSize="small" />
-                </IconButton>
+                  <AddIcon sx={{ color: "#FF9900", fontSize: 32 }} />
+                </Fab>
               </Box>
             )}
           </CardActions>
@@ -1406,61 +1436,75 @@ const ChatWindow: React.FC = () => {
           m: 0,
         }}
       >
-        {menuList.map((title, index) => {
-          return (
-            <Chip
-              sx={{
-                margin: "5px",
-                color: `${selectedChip === title ? "#FFFFFF" : "#BABABA"}`,
-                backgroundColor: `${selectedChip === title ? "#73AD21" : "#FFFFFF"}`,
-                fontWeight: `${selectedChip === title ? "bold" : "normal"}`,
-                fontSize: "14px",
-                '& .MuiChip-label': {
-                  paddingLeft: '4px',  // Reduce default padding between icon and label
-                },
-                '& svg': {
-                  marginLeft: '2px',
-                  marginRight: '-4px',  // Pull the label closer to the icon
-                }
-              }}
-              icon={
-                <MenuIcon
-                  color={selectedChip === title ? "#FFFFFF" : "#BABABA"}
-                />
+        {menuList.map((title, index) => (
+          <Box
+            key={index}
+            onClick={() => {
+              setSelectedOptionListData([]);
+              setChunkTotalPrice(0);
+              setSelectedChunkData(undefined);
+              setTotalPrice("");
+              if (title === "ALL") {
+                setSelectedChip(title);
+                setTypeData(title);
+                setNameData("");
+                setSelectedChunk("ALL");
+                handleGetResponseFromDB("all_option_keyword", "", "");
+              } else {
+                setSelectedChip(title);
+                setTypeData(title);
+                setNameData("");
+                const userMessage: MessageInterface = {
+                  content: title,
+                  role: "user",
+                };
+                const backMessage: MessageInterface = {
+                  content: "I want to find new type." + "type: " + title,
+                  role: "user",
+                };
+                handleDisplayOption(backMessage, flag, false);
               }
-              variant={selectedChip === title ? "filled" : "outlined"} // Change variant when selected
-              key={index}
-              onClick={() => {
-                setSelectedOptionListData([]);
-                setChunkTotalPrice(0);
-                setSelectedChunkData(undefined);
-                setTotalPrice("");
-                if (title === "ALL") {
-                  setSelectedChip(title); // Set the selected chip
-                  setTypeData(title); // set one type data
-                  setNameData("");
-                  setSelectedChunk("ALL");
-                  handleGetResponseFromDB("all_option_keyword", "", "");
-                } else {
-                  setSelectedChip(title); // Set the selected chip
-                  setTypeData(title); // set one type data
-                  setNameData("");
-                  const userMessage: MessageInterface = {
-                    content: title, // Send the text of the item as the user's message
-                    role: "user",
-                  };
-                  const backMessage: MessageInterface = {
-                    content: "I want to find new type." + "type: " + title, // Send the text of the item as the user's message
-                    role: "user",
-                  };
-                  handleDisplayOption(backMessage, flag, false);
-                  // setMessages((prevMessage) => [...prevMessage, userMessage]);
-                }
+            }}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              background: selectedChip === title ? "#DFF5E2" : "#f6f6f6",
+              color: selectedChip === title ? "#4CAF50" : "#222",
+              fontWeight: selectedChip === title ? 700 : 500,
+              fontSize: "1rem",
+              borderRadius: "8px",
+              px: 1.5,
+              py: 0.5,
+              cursor: "pointer",
+              minWidth: 0,
+              mr: 1,
+              mb: 1,
+              boxShadow: "none",
+              border: "none",
+              transition: "background 0.2s, color 0.2s",
+              "&:hover": {
+                background: "#E8F8ED",
+                color: "#388e3c",
+              },
+            }}
+          >
+            <SushiBowlIcon color={selectedChip === title ? "#4CAF50" : "#222"} />
+            <Typography
+              sx={{
+                fontWeight: selectedChip === title ? 700 : 500,
+                fontSize: "1rem",
+                color: "inherit",
+                ml: 0.5,
+                userSelect: "none",
+                lineHeight: 1.6,
+                letterSpacing: 0,
+                whiteSpace: "nowrap",
               }}
-              label={title.replace(/_/g, "\u2009")}
-            />
-          );
-        })}
+            >
+              {title.replace(/_/g, " ")}
+            </Typography>
+          </Box>
+        ))}
       </Paper>
       <Box
         sx={{
