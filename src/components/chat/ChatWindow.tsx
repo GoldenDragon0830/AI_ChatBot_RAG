@@ -83,7 +83,7 @@ const GREETING_WORD =
 
 const drawerWidth = "73%";
 
-const DEFAULT_DATA = [1, 704, 453, 27, 379, 487, 339, 743, 566, 769, 500, 419, 936, 28, 702, 216];
+const DEFAULT_DATA = [1, 704, 553, 64, 379, 487, 309, 743, 866, 321, 590, 419, 15, 28, 602, 126];
 
 const ChatWindow: React.FC = () => {
   const theme = useTheme();
@@ -488,7 +488,7 @@ const ChatWindow: React.FC = () => {
             maxWidth: "450px",
             minWidth: "200px",
             marginLeft: "1vw",
-            marginBottom: "2vh",
+            marginBottom: "1vh",
             cursor: "pointer",
             backgroundColor: selectedOptionListData.includes(text) ? "#F1F7E9" : "white",
             transition: "background-color 0.3s ease-in-out",
@@ -497,7 +497,7 @@ const ChatWindow: React.FC = () => {
             borderRadius: "20px",
           }}
         > 
-          <CardContent sx={{ display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "flex-start", height: "auto", position: "relative", transition: "transform 0.3s ease-in-out",  "&:hover": { transform: "scale(1.05)", }, }}
+          <CardContent sx={{ display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "flex-start", height: "auto", position: "relative", transition: "transform 0.3s ease-in-out",  "&:hover": { transform: "scale(1)", }, }}
             onClick={() => {
               if (type === "option_name") {
                 setSelectedOptionListData((prevOptions) => {
@@ -537,28 +537,24 @@ const ChatWindow: React.FC = () => {
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
+              px: 2,
+              width: "90%",
+              
             }}
             disableSpacing
           >
             {type === "name" && (
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "fill-content",
-                }}
-              >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "row",
-                      alignItems: "center",
-                      border: "1px, solid",
-                      borderRadius: "10px",
-                      borderColor: "#BABABA"
-                    }}
-                  >
+              <>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    border: "1px, solid",
+                    borderRadius: "10px",
+                    borderColor: "#BABABA"
+                  }}
+                >
                   <IconButton
                     size="small"
                     color="inherit"
@@ -587,9 +583,9 @@ const ChatWindow: React.FC = () => {
                     <AddIcon fontSize="small" />
                   </IconButton>
                 </Box>
-                <Box sx={{ display: "flex", minHeight: 'auto', gap: 1, marginLeft: 2 }} >
+                <Box sx={{ display: "flex", minHeight: 'auto', gap: 1,  }} >
                   {displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text) ? (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "2px" }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "1px" }}>
                       {/* Badge for Option 1 */}                    
                         <Badge badgeContent={itemCount["Option 1"] || 0}
                           sx={{ "& .MuiBadge-badge": { backgroundColor: "#FF3B30", color: "white", border: "2px solid #FF3B30", } }} >
@@ -608,7 +604,7 @@ const ChatWindow: React.FC = () => {
                                 backgroundColor: `${selectedOption === "Option 2" ? "#73AD21" : "#BABABA"}`, // Optional: Add a hover effect with a lighter green
                               },
                               marginRight: "5px",
-                              fontSize: "14px"
+                              fontSize: "12px"
                             }}
                             size="small"
                             label={(displayOptionSoup.includes(text) || displayOptionContinue.includes(text)) ? (text === "Beef Dumplings" ? "Fried" : "Quart") : displayOptionDish.includes(text) ? "Large" : displayOptionChinaDish.includes(text) ? "Large" : undefined}
@@ -624,7 +620,6 @@ const ChatWindow: React.FC = () => {
                 <Fab
                   size="medium"
                   sx={{
-                    ml: 2,
                     background: "#fff",
                     boxShadow: "0 4px 16px 0 rgba(0,0,0,0.15)",
                     width: 40,
@@ -664,7 +659,7 @@ const ChatWindow: React.FC = () => {
                 >
                   <AddIcon sx={{ color: "#FF9900", fontSize: 32 }} />
                 </Fab>
-              </Box>
+              </>
             )}
           </CardActions>
         </Card>
@@ -1510,77 +1505,113 @@ const ChatWindow: React.FC = () => {
           listStyle: "none",
           p: 0.5,
           m: 0,
+          background: "#F2F2F2"
         }}
       >
-        {menuList.map((title, index) => (
-          <Box
-            key={index}
-            onClick={() => {
-              setSelectedOptionListData([]);
-              setChunkTotalPrice(0);
-              setSelectedChunkData(undefined);
-              setTotalPrice("");
-              if (title === "ALL") {
-                setSelectedChip(title);
-                setTypeData(title);
-                setNameData("");
-                setSelectedChunk("ALL");
-                handleGetResponseFromDB("all_option_keyword", "", "");
-              } else {
-                setSelectedChip(title);
-                setTypeData(title);
-                setNameData("");
-                const userMessage: MessageInterface = {
-                  content: title,
-                  role: "user",
-                };
-                const backMessage: MessageInterface = {
-                  content: "I want to find new type." + "type: " + title,
-                  role: "user",
-                };
-                handleDisplayOption(backMessage, flag, false);
-              }
-            }}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              background: selectedChip === title ? "#DFF5E2" : "#f6f6f6",
-              color: selectedChip === title ? "#4CAF50" : "#222",
-              fontWeight: selectedChip === title ? 700 : 500,
-              fontSize: "1rem",
-              borderRadius: "8px",
-              px: 1.5,
-              py: 0.5,
-              cursor: "pointer",
-              minWidth: 0,
-              mr: 1,
-              mb: 1,
-              boxShadow: "none",
-              border: "none",
-              transition: "background 0.2s, color 0.2s",
-              "&:hover": {
-                background: "#E8F8ED",
-                color: "#388e3c",
-              },
-            }}
-          >
-            <SushiBowlIcon color={selectedChip === title ? "#4CAF50" : "#222"} />
-            <Typography
-              sx={{
-                fontWeight: selectedChip === title ? 700 : 500,
-                fontSize: "1rem",
-                color: "inherit",
-                ml: 0.5,
-                userSelect: "none",
-                lineHeight: 1.6,
-                letterSpacing: 0,
-                whiteSpace: "nowrap",
-              }}
-            >
-              {title.replace(/_/g, " ")}
-            </Typography>
-          </Box>
-        ))}
+        {fullScreenMenu ? (
+            <>
+              {menuList.filter(m => m !== "ALL").map((menu, idx) => (
+                <Button
+                  key={menu}
+                  onClick={() => {
+                    setSelectedMenu(menu);
+                    setTypeData(menu);
+                    setNameData("");
+                    // Fetch menu data for this menu
+                    fetchMenuData(menu);
+                  }}
+                  sx={{
+                    color: selectedMenu === menu ? "#B71C1C" : "#444",
+                    fontWeight: selectedMenu === menu ? 300 : 200,
+                    borderBottom: selectedMenu === menu ? "3px solid #B71C1C" : "3px solid transparent",
+                    borderRadius: 0,
+                    fontStyle: selectedMenu === menu ? "inherit" : "normal",
+                    fontSize: selectedMenu === menu ? 15 : 12,
+                    background: "none",
+                    minWidth: 120,
+                    px: 2,
+                    py: 1,
+                    textTransform: "none",
+                    whiteSpace: 'normal',
+                    display: 'inline-block',
+                  }}
+                >
+                  {menu.replace(/_/g, " ").replace(/side dishes/i, "Side Dishes")}
+                </Button>
+              ))}
+            </>
+          ) : (
+            <>
+              {menuList.map((title, index) => (
+                <Box
+                  key={index}
+                  onClick={() => {
+                    setSelectedOptionListData([]);
+                    setChunkTotalPrice(0);
+                    setSelectedChunkData(undefined);
+                    setTotalPrice("");
+                    if (title === "ALL") {
+                      setSelectedChip(title);
+                      setTypeData(title);
+                      setNameData("");
+                      setSelectedChunk("ALL");
+                      handleGetResponseFromDB("all_option_keyword", "", "");
+                    } else {
+                      setSelectedChip(title);
+                      setTypeData(title);
+                      setNameData("");
+                      const userMessage: MessageInterface = {
+                        content: title,
+                        role: "user",
+                      };
+                      const backMessage: MessageInterface = {
+                        content: "I want to find new type." + "type: " + title,
+                        role: "user",
+                      };
+                      handleDisplayOption(backMessage, flag, false);
+                    }
+                  }}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    background: selectedChip === title ? "#DFF5E2" : "#FFFFFF",
+                    color: selectedChip === title ? "#4CAF50" : "#222",
+                    fontWeight: selectedChip === title ? 700 : 500,
+                    fontSize: "16",
+                    borderRadius: "8px",
+                    px: 0.6,
+                    py: 0.5,
+                    cursor: "pointer",
+                    minWidth: 0,
+                    mr: 1,
+                    mb: 1,
+                    boxShadow: "none",
+                    border: "none",
+                    transition: "background 0.2s, color 0.2s",
+                    "&:hover": {
+                      background: "#E8F8ED",
+                      color: "#388e3c",
+                    },
+                  }}
+                >
+                  <SushiBowlIcon color={selectedChip === title ? "#4CAF50" : "#222"} />
+                  <Typography
+                    sx={{
+                      fontWeight: selectedChip === title ? 700 : 500,
+                      fontSize: "12",
+                      color: "inherit",
+                      userSelect: "none",
+                      lineHeight: 1.2,
+                      letterSpacing: 0,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {title.replace(/_/g, " ")}
+                  </Typography>
+                </Box>
+              ))}
+            </>
+          )}
       </Paper>
       <Box
         sx={{
@@ -1698,7 +1729,7 @@ const ChatWindow: React.FC = () => {
                 }
               }}
             />
-            <Button
+            {/* <Button
               variant="outlined"
               color="success"
               sx={{
@@ -1774,7 +1805,7 @@ const ChatWindow: React.FC = () => {
               }}
             >
               ${((parseFloat(selectedChunkData?.price ?? '0') || 0) + chunkTotalPrice).toFixed(2)}
-            </Button>
+            </Button> */}
         </Paper>
       </Box>
       { selectedOptionListData.length !== 0 ? (
@@ -1825,7 +1856,7 @@ const ChatWindow: React.FC = () => {
         bottom: 0,
         marginTop: '250px',
         width: '73%', 
-        height: '85%',
+        height: '100%',
         bgcolor: 'white',
         display: 'flex',
         flexDirection: 'column'
@@ -1848,7 +1879,7 @@ const ChatWindow: React.FC = () => {
               overflowY: 'hidden',
               whiteSpace: 'nowrap',
               borderBottom: '2px solid #eee',
-              width: '100%',
+              width: '97%',
               justifyContent: 'flex-start',
               mb: 2,
               px: 2,
@@ -1862,34 +1893,7 @@ const ChatWindow: React.FC = () => {
               },
             }}
           >
-            {menuList.filter(m => m !== "ALL").map((menu, idx) => (
-              <Button
-                key={menu}
-                onClick={() => {
-                  setSelectedMenu(menu);
-                  setTypeData(menu);
-                  setNameData("");
-                  // Fetch menu data for this menu
-                  fetchMenuData(menu);
-                }}
-                sx={{
-                  color: selectedMenu === menu ? "#B71C1C" : "#444",
-                  fontWeight: selectedMenu === menu ? 300 : 200,
-                  borderBottom: selectedMenu === menu ? "3px solid #B71C1C" : "3px solid transparent",
-                  borderRadius: 0,
-                  fontSize: 12,
-                  background: "none",
-                  minWidth: 120,
-                  px: 2,
-                  py: 1,
-                  textTransform: "none",
-                  whiteSpace: 'normal',
-                  display: 'inline-block',
-                }}
-              >
-                {menu.replace(/_/g, " ").replace(/side dishes/i, "Side Dishes")}
-              </Button>
-            ))}
+            
           </Box>
           {/* Menu items list */}
           <Box sx={{ width: '100%', maxWidth: 600, mx: 'auto', mt: 2 }}>
@@ -1926,7 +1930,7 @@ const ChatWindow: React.FC = () => {
           left: 0, 
           right: 0, 
           bottom: 0,
-          marginTop: '260px',
+          marginTop: '240px',
           width: '73%', 
           height: 'auto',
           bgcolor: 'white',
@@ -2573,18 +2577,20 @@ const ChatWindow: React.FC = () => {
             <Button
               sx={{ 
                 backgroundColor: "#73AD21",
-                py: 1.5,  
-                paddingLeft: '40px',
-                paddingRight: '40px',
-                fontSize: '1.3rem',
+                paddingLeft: '25px',
+                paddingRight: '25px',
+                marginLeft: '20px',
                 borderRadius: '10px',
+                color: 'white',
               }}
-              
               size="large"
               aria-label="add"
               onClick={handleCartOpen}
             >
-              <AddShoppingCartIcon sx={{ color: "white" }} />
+              <AddShoppingCartIcon sx={{ color: "white", marginRight: "10px"}} />  {`$${cartData.reduce((sum, item) => {
+                const price = parseFloat(item.price) || 0;
+                return sum + price * item.count;
+              }, 0).toFixed(2)}`}
             </Button>
           </Badge>
 
