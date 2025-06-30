@@ -225,14 +225,19 @@ def get_options_by_ids_response(ids: list[int]):
     try:
         cursor.execute(query, tuple(ids))
         results = cursor.fetchall()
+
+        print(results)
         
         # Format results similar to get_db_response
         results_data = [
             {
-                "option_name": row[2],
-                "description": row[4],
+                "type": row[1],
+                "name": row[2],
                 "price": row[3],
-                "type": row[5]
+                "description": row[4],
+                "option_keyword": row[5],
+                "option_name": row[6],
+                "option_price": row[7]
             }
             for row in results
         ]
@@ -246,35 +251,46 @@ def get_options_by_ids_response(ids: list[int]):
     return results_data
 
 def get_db_response(keyword: str, type: str, name: str):
+    print("keyword: ", keyword)
+    print("type: ", type)
+    print("name: ", name)
     results_data = {}
     column_names = ["no","type", "name", "price", "description", "option_keyword", "option_name", "option_price"]
     # Define the query based on the keyword
-    if keyword == "all_option_keyword":
-        if type == "":
-            query = f'SELECT DISTINCT * FROM csv'
-        else:
-            query = f'SELECT DISTINCT * FROM csv WHERE type=%s'
-    elif keyword == "all_option_name":
-        if type == "":
-            query = f'SELECT DISTINCT * FROM csv WHERE name=%s'
-        else:
-            query = f'SELECT DISTINCT * FROM csv WHERE type=%s AND name=%s'
+    # if keyword == "all_option_keyword":
+    #     if type == "":
+    #         query = f'SELECT DISTINCT * FROM csv'
+    #     else:
+    #         query = f'SELECT DISTINCT * FROM csv WHERE type=%s'
+    # elif keyword == "all_option_name":
+    #     if type == "":
+    #         query = f'SELECT DISTINCT * FROM csv WHERE name=%s'
+    #     else:
+    #         query = f'SELECT DISTINCT * FROM csv WHERE type=%s AND name=%s'
+    # else:
+    #     return results_data  # Return empty if keyword doesn't match valid cases
+    if type == "":
+        query = f"SELECT DISTINCT * FROM csv WHERE name='{name}'"  # Start with a base query
+    elif name == "":
+        query = f"SELECT DISTINCT * FROM csv WHERE type='{type}'"  # Start with a base query
     else:
-        return results_data  # Return empty if keyword doesn't match valid cases
+        query = f"SELECT DISTINCT * FROM csv WHERE type='{type}' AND name='{name}'"  # Start with a base query
 
     # Execute the query
     print("QUERY: ",query)
     try:
-        if keyword == "all_option_keyword" and type != "":
-            cursor.execute(query, (type,))
-        elif keyword == "all_option_name" and type != "":
-            cursor.execute(query, (type, name))
-        elif keyword == "all_option_name":
-            cursor.execute(query, (name,))
-        else:
-            cursor.execute(query)
+        # if keyword == "all_option_keyword" and type != "":
+        #     cursor.execute(query, (type,))
+        # elif keyword == "all_option_name" and type != "":
+        #     cursor.execute(query, (type, name))
+        # elif keyword == "all_option_name":
+        #     cursor.execute(query, (name,))
+        # else:
+        cursor.execute(query)
 
         results = cursor.fetchall()
+        
+        print(results)
 
         # Process results based on the keyword
         if keyword == "all_option_keyword":
@@ -817,6 +833,8 @@ def get_db_data():
     keyword = request.args.get('keyword', '')
     type = request.args.get('type', '')
     name = request.args.get('name', '')
+    print("1 type: ", type)
+    print("1 name: ", name)
     return Response(stream_with_context(get_db_response(keyword, type, name)), content_type='text/event-stream')
 
 @app.route("/chat_via_input")
