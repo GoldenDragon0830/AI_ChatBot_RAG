@@ -70,6 +70,7 @@ interface ChunkOption {
   description: string;
   price: string;
   keyword: string;
+  name: string;
 }
 
 const KEY_CHAT_CUSTOMER = "CHAT_CUSTOMER";
@@ -83,7 +84,7 @@ const GREETING_WORD =
 
 const drawerWidth = "73%";
 
-const DEFAULT_DATA = [1, 704, 553, 64, 379, 487, 309, 743, 866, 321, 590, 419, 15, 28, 602, 126];
+const DEFAULT_DATA = [1, 704, 553, 64, 379, 487, 309, 743, 866, 57, 590, 419, 15, 28, 602, 126];
 
 const ChatWindow: React.FC = () => {
   const theme = useTheme();
@@ -588,8 +589,8 @@ const ChatWindow: React.FC = () => {
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "1px" }}>
                       {/* Badge for Option 1 */}                    
                         <Badge badgeContent={itemCount["Option 1"] || 0}
-                          sx={{ "& .MuiBadge-badge": { backgroundColor: "#FF3B30", color: "white", border: "2px solid #FF3B30", } }} >
-                          <Chip sx={{ color: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`, borderColor: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`, "& .MuiChip-label": { fontWeight: "bold",  }, "&:hover": { backgroundColor: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`,  }, marginRight: "5px", fontSize: "14px" }} size="small" label={(displayOptionSoup.includes(text) || displayOptionContinue.includes(text)) ? (text === "Beef Dumplings" ? "Steamed" : "Pint") : displayOptionDish.includes(text) ? "Small" : displayOptionChinaDish.includes(text) ? "Small" : undefined} variant="outlined" onClick={() => handleSelectOption("Option 1")} />
+                          sx={{ "& .MuiBadge-badge": { backgroundColor: "#FF0000", color: "white", border: "2px solid #FF3B30", } }} >
+                          <Chip sx={{ fontSize: "12px", color: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`, borderColor: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`, "&:hover": { backgroundColor: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`,  }, marginRight: "5px" }} size="small" label={(displayOptionSoup.includes(text) || displayOptionContinue.includes(text)) ? (text === "Beef Dumplings" ? "Steamed" : "Pint") : displayOptionDish.includes(text) ? "Small" : displayOptionChinaDish.includes(text) ? "Small" : undefined} variant="outlined" onClick={() => handleSelectOption("Option 1")} />
                         </Badge>
                         {/* Badge for Option 2 */}
                         <Badge badgeContent={itemCount["Option 2"] || 0} sx={{  "& .MuiBadge-badge": { backgroundColor: "#FF3B30",  color: "white",  border: "2px solid #FF3B30",  } }} >
@@ -597,13 +598,10 @@ const ChatWindow: React.FC = () => {
                             sx={{
                               color: `${selectedOption === "Option 2" ? "#73AD21" : "#BABABA"}`, // Custom text color
                               borderColor: `${selectedOption === "Option 2" ? "#73AD21" : "#BABABA"}`, // Custom border color
-                              "& .MuiChip-label": {
-                                fontWeight: "bold", // Optional: Make the label bold
-                              },
+
                               "&:hover": {
                                 backgroundColor: `${selectedOption === "Option 2" ? "#73AD21" : "#BABABA"}`, // Optional: Add a hover effect with a lighter green
                               },
-                              marginRight: "5px",
                               fontSize: "12px"
                             }}
                             size="small"
@@ -771,6 +769,7 @@ const ChatWindow: React.FC = () => {
     name: string
   ) => {
     setLoading(true);
+    console.log(keyword, type, name)
     try {
       const response = await fetch(
         `${BACKEND_API_URL}/get_db_data?keyword=${keyword}&type=${type}&name=${name}`,
@@ -846,6 +845,7 @@ const ChatWindow: React.FC = () => {
                     description: "",
                     price: "",
                     keyword: "",
+                    name: ""
                   };
                   const updatedData =
                     jsonData.length > 1
@@ -1037,6 +1037,7 @@ const ChatWindow: React.FC = () => {
                     description: "",
                     price: "",
                     keyword: "",
+                    name: ""
                   };
                   const updatedData =
                     jsonData.length > 1
@@ -1987,7 +1988,7 @@ const ChatWindow: React.FC = () => {
                           if (item.type === "name") {
                             setSelectedNameForOptions(item.value);
                             handleOptionsDialogOpen();
-                            fetchOptionsForDialog(typeData, item.value); // Use the correct type and name
+                            fetchOptionsForDialog(item.name, item.value); // Use the correct type and name
                           } else {
                             // For non-name items, keep the existing behavior
                             const userMessage: MessageInterface = {
@@ -2299,11 +2300,18 @@ const ChatWindow: React.FC = () => {
         const data = await response.json();
         console.log(data)
         // Format the data for the frontend
+                //         "type": row[1],
+                // "name": row[2],
+                // "price": row[3],
+                // "description": row[4],
+                // "option_keyword": row[5],
+                // "option_name": row[6],
+                // "option_price": row[7]
         const parsedData: ChunkOption[] = data.map((item: any) => {
           return {
             type: "name",
-            name: item.name,
-            value: item.option_name,
+            name: item.type,
+            value: item.name,
             description: item.description,
             price: item.price,
           };
@@ -2401,6 +2409,8 @@ const ChatWindow: React.FC = () => {
 
   // Add this function
   const fetchOptionsForDialog = async (type: string, name: string) => {
+    console.log(`Fetching options for type: ${type}, name: ${name}`);
+    type = type.toLowerCase();
     setLoading(true);
     try {
       const response = await fetch(
