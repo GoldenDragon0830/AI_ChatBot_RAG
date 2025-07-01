@@ -131,7 +131,7 @@ const ChatWindow: React.FC = () => {
     "Sushi_platters",
     "Poke_and_salads",
     "Sushi_or_sashimi",
-    "Others",
+    "Lunch_Specialis",
   ];
 
   const [chunkData, setChunkData] = useState<ChunkOption[]>([]);
@@ -362,7 +362,7 @@ const ChatWindow: React.FC = () => {
                   const key_description = Object.keys(item)[1];
                   const key_price = Object.keys(item)[2];
                   const key_type = Object.keys(item)[3];
-  
+                  console.log(item)
                   return {
                     type: key,
                     value: item[key],
@@ -629,30 +629,30 @@ const ChatWindow: React.FC = () => {
                     },
                   }}
                   onClick={() => {
-                    if (
-                      displayOptionSoup.includes(text) ||
-                      displayOptionContinue.includes(text) ||
-                      displayOptionDish.includes(text) ||
-                      displayOptionChinaDish.includes(text)
-                    ) {
-                      handleOnClick();
-                    } else {
-                      setCartData((prevCartData) => [
-                        ...prevCartData,
-                        {
-                          type,
-                          name: text,
-                          description,
-                          price,
-                          option_keyword: "",
-                          option_name: "",
-                          option_price: "",
-                          count: generalCount,
-                          optionList: [],
-                        },
-                      ]);
-                      setCartCount((prevCount) => prevCount + generalCount);
-                    }
+                    // if (
+                    //   displayOptionSoup.includes(text) ||
+                    //   displayOptionContinue.includes(text) ||
+                    //   displayOptionDish.includes(text) ||
+                    //   displayOptionChinaDish.includes(text)
+                    // ) {
+                      onClick();
+                    // } else {
+                    //   setCartData((prevCartData) => [
+                    //     ...prevCartData,
+                    //     {
+                    //       type,
+                    //       name: text,
+                    //       description,
+                    //       price,
+                    //       option_keyword: "",
+                    //       option_name: "",
+                    //       option_price: "",
+                    //       count: generalCount,
+                    //       optionList: [],
+                    //     },
+                    //   ]);
+                    //   setCartCount((prevCount) => prevCount + generalCount);
+                    // }
                   }}
                 >
                   <AddIcon sx={{ color: "#FF9900", fontSize: 32 }} />
@@ -1897,7 +1897,25 @@ const ChatWindow: React.FC = () => {
             
           </Box>
           {/* Menu items list */}
-          <Box sx={{ width: '100%', maxWidth: 600, mx: 'auto', mt: 2 }}>
+          <Box
+            sx={{
+              width: 800,
+              maxHeight: 600,
+              mx: 'auto',
+              mt: 2,
+              overflowY: 'auto', // Enable horizontal scroll
+              whiteSpace: 'nowrap', // Prevent wrapping
+              display: 'flex', // Use flexbox for horizontal layout
+              flexDirection: 'column',
+              gap: 2, // Optional: space between items
+              pb: 1, // Optional: padding bottom for scrollbar
+            }}
+          >
+            {selectedMenu == "Lunch_Specialis" ? (
+              <Typography variant="h5" sx={{ fontWeight: 700, color: "red", mb: 2, ml: 1 }}>
+                10% Discount Does Not Apply To Lunch Specials
+              </Typography>
+            ) : null}
             <Typography variant="h5" sx={{ fontWeight: 700, color: "#B71C1C", mb: 2, ml: 1 }}>
               {selectedMenu.replace(/_/g, " ")} Menu
             </Typography>
@@ -1905,21 +1923,32 @@ const ChatWindow: React.FC = () => {
             {menuDisplayData.length === 0 ? (
               <Typography sx={{ color: "#888", textAlign: "center", mt: 4 }}>No items found.</Typography>
             ) : (
-              menuDisplayData.map((item, idx) => (
-                <Box key={idx} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1, borderBottom: '1px solid #eee' }}>
-                  <Box>
-                    <Typography sx={{ fontWeight: 500, fontSize: 17, color: "#222" }}>
-                      {item.price}
-                    </Typography>
-                    {item.keyword && (
-                      <Typography sx={{ color: "#888", fontSize: 14 }}>{item.description}</Typography>
-                    )}
-                  </Box>
-                  <Typography sx={{ fontWeight: 600, fontSize: 17, color: "#222" }}>
-                    ${parseFloat(item.keyword).toFixed(2)}
-                  </Typography>
-                </Box>
-              ))
+              (() => {
+                const seenDescriptions = new Set();
+                return menuDisplayData
+                  .filter(item => {
+                    if (seenDescriptions.has(item.price)) {
+                      return false;
+                    }
+                    seenDescriptions.add(item.price);
+                    return true;
+                  })
+                  .map((item, idx) => (
+                    <Box key={idx} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1, borderBottom: '1px solid #eee' }}>
+                      <Box>
+                        <Typography sx={{ fontWeight: 500, fontSize: 17, color: "#222" }}>
+                          {item.price}
+                        </Typography>
+                        {item.keyword && (
+                          <Typography sx={{ color: "#888", fontSize: 14 }}>{item.description}</Typography>
+                        )}
+                      </Box>
+                      <Typography sx={{ fontWeight: 600, fontSize: 17, color: "#222" }}>
+                        ${parseFloat(item.keyword).toFixed(2)}
+                      </Typography>
+                    </Box>
+                  ));
+              })()
             )}
           </Box>
         </Box>
