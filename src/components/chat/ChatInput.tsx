@@ -38,6 +38,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
         position: "fixed",
         bottom: 0,
         right: 0,
+        marginBottom: "20px",
         left: drawerWidth, // Align with chatting area
         padding: "1vw", // Relative padding
         backgroundColor: "#F4F7FD",

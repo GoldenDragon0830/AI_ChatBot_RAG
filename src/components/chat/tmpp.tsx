@@ -24,7 +24,6 @@ import {
   FormControlLabel,
   Typography,
   DialogActions,
-  CardHeader,
 } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
@@ -40,11 +39,6 @@ import Paper from "@mui/material/Paper";
 import ImageList from "@mui/material/ImageList";
 import ImageListItem from "@mui/material/ImageListItem";
 import Chip from "@mui/material/Chip";
-import { generateRandomId, generateUUID } from "../../utils/randomIdGenerator";
-import axios from "axios";
-import { createGroup, getGroupByCompany, getMessages, sendMessage } from "../../utils/api";
-import { getStoredUser } from "../../utils/getStoreUser";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
@@ -58,11 +52,16 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import { styled } from '@mui/material/styles';
+import { generateRandomId, generateUUID } from "../../utils/randomIdGenerator";
+import axios from "axios";
+import { createGroup, getGroupByCompany, getMessages, sendMessage } from "../../utils/api";
+import { getStoredUser } from "../../utils/getStoreUser";
+import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 
 
-const displayOptionSoup = ["Beef Dumplings","Egg Drop Soup", "Hot And Sour Soup", "Thai Chicken Noodle Soup", "Tofu Vegetable Soup"];
+const displayOptionSoup = ["Beef Dumplings", "Egg Drop Soup", "Hot And Sour Soup", "Thai Chicken Noodle Soup", "Tofu Vegetable Soup"];
 const displayOptionContinue = ["Subgum Wonton Soup", "Wonton Soup", "Egg Drop Wonton Soup"];
-const displayOptionDish = ["Fried Rice", "Lo-mein", "Chow Fun", "Mei Fun", "Thai Fried Rice",  ]; // small, large
+const displayOptionDish = ["Fried Rice", "Lo-mein", "Chow Fun", "Mei Fun", "Thai Fried Rice",]; // small, large
 
 const displayOptionChinaDish = ["With Broccoli", "With Eggplants", "With Mixed Vegetables", "Moo Shoo Style", "Steamed Chicken With Mixed Vegetables S", "Pepper Steak S", "Sichuan S", "Hunan Style S", "With String Beans in Garlic Sauce S", "With Mushrooms S",]; // small, large
 
@@ -78,7 +77,6 @@ interface ChunkOption {
   description: string;
   price: string;
   keyword: string;
-  name: string;
 }
 
 const KEY_CHAT_CUSTOMER = "CHAT_CUSTOMER";
@@ -92,7 +90,7 @@ const GREETING_WORD =
 
 const drawerWidth = "73%";
 
-const DEFAULT_DATA = [1, 704, 553, 64, 379, 487, 309, 743, 866, 57, 590, 419, 15, 28, 602, 126];
+const DEFAULT_DATA = [1, 704, 453, 27, 379, 487, 339, 743, 566, 769, 500, 419, 936, 28, 702, 216];
 
 const ChatWindow: React.FC = () => {
   const theme = useTheme();
@@ -102,10 +100,18 @@ const ChatWindow: React.FC = () => {
   const [orderDetailDialogOpen, setOrderDetailDialogOpen] = useState(false);
   const [totalPrice, setTotalPrice] = useState("");
   const [currentAmount, setCurrentAmount] = useState(INITIAL_AMOUNT);
-    // Add these state variables
+  // Add these state variables
   const [menuPdfOpen, setMenuPdfOpen] = useState(false);
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
+
+  // Add user form state variables
+  const [showUserForm, setShowUserForm] = useState(true);
+  const [userFormData, setUserFormData] = useState<{
+    name: string;
+    email: string;
+    question: string;
+  } | null>(null);
 
   const [selectedChunk, setSelectedChunk] = useState<string | null>("ALL");
   const [chunkDataHistory, setChunkDataHistory] = useState<ChunkOption[][]>([]);
@@ -113,30 +119,16 @@ const ChatWindow: React.FC = () => {
   const [nameListData, setNameListData] = useState<ChunkOption[]>([]);
   const [nameListDataHistory, setNameListDataHistory] = useState<ChunkOption[][]>([]);
 
-
   const [selectedOptionListData, setSelectedOptionListData] = useState<string[]>([]);
 
   const BACKEND_API_URL = "https://soundglide.com/backend/api/static";
+
+
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-
-  // Add user form state variables
-  const [showUserForm, setShowUserForm] = useState(true);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [userFormData, setUserFormData] = useState<{
-    name: string;
-    email: string;
-    question: string;
-  } | null>(null);
-
-  useEffect(() => {
-    setMessages([
-      { content: "Please input your email address to start chat.", role: "assistant" }
-    ]);
-  }, []);
 
   // const API_URL = process.env.REACT_APP_API_URL;
 
@@ -150,7 +142,7 @@ const ChatWindow: React.FC = () => {
     "Traditional_side_dishes",
     "Chinese_dishes",
     "Thai_food",
-    "Chef_specialities",
+    "Chef's_specialities",
     "Sushi_appetizers",
     "Regular_rolls",
     "Vegetable_rolls",
@@ -159,7 +151,7 @@ const ChatWindow: React.FC = () => {
     "Sushi_platters",
     "Poke_and_salads",
     "Sushi_or_sashimi",
-    "Lunch_Specialis",
+    "Others",
   ];
 
   const [chunkData, setChunkData] = useState<ChunkOption[]>([]);
@@ -191,10 +183,10 @@ const ChatWindow: React.FC = () => {
     }[]
   >([]);
 
+  const [oneOrderData, setOneOrderData] = useState("");
+
   const company_id = "8G7BPuTtFbfxczx432ST";
   const business_id = "7td2ULdazAIDPJqObgvO";
-
-  const [oneOrderData, setOneOrderData] = useState("");
 
   const [typeData, setTypeData] = useState("");
   const [nameData, setNameData] = useState("");
@@ -232,32 +224,27 @@ const ChatWindow: React.FC = () => {
   const [selectedNameForOptions, setSelectedNameForOptions] = useState<string | null>(null);
   const [groupedOptionsData, setGroupedOptionsData] = useState<Record<string, ChunkOption[]>>({});
 
-  const [emailInput, setEmailInput] = useState('');
-  const [emailError, setEmailError] = useState('');
-
-  // Add these new handler functions
-  const handleOptionsDialogOpen = () => {
-    setOptionsDialogOpen(true);
-  };
-
-  const SushiBowlIcon = ({ color = "#222" }) => (
-    <svg width="18" height="18" viewBox="0 0 32 32" style={{ marginRight: 6, display: "block" }}>
-      <g>
-        <ellipse cx="12" cy="24" rx="8" ry="4" fill={color} />
-        <rect x="4" y="22" width="16" height="2" fill={color} />
-        <polygon points="18,10 28,14 18,18" fill="#fff" stroke={color} strokeWidth="1.5"/>
-        <circle cx="21" cy="13" r="1" fill={color}/>
-        <circle cx="23" cy="14" r="1" fill={color}/>
-        <circle cx="20" cy="15" r="1" fill={color}/>
-      </g>
-    </svg>
+  const [detailDialog, setDetailDialog] = useState(false);
+  const [optionDialog, setOptionDialog] = useState(false);
+  const [selectedItemData, setSelectedItemData] = useState<any>(null);
+  const [selectedChip, setSelectedChip] = useState<string | null>("ALL");
+  const [selectedNameChip, setSelectedNameChip] = useState<string | null>(
+    "ALL"
   );
 
-  const handleOptionsDialogClose = () => {
-    setOptionsDialogOpen(false);
-    setSelectedNameForOptions(null);
-    setGroupedOptionsData({});
-  };
+  const [selectedOptions, setSelectedOptions] = useState<{ [group: string]: string[] }>({});
+  const [chunkTotalPrice, setChunkTotalPrice] = useState(0);
+
+  const [open, setOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [fullScreenMenu, setFullScreenMenu] = useState(false);
+
+  // Handling Chat State
+  const [group_id, setGroupId] = useState(null);
+  const [userId, setUserId] = useState<string | undefined>();
+  const storedUser = getStoredUser();
+  const [isFetchingMsg, setIsFetchingMsg] = useState(false);
+  const [messagesBox, setMessagesBox] = useState<any>([])
 
   const ItemCart: React.FC<{
     title: string;
@@ -351,77 +338,6 @@ const ChatWindow: React.FC = () => {
     );
   };
 
-
-  const [selectedOptions, setSelectedOptions] = useState<{ [group: string]: string[] }>({});
-  const [chunkTotalPrice, setChunkTotalPrice] = useState(0);
-  
-  const fetchMenuData = async (menu: string) => {
-    setLoading(true);
-    setMenuDisplayData([]); // clear while loading
-    try {
-      const response = await fetch(
-        `${BACKEND_API_URL}/get_db_data?keyword=all_option_keyword&type=${menu.toLowerCase()}&name=`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "text/event-stream",
-          },
-        }
-      );
-      if (!response.ok) throw new Error("Network response was not ok");
-      if (!response.body) throw new Error("Response body is null");
-  
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-  
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-  
-        const chunk = decoder.decode(value);
-        buffer += chunk;
-  
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
-  
-        lines.forEach((line) => {
-          if (line.startsWith("data: ")) {
-            const data = line.slice(6).trim();
-            if (data.includes("ChunkData:")) {
-              try {
-                const jsonData = JSON.parse(data.split("ChunkData:")[1]);
-                const parsedData: ChunkOption[] = jsonData.map((item: any) => {
-                  const key = Object.keys(item)[0];
-                  const key_description = Object.keys(item)[1];
-                  const key_price = Object.keys(item)[2];
-                  const key_type = Object.keys(item)[3];
-                  return {
-                    type: key,
-                    value: item[key],
-                    description: item[key_description],
-                    price: item[key_price],
-                    keyword: item[key_type],
-                  };
-                });
-                console.log(parsedData)
-                setMenuDisplayData(parsedData);
-                setLoading(false)
-              } catch (e) {
-                setLoading(false)
-                console.error(e);
-              }
-            }
-          }
-        });
-      }
-    } catch (error) {
-      setLoading(false)
-      console.error(error);
-    }
-  };
-
   const AmountItemButton: React.FC<{
     text: string;
     type: string;
@@ -455,7 +371,7 @@ const ChatWindow: React.FC = () => {
     }
 
 
-    const handleIncrease = (optionKey: string) => { 
+    const handleIncrease = (optionKey: string) => {
       if (displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text)) {
         setItemCount((prev) => ({
           ...prev,
@@ -465,7 +381,7 @@ const ChatWindow: React.FC = () => {
         setGeneralCount((prev) => prev + 1); // Increment count for non-displayOptionSoup
       }
     };
-  
+
     const handleDecrease = (optionKey: string) => {
       if (displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text)) {
         setItemCount((prev) => ({
@@ -476,7 +392,7 @@ const ChatWindow: React.FC = () => {
         setGeneralCount((prev) => Math.max(1, prev - 1)); // Decrement count for non-displayOptionSoup
       }
     };
-  
+
     const handleSelectOption = (optionKey: string) => {
       setSelectedOption(optionKey);
     };
@@ -486,7 +402,7 @@ const ChatWindow: React.FC = () => {
         if (displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text)) {
           const optionToAdd = selectedOption === "Option 1" ? (displayOptionDish.includes(text) ? "Small" : text === "Beef Dumplings" ? "Steamed" : "Pint") : (displayOptionDish.includes(text) ? "Large" : text === "Beef Dumplings" ? "Fried" : "Quart");
           let c_price = "";
-          if (displayOptionSoup.includes(text) || displayOptionContinue.includes(text)){
+          if (displayOptionSoup.includes(text) || displayOptionContinue.includes(text)) {
             c_price = selectedOption === "Option 1" ? "5" : "10";
           } else if (displayOptionDish.includes(text)) {
             c_price = selectedOption === "Option 1" ? "9" : "16";
@@ -526,16 +442,16 @@ const ChatWindow: React.FC = () => {
             maxWidth: "450px",
             minWidth: "200px",
             marginLeft: "1vw",
-            marginBottom: "1vh",
+            marginBottom: "2vh",
             cursor: "pointer",
             backgroundColor: selectedOptionListData.includes(text) ? "#F1F7E9" : "white",
             transition: "background-color 0.3s ease-in-out",
             border: "1px solid",
-            borderColor: "#D1D1D1",
+            borderColor: "#73AD21",
             borderRadius: "20px",
           }}
-        > 
-          <CardContent sx={{ display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "flex-start", height: "auto", position: "relative", transition: "transform 0.3s ease-in-out",  "&:hover": { transform: "scale(1)", }, }}
+        >
+          <CardContent sx={{ display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "flex-start", height: "auto", position: "relative", transition: "transform 0.3s ease-in-out", "&:hover": { transform: "scale(1.05)", }, }}
             onClick={() => {
               if (type === "option_name") {
                 setSelectedOptionListData((prevOptions) => {
@@ -551,38 +467,75 @@ const ChatWindow: React.FC = () => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-              <Typography variant="body2" sx={{ fontWeight: "bold", color: "block", fontSize: "20px", marginBottom: "5px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient:  "vertical", flex: 1 }} onClick={onClick}>
+              <Typography variant="body2" sx={{ fontWeight: "bold", color: "block", fontSize: "20px", marginBottom: "5px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", flex: 1 }} onClick={onClick}>
                 {text}
               </Typography>
-                         
-              <Typography variant="body2" style={{ color: "black", fontSize: "19px", fontWeight: "bold", marginLeft: "10px", justifyContent: "center" }} onClick={onClick}>
-                {"$" + parseFloat(price)}
-              </Typography>
-              {/* {!displayOptionSoup.includes(text) && ( displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text) )?
+              {!displayOptionSoup.includes(text) && (displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text)) ?
                 (
-                  <ChevronRightIcon sx={{ color: '#000', fontSize: 28, ml: 1 }} onClick={onClick}/>
+                  <ChevronRightIcon sx={{ color: '#000', fontSize: 28, ml: 1 }} onClick={onClick} />
                 ) : null
-              } */}
+              }
             </Box>
             {type !== "option_name" ? (
               <Typography variant="body2" sx={{ color: "gray", fontSize: "14px", marginBottom: "10px", height: "40px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }} onClick={onClick}>
                 {description}
               </Typography>
             ) : null}
+            <Box sx={{ display: "flex", minHeight: 'auto', marginBottom: "-3px", gap: 1, height: "5px" }} >
+              {displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text) ? (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "2px" }}>
+                  {/* Badge for Option 1 */}
+                  <Badge badgeContent={itemCount["Option 1"] || 0}
+                    sx={{ "& .MuiBadge-badge": { backgroundColor: "#FF3B30", color: "white", border: "2px solid #FF3B30", } }} >
+                    <Chip sx={{ color: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`, borderColor: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`, "& .MuiChip-label": { fontWeight: "bold", }, "&:hover": { backgroundColor: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`, }, marginRight: "5px", fontSize: "14px" }} size="small" label={(displayOptionSoup.includes(text) || displayOptionContinue.includes(text)) ? (text === "Beef Dumplings" ? "Steamed" : "Pint $5") : displayOptionDish.includes(text) ? "Small $9" : displayOptionChinaDish.includes(text) ? "Small $18" : undefined} variant="outlined" onClick={() => handleSelectOption("Option 1")} />
+                  </Badge>
+                  {/* Badge for Option 2 */}
+                  <Badge badgeContent={itemCount["Option 2"] || 0} sx={{ "& .MuiBadge-badge": { backgroundColor: "#FF3B30", color: "white", border: "2px solid #FF3B30", } }} >
+                    <Chip
+                      sx={{
+                        color: `${selectedOption === "Option 2" ? "#73AD21" : "#BABABA"}`, // Custom text color
+                        borderColor: `${selectedOption === "Option 2" ? "#73AD21" : "#BABABA"}`, // Custom border color
+                        "& .MuiChip-label": {
+                          fontWeight: "bold", // Optional: Make the label bold
+                        },
+                        "&:hover": {
+                          backgroundColor: `${selectedOption === "Option 2" ? "#73AD21" : "#BABABA"}`, // Optional: Add a hover effect with a lighter green
+                        },
+                        marginRight: "5px",
+                        fontSize: "14px"
+                      }}
+                      size="small"
+                      label={(displayOptionSoup.includes(text) || displayOptionContinue.includes(text)) ? (text === "Beef Dumplings" ? "Fried" : "Quart $10") : displayOptionDish.includes(text) ? "Large $16" : displayOptionChinaDish.includes(text) ? "Large $24" : undefined}
+                      variant="outlined"
+                      onClick={() => handleSelectOption("Option 2")}
+                    />
+                  </Badge>
+                </div>
+              ) : (
+                null
+              )}
+            </Box>
           </CardContent>
           <CardActions
             sx={{
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              px: 2,
-              width: "90%",
-              
             }}
             disableSpacing
           >
+            <Typography variant="body2" style={{ color: "#73AD21", fontSize: "19px", fontWeight: "bold", marginLeft: "10px" }} onClick={onClick}>
+              {"$" + parseFloat(price)}
+            </Typography>
             {type === "name" && (
-              <>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <Box
                   sx={{
                     display: "flex",
@@ -597,7 +550,7 @@ const ChatWindow: React.FC = () => {
                     size="small"
                     color="inherit"
                     onClick={() =>
-                      displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) ||displayOptionChinaDish.includes(text)
+                      displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text)
                         ? handleDecrease(selectedOption || "Option 1")
                         : handleDecrease("")
                     }
@@ -621,80 +574,35 @@ const ChatWindow: React.FC = () => {
                     <AddIcon fontSize="small" />
                   </IconButton>
                 </Box>
-                <Box sx={{ display: "flex", minHeight: 'auto', gap: 1,  }} >
-                  {displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text) ? (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "1px" }}>
-                      {/* Badge for Option 1 */}                    
-                        <Badge badgeContent={itemCount["Option 1"] || 0}
-                          sx={{ "& .MuiBadge-badge": { backgroundColor: "#FF0000", color: "white", border: "2px solid #FF3B30", } }} >
-                          <Chip sx={{ fontSize: "12px", color: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`, borderColor: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`, "&:hover": { backgroundColor: `${selectedOption === "Option 1" ? "#73AD21" : "#BABABA"}`,  }, marginRight: "5px" }} size="small" label={(displayOptionSoup.includes(text) || displayOptionContinue.includes(text)) ? (text === "Beef Dumplings" ? "Steamed" : "Pint") : displayOptionDish.includes(text) ? "Small" : displayOptionChinaDish.includes(text) ? "Small" : undefined} variant="outlined" onClick={() => handleSelectOption("Option 1")} />
-                        </Badge>
-                        {/* Badge for Option 2 */}
-                        <Badge badgeContent={itemCount["Option 2"] || 0} sx={{  "& .MuiBadge-badge": { backgroundColor: "#FF3B30",  color: "white",  border: "2px solid #FF3B30",  } }} >
-                          <Chip
-                            sx={{
-                              color: `${selectedOption === "Option 2" ? "#73AD21" : "#BABABA"}`, // Custom text color
-                              borderColor: `${selectedOption === "Option 2" ? "#73AD21" : "#BABABA"}`, // Custom border color
-
-                              "&:hover": {
-                                backgroundColor: `${selectedOption === "Option 2" ? "#73AD21" : "#BABABA"}`, // Optional: Add a hover effect with a lighter green
-                              },
-                              fontSize: "12px"
-                            }}
-                            size="small"
-                            label={(displayOptionSoup.includes(text) || displayOptionContinue.includes(text)) ? (text === "Beef Dumplings" ? "Fried" : "Quart") : displayOptionDish.includes(text) ? "Large" : displayOptionChinaDish.includes(text) ? "Large" : undefined}
-                            variant="outlined"
-                            onClick={() => handleSelectOption("Option 2")}
-                          />
-                        </Badge>
-                    </div>
-                  ) : (
-                    null
-                  )}
-                </Box>
-                <Fab
-                  size="medium"
-                  sx={{
-                    background: "#fff",
-                    boxShadow: "0 4px 16px 0 rgba(0,0,0,0.15)",
-                    width: 40,
-                    height: 40,
-                    minHeight: 40,
-                    '&:hover': {
-                      background: "#fff",
-                      boxShadow: "0 6px 20px 0 rgba(0,0,0,0.18)",
-                    },
-                  }}
+                <IconButton
+                  size="small"
+                  color="success"
+                  sx={{ marginLeft: "10px" }}
                   onClick={() => {
-                    // if (
-                    //   displayOptionSoup.includes(text) ||
-                    //   displayOptionContinue.includes(text) ||
-                    //   displayOptionDish.includes(text) ||
-                    //   displayOptionChinaDish.includes(text)
-                    // ) {
-                      onClick();
-                    // } else {
-                    //   setCartData((prevCartData) => [
-                    //     ...prevCartData,
-                    //     {
-                    //       type,
-                    //       name: text,
-                    //       description,
-                    //       price,
-                    //       option_keyword: "",
-                    //       option_name: "",
-                    //       option_price: "",
-                    //       count: generalCount,
-                    //       optionList: [],
-                    //     },
-                    //   ]);
-                    //   setCartCount((prevCount) => prevCount + generalCount);
-                    // }
+                    if (displayOptionSoup.includes(text) || displayOptionContinue.includes(text) || displayOptionDish.includes(text) || displayOptionChinaDish.includes(text)) {
+                      handleOnClick();
+                    } else {
+                      setCartData((prevCartData) => [
+                        ...prevCartData,
+                        {
+                          type,
+                          name: text,
+                          description,
+                          price,
+                          option_keyword: "",
+                          option_name: "",
+                          option_price: "",
+                          count: generalCount,
+                          optionList: []
+                        },
+                      ]);
+                      setCartCount((prevCount) => prevCount + generalCount);
+                    }
                   }}
                 >
-                  <AddIcon sx={{ color: "#FF9900", fontSize: 32 }} />
-                </Fab>
-              </>
+                  <AddShoppingCartIcon fontSize="small" />
+                </IconButton>
+              </Box>
             )}
           </CardActions>
         </Card>
@@ -762,65 +670,41 @@ const ChatWindow: React.FC = () => {
   styleSheet.innerText = styles;
   document.head.appendChild(styleSheet);
 
-  useEffect(() => {
-    if (containerRef.current) {
-      // Scroll to the bottom of the container
-      const scrollHeight = containerRef.current.scrollHeight;
-      const height = containerRef.current.clientHeight;
-      containerRef.current.scrollTop = scrollHeight - height;
-    }
-  }, [messages]);
-
-  useEffect(() => {
-    // Calculate total price based on selected options
-    const total = chunkData
-      .filter((item) => selectedOptionListData.includes(getItemOptionName(item.value)))
-      .reduce((sum, item) => {
-        // Extract option_price from the item.value string
-        const optionPriceMatch = item.value.match(/'option_price':\s*['"]?([\d.]+)['"]?/);
-        const optionPrice = optionPriceMatch ? parseFloat(optionPriceMatch[1]) : 0;
-        return sum + optionPrice;
-      }, 0);
-  
-    setChunkTotalPrice(total); // Update the total price
-  }, [selectedOptionListData, chunkData]);
-
-
-  useEffect(() => {
-    if (orderData.length > 0) {
-      const singlePrice = parseFloat(orderData[0].price);
-
-      if (!isNaN(singlePrice)) {
-        const totalPrice = singlePrice * currentAmount;
-        setTotalPrice(`$${totalPrice.toFixed(2)}`);
-      } else {
-        console.error("Failed to parse single_price from orderData");
-        setTotalPrice("");
+  let groupedData: Record<string, ChunkOption[]> = chunkData.reduce(
+    (acc: Record<string, ChunkOption[]>, item) => {
+      const groupKey =
+        selectedChip === "ALL" || selectedNameChip === "ALL"
+          ? item.keyword
+          : "";
+      if (!acc[groupKey]) {
+        acc[groupKey] = [];
       }
-    }
-  }, [currentAmount, orderData]);
+      acc[groupKey].push(item);
+      return acc;
+    },
+    {}
+  );
 
-  // Helper to split array into chunks
-  function chunkArray(array : any, size : any) {
-    const result = [];
-    for (let i = 0; i < array.length; i += size) {
-      result.push(array.slice(i, i + size));
-    }
-    return result;
+  // Reorder groupedData based on nameListData's order
+  if (nameListData.length > 1) {
+    groupedData = Object.fromEntries(
+      nameListData
+        .map((nameItem) => nameItem.value)
+        .filter((key) => groupedData[key]) // Ensure only existing keys are included
+        .map((key) => [key, groupedData[key]])
+    );
   }
 
-  // Helper to progressively set chunkData
-  function progressiveSetChunkData(chunks: ChunkOption[][], setChunkData: React.Dispatch<React.SetStateAction<ChunkOption[]>>) {
-    let i = 0;
-    function next() {
-      setChunkData((prev: ChunkOption[]) => [...prev, ...chunks[i]]);
-      i++;
-      if (i < chunks.length) {
-        setTimeout(next, 1000)
-      }
-    }
-    next();
-  }
+  // Add these new handler functions
+  const handleOptionsDialogOpen = () => {
+    setOptionsDialogOpen(true);
+  };
+
+  const handleOptionsDialogClose = () => {
+    setOptionsDialogOpen(false);
+    setSelectedNameForOptions(null);
+    setGroupedOptionsData({});
+  };
 
   const handleGetResponseFromDB = async (
     keyword: string,
@@ -828,7 +712,6 @@ const ChatWindow: React.FC = () => {
     name: string
   ) => {
     setLoading(true);
-    console.log(keyword, type, name)
     try {
       const response = await fetch(
         `${BACKEND_API_URL}/get_db_data?keyword=${keyword}&type=${type}&name=${name}`,
@@ -896,9 +779,7 @@ const ChatWindow: React.FC = () => {
                   Object.keys(jsonData[0])[0] === "name"
                 ) {
                   // Set nameListData if the key is "name"
-                  const chunks = chunkArray(parsedData, 4);
-                  setChunkData([]); // Clear first
-                  progressiveSetChunkData(chunks, setChunkData);
+                  setChunkData(parsedData);
                 } else if (Object.keys(jsonData[0])[0] === "option_keyword") {
                   firstData = {
                     type: "ALL",
@@ -906,7 +787,6 @@ const ChatWindow: React.FC = () => {
                     description: "",
                     price: "",
                     keyword: "",
-                    name: ""
                   };
                   const updatedData =
                     jsonData.length > 1
@@ -919,9 +799,61 @@ const ChatWindow: React.FC = () => {
                     setNameListData(updatedData);
                   }
                 } else if (Object.keys(jsonData[0])[0] === "option_name") {
-                    setChunkData(parsedData);
+                  // if (parsedData.length === 1) {
+                  //   console.log(parsedData);
+
+                  //   const cartDataString = parsedData[0].value
+
+                  //   const typeMatch = cartDataString.match(/'type':\s*'([^']+)'/);
+                  //   const nameMatch = cartDataString.match(/'name':\s*'([^']+)'/);
+                  //   const descriptionMatch = cartDataString.match(
+                  //     /'description':\s*'([^']*)'/
+                  //   );
+                  //   const priceMatch = cartDataString.match(/'price':\s*([\d.]+)/);
+                  //   const optionKeywordMatch = cartDataString.match(
+                  //     /'option_keyword':\s*'([^']+)'/
+                  //   );
+                  //   const optionNameMatch = cartDataString.match(
+                  //     /'option_name':\s*'([^']+)'/
+                  //   );
+                  //   const optionPriceMatch = cartDataString.match(
+                  //     /'option_price':\s*'([^']+)'/
+                  //   );
+
+                  //   // Construct the object manually
+                  //   const parsedCartData = {
+                  //     type: typeMatch ? typeMatch[1] : "",
+                  //     name: nameMatch ? nameMatch[1] : "",
+                  //     description: descriptionMatch ? descriptionMatch[1] : "",
+                  //     price: priceMatch ? priceMatch[1] : "",
+                  //     option_keyword: optionKeywordMatch
+                  //       ? optionKeywordMatch[1]
+                  //       : "",
+                  //     option_name: optionNameMatch ? optionNameMatch[1] : "",
+                  //     option_price: optionPriceMatch ? optionPriceMatch[1] : "",
+                  //   };
+
+                  //   // Update the cartData state
+                  //   setCartCount(cartCount + 1);
+                  //   setCartData((prevCartData) => [
+                  //     ...prevCartData,
+                  //     {
+                  //       ...parsedCartData,
+                  //       count: selectedItemCount, // Default count for new cart items
+                  //       optionList: []
+                  //     },
+                  //   ]);
+                  //   setSelectedOptions((prevOptions) => [
+                  //     ...prevOptions,
+                  //     parsedData[0].value,
+                  //   ]);
+
+                  //   setSelectedItemCount(1);
+                  // } else {
+                  setChunkData(parsedData);
+                  // }
                 } else {
-                  setChunkData(parsedData);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+                  setChunkData(parsedData);
                 }
               } catch (e) {
                 console.error(e);
@@ -932,15 +864,15 @@ const ChatWindow: React.FC = () => {
                 const newMessages = [...prev];
                 const lastMessageIndex = newMessages.length - 1;
                 if (
-                    lastMessageIndex >= 0 &&
-                    newMessages[lastMessageIndex].role === "assistant"
+                  lastMessageIndex >= 0 &&
+                  newMessages[lastMessageIndex].role === "assistant"
                 ) {
-                    newMessages[lastMessageIndex].content = newMessageContent;
+                  newMessages[lastMessageIndex].content = newMessageContent;
                 } else {
-                    newMessages.push({
-                        content: newMessageContent,
-                        role: "assistant",
-                    });
+                  newMessages.push({
+                    content: newMessageContent,
+                    role: "assistant",
+                  });
                 }
                 return newMessages;
               });
@@ -970,8 +902,7 @@ const ChatWindow: React.FC = () => {
 
     try {
       const response = await fetch(
-        `${BACKEND_API_URL}${isInput ? "/chat_via_input" : "/chat"}?message=${
-          message.content
+        `${BACKEND_API_URL}${isInput ? "/chat_via_input" : "/chat"}?message=${message.content
         }&history=${JSON.stringify(messages)}&flag=${flag}`,
         {
           method: "GET",
@@ -1046,7 +977,6 @@ const ChatWindow: React.FC = () => {
                     description: "",
                     price: "",
                     keyword: "",
-                    name: ""
                   };
                   const updatedData =
                     jsonData.length > 1
@@ -1057,7 +987,7 @@ const ChatWindow: React.FC = () => {
                   setNameListData(updatedData);
                 } else {
                   if (parsedData.length === 1) {
-                    console.log(parsedData)    
+                    console.log(parsedData)
                   } else {
                     setChunkData(parsedData);
                   }
@@ -1179,7 +1109,6 @@ const ChatWindow: React.FC = () => {
     flag: string,
     showInChat: boolean = true,
   ) => {
-    console.log(message)
     setCurrentAmount(1);
     setShowAmountSelector(false);
     if (showInChat) {
@@ -1189,8 +1118,7 @@ const ChatWindow: React.FC = () => {
 
     try {
       const response = await fetch(
-        `${BACKEND_API_URL}/chat_via_input?message=${
-          message.content
+        `${BACKEND_API_URL}/chat_via_input?message=${message.content
         }&history=${JSON.stringify(messages)}&flag=${flag}`,
         {
           method: "GET",
@@ -1230,7 +1158,7 @@ const ChatWindow: React.FC = () => {
               //   role: "user",
               // };
               // setMessages((prevMessages) => [...prevMessages, displayMessage]);
-              const displayMessage : MessageInterface = {
+              const displayMessage: MessageInterface = {
                 content: newMessageContent,
                 role: "assistant",
               }
@@ -1298,19 +1226,6 @@ const ChatWindow: React.FC = () => {
       setOrderDetailDialogOpen(true);
     }
   };
-
-
-  const [open, setOpen] = useState(false);
-  const [cartOpen, setCartOpen] = useState(false);
-  const [fullScreenMenu, setFullScreenMenu] = useState(false);
-
-  
-  // Handling Chat State
-  const [group_id, setGroupId] = useState(null);
-  const [userId, setUserId] = useState<string | undefined>();
-  const storedUser = getStoredUser();
-  const [isFetchingMsg, setIsFetchingMsg] = useState(false);
-  const [messagesBox, setMessagesBox] = useState<any>([])
 
   const handleCartOpen = () => setCartOpen(true);
   const handleCartClose = () => setCartOpen(false);
@@ -1381,7 +1296,7 @@ const ChatWindow: React.FC = () => {
 
   const getItemOptionName = (item: string): string => {
     const match = item.match(/'option_name':\s*'([^']*)'/);
-                            
+
     if (match) {
       const option_name = match[1];
       return option_name;
@@ -1389,16 +1304,6 @@ const ChatWindow: React.FC = () => {
       return ""
     }
   }
-
-  const [detailDialog, setDetailDialog] = useState(false);
-  const [optionDialog, setOptionDialog] = useState(false);
-  const [selectedItemData, setSelectedItemData] = useState<any>(null);
-  const [selectedChip, setSelectedChip] = useState<string | null>("ALL");
-  const [selectedMenu, setSelectedMenu] = useState<string>(""); // for horizontal menu bar
-  const [menuDisplayData, setMenuDisplayData] = useState<ChunkOption[]>([]);
-  const [selectedNameChip, setSelectedNameChip] = useState<string | null>(
-    "ALL"
-  );
 
   const handleBackButton = () => {
     setSelectedOptionListData([]);
@@ -1430,61 +1335,11 @@ const ChatWindow: React.FC = () => {
     setOptionDialog(false);
   };
 
-  useEffect(() => {
-    // Only run this effect if we're not just showing options
-    if (nameListData.length > 0 && !optionsDialogOpen) {
-      setNameListDataHistory((prevHistory) => [...prevHistory, nameListData]);
-      setSelectedNameChip("ALL");
-      handleGetResponseFromDB("all_option_name", typeData, nameData);
-    }
-
-    if (nameListData.length === 1 && !optionsDialogOpen) {
-      const singleItemData = nameListData[0];
-      setSelectedNameChip(singleItemData.value);
-      handleGetResponseFromDB("all_option_name", typeData, nameData);
-    }
-  }, [nameListData, optionsDialogOpen]); // Add optionsDialogOpen to dependencies
-
-  useEffect(() => {
-    const firstMenu = menuList.find(m => m !== "ALL");
-    if (firstMenu) {
-      setSelectedMenu(firstMenu);
-      setTypeData(firstMenu);
-      setNameData("");
-      fetchMenuData(firstMenu);
-    }
-  }, []);
-
-  let groupedData: Record<string, ChunkOption[]> = chunkData.reduce(
-    (acc: Record<string, ChunkOption[]>, item) => {
-      const groupKey =
-        selectedChip === "ALL" || selectedNameChip === "ALL"
-          ? item.keyword
-          : "";
-      if (!acc[groupKey]) {
-        acc[groupKey] = [];
-      }
-      acc[groupKey].push(item);
-      return acc;
-    },
-    {}
-  );
-  
-  // Reorder groupedData based on nameListData's order
-  if (nameListData.length > 1) {
-    groupedData = Object.fromEntries(
-      nameListData
-        .map((nameItem) => nameItem.value)
-        .filter((key) => groupedData[key]) // Ensure only existing keys are included
-        .map((key) => [key, groupedData[key]])
-    );
-  }
-
   const MenuIcon = ({ color }: { color: string }) => {
     return (
       <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="26" height="26" fill="white" fillOpacity="0.01"/>
-        <path d="M16.7406 14.8375H6.37188C6.74688 14.6172 7.14063 14.3969 7.60001 14.2844C7.90938 14.2094 8.27501 14.2047 8.66407 14.2C8.95938 14.1953 9.26407 14.1906 9.57813 14.1578C9.86407 14.1297 10.1453 14.0688 10.4172 14.0125C10.8063 13.9281 11.1766 13.8531 11.5469 13.8531C11.9172 13.8531 12.2875 13.9328 12.6813 14.0125C12.9531 14.0688 13.2391 14.1297 13.5203 14.1578C13.8344 14.1906 14.1391 14.1953 14.4344 14.2C14.8234 14.2047 15.1938 14.2094 15.4984 14.2844C15.9719 14.4016 16.3656 14.6219 16.7406 14.8375ZM4.84844 17.2891H18.2641C18.0203 20.6781 15.1047 23.3594 11.5563 23.3594C8.01251 23.3594 5.09688 20.6781 4.84844 17.2891ZM19.2625 16.0516V16.075C19.2625 16.2297 19.1359 16.3516 18.9859 16.3516H4.12657C3.97188 16.3516 3.85001 16.225 3.85001 16.075V16.0516C3.85001 15.8969 3.97657 15.775 4.12657 15.775H18.9859C19.1406 15.775 19.2625 15.9016 19.2625 16.0516ZM22.15 7.46875C22.1406 7.21562 22.0094 6.99531 21.7891 6.87344L14.4203 2.73438C14.3078 2.67344 14.1906 2.64062 14.0734 2.64062C13.9563 2.64062 13.8438 2.66875 13.7359 2.72969C13.5156 2.84688 13.3797 3.05781 13.3609 3.30625L12.6578 13.0516C12.7328 13.0656 12.8078 13.0844 12.8828 13.0984C13.1453 13.1547 13.3938 13.2062 13.6281 13.2297C13.7406 13.2391 13.8578 13.2484 13.9703 13.2531L21.8266 8.0875C22.0422 7.95156 22.1594 7.72656 22.15 7.46875ZM14.1719 12.2828C14.0922 12.3344 14.0031 12.3578 13.9141 12.3578C13.7641 12.3578 13.6141 12.2828 13.525 12.1469C13.3844 11.9313 13.4406 11.6406 13.6609 11.5C13.8766 11.3594 14.1672 11.4156 14.3078 11.6359C14.4438 11.8516 14.3875 12.1422 14.1719 12.2828ZM14.5656 9.32969C14.5469 9.57812 14.3406 9.76562 14.0969 9.76562H14.0641C13.8063 9.74687 13.6141 9.52188 13.6328 9.26406C13.6516 9.00625 13.8766 8.81406 14.1344 8.83281C14.3922 8.85156 14.5844 9.07187 14.5656 9.32969ZM14.7531 6.7375C14.7344 6.98594 14.5281 7.17344 14.2844 7.17344H14.2516C13.9938 7.15469 13.8016 6.92969 13.8203 6.67188C13.8391 6.41406 14.0641 6.22188 14.3219 6.24063C14.5797 6.25469 14.7719 6.47969 14.7531 6.7375ZM14.8844 4.3375C14.8 4.49219 14.6406 4.57656 14.4766 4.57656C14.3969 4.57656 14.3219 4.55781 14.2469 4.51562C14.0219 4.38906 13.9422 4.10313 14.0688 3.87813C14.1953 3.65313 14.4813 3.57344 14.7063 3.7C14.9313 3.82656 15.0109 4.1125 14.8844 4.3375ZM16.3844 10.8297C16.3047 10.8812 16.2156 10.9047 16.1266 10.9047C15.9766 10.9047 15.8266 10.8297 15.7375 10.6938C15.5969 10.4781 15.6531 10.1875 15.8734 10.0469C16.0891 9.90625 16.3797 9.9625 16.5203 10.1828C16.6609 10.3937 16.6 10.6844 16.3844 10.8297ZM16.5156 8.07344C16.4359 8.125 16.3469 8.14844 16.2578 8.14844C16.1078 8.14844 15.9578 8.07344 15.8641 7.9375C15.7234 7.72188 15.7844 7.43125 16 7.29062C16.2156 7.15 16.5063 7.21094 16.6469 7.42656C16.7922 7.64219 16.7313 7.93281 16.5156 8.07344ZM16.9094 5.47656C16.825 5.63125 16.6656 5.71562 16.5016 5.71562C16.4219 5.71562 16.3469 5.69688 16.2719 5.65469C16.0469 5.52813 15.9672 5.24219 16.0938 5.01719C16.2203 4.79219 16.5063 4.7125 16.7313 4.83906C16.9563 4.96563 17.0359 5.25156 16.9094 5.47656ZM18.6016 9.37188C18.5219 9.42344 18.4328 9.44687 18.3438 9.44687C18.1938 9.44687 18.0438 9.37187 17.95 9.23594C17.8094 9.02031 17.8703 8.72969 18.0859 8.58906C18.3016 8.44844 18.5922 8.50938 18.7328 8.725C18.8734 8.94063 18.8172 9.23125 18.6016 9.37188ZM18.9391 6.61563C18.8547 6.77031 18.6953 6.85469 18.5313 6.85469C18.4516 6.85469 18.3766 6.83594 18.3016 6.79375C18.0766 6.66719 17.9969 6.38125 18.1234 6.15625C18.25 5.93125 18.5359 5.85156 18.7609 5.97812C18.9859 6.10469 19.0656 6.39063 18.9391 6.61563ZM20.9641 7.75469C20.8797 7.90938 20.7203 7.99375 20.5563 7.99375C20.4766 7.99375 20.4016 7.975 20.3266 7.93281C20.1016 7.80625 20.0219 7.52031 20.1484 7.29531C20.275 7.07031 20.5609 6.99062 20.7859 7.11719C21.0109 7.24375 21.0906 7.52969 20.9641 7.75469Z" fill={color}/>
+        <rect width="26" height="26" fill="white" fillOpacity="0.01" />
+        <path d="M16.7406 14.8375H6.37188C6.74688 14.6172 7.14063 14.3969 7.60001 14.2844C7.90938 14.2094 8.27501 14.2047 8.66407 14.2C8.95938 14.1953 9.26407 14.1906 9.57813 14.1578C9.86407 14.1297 10.1453 14.0688 10.4172 14.0125C10.8063 13.9281 11.1766 13.8531 11.5469 13.8531C11.9172 13.8531 12.2875 13.9328 12.6813 14.0125C12.9531 14.0688 13.2391 14.1297 13.5203 14.1578C13.8344 14.1906 14.1391 14.1953 14.4344 14.2C14.8234 14.2047 15.1938 14.2094 15.4984 14.2844C15.9719 14.4016 16.3656 14.6219 16.7406 14.8375ZM4.84844 17.2891H18.2641C18.0203 20.6781 15.1047 23.3594 11.5563 23.3594C8.01251 23.3594 5.09688 20.6781 4.84844 17.2891ZM19.2625 16.0516V16.075C19.2625 16.2297 19.1359 16.3516 18.9859 16.3516H4.12657C3.97188 16.3516 3.85001 16.225 3.85001 16.075V16.0516C3.85001 15.8969 3.97657 15.775 4.12657 15.775H18.9859C19.1406 15.775 19.2625 15.9016 19.2625 16.0516ZM22.15 7.46875C22.1406 7.21562 22.0094 6.99531 21.7891 6.87344L14.4203 2.73438C14.3078 2.67344 14.1906 2.64062 14.0734 2.64062C13.9563 2.64062 13.8438 2.66875 13.7359 2.72969C13.5156 2.84688 13.3797 3.05781 13.3609 3.30625L12.6578 13.0516C12.7328 13.0656 12.8078 13.0844 12.8828 13.0984C13.1453 13.1547 13.3938 13.2062 13.6281 13.2297C13.7406 13.2391 13.8578 13.2484 13.9703 13.2531L21.8266 8.0875C22.0422 7.95156 22.1594 7.72656 22.15 7.46875ZM14.1719 12.2828C14.0922 12.3344 14.0031 12.3578 13.9141 12.3578C13.7641 12.3578 13.6141 12.2828 13.525 12.1469C13.3844 11.9313 13.4406 11.6406 13.6609 11.5C13.8766 11.3594 14.1672 11.4156 14.3078 11.6359C14.4438 11.8516 14.3875 12.1422 14.1719 12.2828ZM14.5656 9.32969C14.5469 9.57812 14.3406 9.76562 14.0969 9.76562H14.0641C13.8063 9.74687 13.6141 9.52188 13.6328 9.26406C13.6516 9.00625 13.8766 8.81406 14.1344 8.83281C14.3922 8.85156 14.5844 9.07187 14.5656 9.32969ZM14.7531 6.7375C14.7344 6.98594 14.5281 7.17344 14.2844 7.17344H14.2516C13.9938 7.15469 13.8016 6.92969 13.8203 6.67188C13.8391 6.41406 14.0641 6.22188 14.3219 6.24063C14.5797 6.25469 14.7719 6.47969 14.7531 6.7375ZM14.8844 4.3375C14.8 4.49219 14.6406 4.57656 14.4766 4.57656C14.3969 4.57656 14.3219 4.55781 14.2469 4.51562C14.0219 4.38906 13.9422 4.10313 14.0688 3.87813C14.1953 3.65313 14.4813 3.57344 14.7063 3.7C14.9313 3.82656 15.0109 4.1125 14.8844 4.3375ZM16.3844 10.8297C16.3047 10.8812 16.2156 10.9047 16.1266 10.9047C15.9766 10.9047 15.8266 10.8297 15.7375 10.6938C15.5969 10.4781 15.6531 10.1875 15.8734 10.0469C16.0891 9.90625 16.3797 9.9625 16.5203 10.1828C16.6609 10.3937 16.6 10.6844 16.3844 10.8297ZM16.5156 8.07344C16.4359 8.125 16.3469 8.14844 16.2578 8.14844C16.1078 8.14844 15.9578 8.07344 15.8641 7.9375C15.7234 7.72188 15.7844 7.43125 16 7.29062C16.2156 7.15 16.5063 7.21094 16.6469 7.42656C16.7922 7.64219 16.7313 7.93281 16.5156 8.07344ZM16.9094 5.47656C16.825 5.63125 16.6656 5.71562 16.5016 5.71562C16.4219 5.71562 16.3469 5.69688 16.2719 5.65469C16.0469 5.52813 15.9672 5.24219 16.0938 5.01719C16.2203 4.79219 16.5063 4.7125 16.7313 4.83906C16.9563 4.96563 17.0359 5.25156 16.9094 5.47656ZM18.6016 9.37188C18.5219 9.42344 18.4328 9.44687 18.3438 9.44687C18.1938 9.44687 18.0438 9.37187 17.95 9.23594C17.8094 9.02031 17.8703 8.72969 18.0859 8.58906C18.3016 8.44844 18.5922 8.50938 18.7328 8.725C18.8734 8.94063 18.8172 9.23125 18.6016 9.37188ZM18.9391 6.61563C18.8547 6.77031 18.6953 6.85469 18.5313 6.85469C18.4516 6.85469 18.3766 6.83594 18.3016 6.79375C18.0766 6.66719 17.9969 6.38125 18.1234 6.15625C18.25 5.93125 18.5359 5.85156 18.7609 5.97812C18.9859 6.10469 19.0656 6.39063 18.9391 6.61563ZM20.9641 7.75469C20.8797 7.90938 20.7203 7.99375 20.5563 7.99375C20.4766 7.99375 20.4016 7.975 20.3266 7.93281C20.1016 7.80625 20.0219 7.52031 20.1484 7.29531C20.275 7.07031 20.5609 6.99062 20.7859 7.11719C21.0109 7.24375 21.0906 7.52969 20.9641 7.75469Z" fill={color} />
       </svg>
     )
   }
@@ -1502,113 +1357,63 @@ const ChatWindow: React.FC = () => {
           listStyle: "none",
           p: 0.5,
           m: 0,
-          background: "#F2F2F2"
         }}
       >
-        {fullScreenMenu ? (
-            <>
-              {menuList.filter(m => m !== "ALL").map((menu, idx) => (
-                <Button
-                  key={menu}
-                  onClick={() => {
-                    setSelectedMenu(menu);
-                    setTypeData(menu);
-                    setNameData("");
-                    // Fetch menu data for this menu
-                    fetchMenuData(menu);
-                  }}
-                  sx={{
-                    color: selectedMenu === menu ? "#B71C1C" : "#444",
-                    fontWeight: selectedMenu === menu ? 300 : 200,
-                    borderBottom: selectedMenu === menu ? "3px solid #B71C1C" : "3px solid transparent",
-                    borderRadius: 0,
-                    fontStyle: selectedMenu === menu ? "inherit" : "normal",
-                    fontSize: selectedMenu === menu ? 15 : 12,
-                    background: "none",
-                    minWidth: 120,
-                    px: 2,
-                    py: 1,
-                    textTransform: "none",
-                    whiteSpace: 'normal',
-                    display: 'inline-block',
-                  }}
-                >
-                  {menu.replace(/_/g, " ").replace(/side dishes/i, "Side Dishes")}
-                </Button>
-              ))}
-            </>
-          ) : (
-            <>
-              {menuList.map((title, index) => (
-                <Box
-                  key={index}
-                  onClick={() => {
-                    setSelectedOptionListData([]);
-                    setChunkTotalPrice(0);
-                    setSelectedChunkData(undefined);
-                    setTotalPrice("");
-                    if (title === "ALL") {
-                      setSelectedChip(title);
-                      setTypeData(title);
-                      setNameData("");
-                      setSelectedChunk("ALL");
-                      handleGetResponseFromDB("all_option_keyword", "", "");
-                    } else {
-                      setSelectedChip(title);
-                      setTypeData(title);
-                      setNameData("");
-                      const userMessage: MessageInterface = {
-                        content: title,
-                        role: "user",
-                      };
-                      const backMessage: MessageInterface = {
-                        content: "I want to find new type." + "type: " + title,
-                        role: "user",
-                      };
-                      handleDisplayOption(backMessage, flag, false);
-                    }
-                  }}
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    background: selectedChip === title ? "#DFF5E2" : "#FFFFFF",
-                    color: selectedChip === title ? "#4CAF50" : "#222",
-                    fontWeight: selectedChip === title ? 700 : 500,
-                    fontSize: "16",
-                    borderRadius: "8px",
-                    px: 0.6,
-                    py: 0.5,
-                    cursor: "pointer",
-                    minWidth: 0,
-                    mr: 1,
-                    mb: 1,
-                    boxShadow: "none",
-                    border: "none",
-                    transition: "background 0.2s, color 0.2s",
-                    "&:hover": {
-                      background: "#E8F8ED",
-                      color: "#388e3c",
-                    },
-                  }}
-                >
-                  <SushiBowlIcon color={selectedChip === title ? "#4CAF50" : "#222"} />
-                  <Typography
-                    sx={{
-                      fontWeight: selectedChip === title ? 700 : 500,
-                      fontSize: "12",
-                      color: "inherit",
-                      userSelect: "none",
-                      lineHeight: 1.2,
-                      letterSpacing: 0,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {title.replace(/_/g, " ")}
-                  </Typography>
-                </Box>
-              ))}
-            </>
-          )}
+        {menuList.map((title, index) => {
+          return (
+            <Chip
+              sx={{
+                margin: "5px",
+                color: `${selectedChip === title ? "#FFFFFF" : "#BABABA"}`,
+                backgroundColor: `${selectedChip === title ? "#73AD21" : "#FFFFFF"}`,
+                fontWeight: `${selectedChip === title ? "bold" : "normal"}`,
+                fontSize: "14px",
+                '& .MuiChip-label': {
+                  paddingLeft: '4px',  // Reduce default padding between icon and label
+                },
+                '& svg': {
+                  marginLeft: '2px',
+                  marginRight: '-4px',  // Pull the label closer to the icon
+                }
+              }}
+              icon={
+                <MenuIcon
+                  color={selectedChip === title ? "#FFFFFF" : "#BABABA"}
+                />
+              }
+              variant={selectedChip === title ? "filled" : "outlined"} // Change variant when selected
+              key={index}
+              onClick={() => {
+                setSelectedOptionListData([]);
+                setChunkTotalPrice(0);
+                setSelectedChunkData(undefined);
+                setTotalPrice("");
+                if (title === "ALL") {
+                  setSelectedChip(title); // Set the selected chip
+                  setTypeData(title); // set one type data
+                  setNameData("");
+                  setSelectedChunk("ALL");
+                  handleGetResponseFromDB("all_option_keyword", "", "");
+                } else {
+                  setSelectedChip(title); // Set the selected chip
+                  setTypeData(title); // set one type data
+                  setNameData("");
+                  const userMessage: MessageInterface = {
+                    content: title, // Send the text of the item as the user's message
+                    role: "user",
+                  };
+                  const backMessage: MessageInterface = {
+                    content: "I want to find new type." + "type: " + title, // Send the text of the item as the user's message
+                    role: "user",
+                  };
+                  handleDisplayOption(backMessage, flag, false);
+                  // setMessages((prevMessage) => [...prevMessage, userMessage]);
+                }
+              }}
+              label={title.replace(/_/g, "\u2009")}
+            />
+          );
+        })}
       </Paper>
       <Box
         sx={{
@@ -1629,259 +1434,311 @@ const ChatWindow: React.FC = () => {
             width: "100%", // Ensure it doesn't overflow its container
           }}
         >
-            <Button
-              color="success"
-              startIcon={<ArrowBackIosIcon />}
-              sx={{
-                marginLeft: "30px",
-                marginTop: "10px",
-                marginBottom: "10px",
-                width: "100px",
-                color: "black"
-              }}
-              onClick={handleBackButton}
-              disabled={chunkDataHistory.length === 0}
-            >
-              Back
-            </Button>
-            {nameListData.map((item, index) => {
+          <Button
+            color="success"
+            startIcon={<ArrowBackIosIcon />}
+            sx={{
+              marginLeft: "30px",
+              marginTop: "10px",
+              marginBottom: "10px",
+              width: "100px",
+              color: "black"
+            }}
+            onClick={handleBackButton}
+            disabled={chunkDataHistory.length === 0}
+          >
+            Back
+          </Button>
+          {nameListData.map((item, index) => {
+            return (
+              <Chip
+                sx={{
+                  margin: "5px",
+                  color: `${selectedNameChip === item.value ? "#FFFFFF" : "#BABABA"}`,
+                  backgroundColor: `${selectedNameChip === item.value ? "#73AD21" : "#FFFFFF"}`,
+                  fontWeight: `${selectedNameChip === item.value ? "bold" : "normal"}`, // Add this line
+                  fontSize: "14px"
+                }}
+                variant="outlined"
+                label={item.value}
+                key={index}
+                onClick={() => {
+                  if (item.value === "ALL") {
+                    setSelectedNameChip(item.value);
+                    // setSelectedChunk("ALL");
+                    handleGetResponseFromDB(
+                      "all_option_name",
+                      typeData,
+                      nameData
+                    );
+                  } else {
+                    setSelectedNameChip(item.value);
+                    // setSelectedChunk(item.value)
+                    const userMessage: MessageInterface = {
+                      content: item.value, // Send the text of the item as the user's message
+                      role: "user",
+                    };
+                    const backMessage: MessageInterface = {
+                      content:
+                        `type: ${typeData} + name: ${nameData} + ` + item.value, // Send the text of the item as the user's message
+                      role: "user",
+                    };
+                    handleDisplayOption(backMessage, flag, false);
+                    setMessages((prevMessage) => [...prevMessage, userMessage]);
+                  }
+                }}
+              />
+            );
+          })}
+          <FormControlLabel
+            control={
+              <Switch
+                checked={fullScreenMenu}
+                onChange={toggleFullScreenMenu}
+                color="success"
+                sx={{
+                  '& .MuiSwitch-switchBase': {
+                    transform: 'translateX(4px)',
+                    '&.Mui-checked': {
+                      transform: 'translateX(22px)',
+                    }
+                  },
+                  '& .MuiSwitch-thumb': {
+                    width: 20,
+                    height: 20,
+                  },
+                  '& .MuiSwitch-track': {
+                    borderRadius: 26 / 2,
+                    backgroundColor: '#73AD21',
+                    opacity: 0.5,
+                  },
+                  width: 58,
+                  height: 38,
+                  padding: '8px',
+                }}
+              />
+            }
+            label="PDF Menu"
+            labelPlacement="start"
+            sx={{
+              color: 'black',
+              marginLeft: 'auto',
+              marginRight: '10px',
+              '& .MuiFormControlLabel-label': {
+                fontWeight: 'bold',
+                fontSize: '1rem',
+                marginRight: '10px',
+              }
+            }}
+          />
+          <Button
+            variant="outlined"
+            color="success"
+            sx={{
+              color: "#73AD21",
+              fontSize: "16px",
+              fontWeight: "bold",
+              border: "1px solid",
+              borderColor: "#73AD21",
+            }}
+            startIcon={<AddShoppingCartIcon />}
+            disabled={selectedOptionListData.length === 0} // Disable button if nothing is selected
+            onClick={() => {
+              const itemsToAdd = chunkData.filter((item) =>
+                selectedOptionListData.includes(getItemOptionName(item.value))
+              );
+
+              const cartDataString = itemsToAdd[0].value;
+              console.log(cartDataString)
+
+              // Use regex to extract specific fields from the string
+              const typeMatch = cartDataString.match(/'type':\s*'([^']+)'/);
+              const nameMatch = cartDataString.match(/'name':\s*(['"])(.*?)\1/);
+              const descriptionMatch = cartDataString.match(
+                /'description':\s*'([^']*)'/
+              );
+              const priceMatch = cartDataString.match(/'price':\s*([\d.]+)/);
+              const optionKeywordMatch = cartDataString.match(
+                /'option_keyword':\s*'([^']+)'/
+              );
+              const optionNameMatch = cartDataString.match(
+                /'option_name':\s*'([^']+)'/
+              );
+              const optionPriceMatch = cartDataString.match(
+                /'option_price':\s*'([^']+)'/
+              );
+
+              // Construct the object manually
+              const parsedCartData = {
+                type: typeMatch ? typeMatch[1] : "",
+                name: nameMatch ? nameMatch[2] : "",
+                description: descriptionMatch ? descriptionMatch[1] : "",
+                price: `${((parseFloat(selectedChunkData?.price ?? '0') || 0) + chunkTotalPrice).toFixed(2)}`,
+                option_keyword: optionKeywordMatch
+                  ? optionKeywordMatch[1]
+                  : "",
+                option_name: optionNameMatch ? optionNameMatch[1] : "",
+                option_price: optionPriceMatch ? optionPriceMatch[1] : "",
+              };
+
+              console.log(parsedCartData)
+
+              setCartCount(cartCount + 1);
+              setCartData((prevCartData) => [
+                ...prevCartData,
+                {
+                  ...parsedCartData,
+                  count: selectedItemCount, // Default count for new cart items
+                  optionList: selectedOptionListData
+                },
+              ]);
+
+              console.log("Cart updated:", parsedCartData);
+              setSelectedOptions({});
+
+              const messageText: MessageInterface = {
+                content: "Added to cart successfully! Would you like to add more items or options?",
+                role: "assistant",
+              };
+
+              setMessages((prevMessages) => [...prevMessages, messageText]);
+
+              setOneOrderData("")
+            }}
+          >
+            ${((parseFloat(selectedChunkData?.price ?? '0') || 0) + chunkTotalPrice).toFixed(2)}
+          </Button>
+        </Paper>
+      </Box>
+      {selectedOptionListData.length !== 0 ? (
+        <Box
+          sx={{
+            display: "flex", // Use flexbox for layout
+            flexDirection: "vertically", // Stack items vertically
+          }}
+        >
+          <Paper
+            sx={{
+              display: "flex",
+              flexWrap: "nowrap", // Prevent wrapping to ensure chips stay in one line
+              overflowX: "auto", // Enable horizontal scrolling
+              listStyle: "none",
+              p: 0.5,
+              m: 0,
+              padding: "10px",
+              paddingLeft: "45px",
+              width: "100%", // Ensure it doesn't overflow its container
+            }}
+          >
+            {selectedOptionListData.map((text, index) => {
               return (
                 <Chip
                   sx={{
-                    margin: "5px",
-                    color: `${selectedNameChip === item.value ? "#FFFFFF" : "#BABABA"}`,
-                    backgroundColor: `${selectedNameChip === item.value ? "#73AD21" : "#FFFFFF"}`,
-                    fontWeight: `${selectedNameChip === item.value ? "bold" : "normal"}`, // Add this line
-                    fontSize: "14px"
+                    margin: "2px",
+                    paddingLeft: "10px",
+                    paddingRight: "10px",
+                    color: "#BABABA"
                   }}
-                  variant="outlined"
-                  label={item.value}
+                  label={text}
+                  clickable
+                  variant="outlined" // Change variant when selected
                   key={index}
-                  onClick={() => {
-                    if (item.value === "ALL") {
-                      setSelectedNameChip(item.value);
-                      // setSelectedChunk("ALL");
-                      handleGetResponseFromDB(
-                        "all_option_name",
-                        typeData,
-                        nameData
-                      );
-                    } else {
-                      setSelectedNameChip(item.value);
-                      // setSelectedChunk(item.value)
-                      const userMessage: MessageInterface = {
-                        content: item.value, // Send the text of the item as the user's message
-                        role: "user",
-                      };
-                      const backMessage: MessageInterface = {
-                        content:
-                          `type: ${typeData} + name: ${nameData} + ` + item.value, // Send the text of the item as the user's message
-                        role: "user",
-                      };
-                      handleDisplayOption(backMessage, flag, false);
-                      setMessages((prevMessage) => [...prevMessage, userMessage]);
-                    }
-                  }}
                 />
               );
             })}
-            <FormControlLabel
-              control={
-                <Switch 
-                  checked={fullScreenMenu}
-                  onChange={toggleFullScreenMenu}
-                  color="success"
-                  sx={{
-                    '& .MuiSwitch-switchBase': {
-                      transform: 'translateX(4px)',
-                      '&.Mui-checked': {
-                        transform: 'translateX(22px)',
-                      }
-                    },
-                    '& .MuiSwitch-thumb': {
-                      width: 20,
-                      height: 20,
-                    },
-                    '& .MuiSwitch-track': {
-                      borderRadius: 26 / 2,
-                      backgroundColor: '#73AD21',
-                      opacity: 0.5,
-                    },
-                    width: 58,
-                    height: 38,
-                    padding: '8px',
-                  }}
-                />
-              }
-              label="PDF Menu"
-              labelPlacement="start"
-              sx={{ 
-                color: 'black',
-                marginLeft: 'auto',
-                marginRight: '10px',
-                '& .MuiFormControlLabel-label': {
-                  fontWeight: 'bold',
-                  fontSize: '1rem',
-                  marginRight: '10px',
-                }
-              }}
-            />
-        </Paper>
-      </Box>
-      { selectedOptionListData.length !== 0 ? (
-        <Box
-        sx={{
-          display: "flex", // Use flexbox for layout
-          flexDirection: "vertically", // Stack items vertically
-        }}
-      >
-      <Paper
-        sx={{
-          display: "flex",
-          flexWrap: "nowrap", // Prevent wrapping to ensure chips stay in one line
-          overflowX: "auto", // Enable horizontal scrolling
-          listStyle: "none",
-          p: 0.5,
-          m: 0,
-          padding: "10px",
-          paddingLeft: "45px",
-          width: "100%", // Ensure it doesn't overflow its container
-        }}
-      >
-        {selectedOptionListData.map((text, index) => {
-          return (
-            <Chip
-              sx={{
-                margin: "2px",
-                paddingLeft: "10px",
-                paddingRight: "10px",
-                color: "#BABABA"
-              }}
-              label={text}
-              clickable
-              variant="outlined" // Change variant when selected
-              key={index}
-            />
-          );
-        })}
-      </Paper>
-      </Box>
+          </Paper>
+        </Box>
       ) : null}
       {fullScreenMenu ? (
-      <Box sx={{ 
-        position: 'fixed', 
-        top: 0, 
-        left: 0, 
-        right: 0, 
-        bottom: 0,
-        marginTop: '250px',
-        width: '73%', 
-        height: '100%',
-        bgcolor: 'white',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        <Box sx={{ 
-          width: '100%', 
-          bgcolor: 'white', 
-          display: 'flex', 
-          flexDirection: 'column', 
-          alignItems: 'center', 
-          p: 0, 
-          mt: 2 
+        <Box sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          marginTop: '250px',
+          width: '73%',
+          height: '85%',
+          bgcolor: 'white',
+          display: 'flex',
+          flexDirection: 'column'
         }}>
-          {/* Horizontal menu bar */}
-          <Box
-            sx={{
+          <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+            <Box sx={{
+              flexGrow: 1,
               display: 'flex',
-              flexDirection: 'row',
-              overflowX: 'auto', // horizontal scroll
-              overflowY: 'hidden',
-              whiteSpace: 'nowrap',
-              borderBottom: '2px solid #eee',
-              width: '97%',
-              justifyContent: 'flex-start',
-              mb: 2,
-              px: 2,
-              scrollbarWidth: 'thin',
-              '&::-webkit-scrollbar': {
-                height: '6px',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                background: '#eee',
-                borderRadius: '3px',
-              },
-            }}
-          >
-            
-          </Box>
-          {/* Menu items list */}
-          <Box
-            sx={{
-              width: 800,
-              maxHeight: 600,
-              mx: 'auto',
-              paddingLeft: "200px",
-              mt: 2,
-              overflowY: 'auto', // Enable horizontal scroll
-              whiteSpace: 'nowrap', // Prevent wrapping
-              display: 'flex', // Use flexbox for horizontal layout
-              flexDirection: 'column',
-              gap: 2, // Optional: space between items
-              pb: 1, // Optional: padding bottom for scrollbar
-            }}
-          >
-            {selectedMenu == "Lunch_Specialis" ? (
-              <Typography variant="h5" sx={{ fontWeight: 700, color: "red", mb: 2, ml: 1 }}>
-                10% Discount Does Not Apply To Lunch Specials
-              </Typography>
-            ) : null}
-            <Typography variant="h5" sx={{ fontWeight: 700, color: "#B71C1C", mb: 2, ml: 1 }}>
-              {selectedMenu.replace(/_/g, " ")} Menu
-            </Typography>
-            <Divider sx={{ mb: 1 }} />
-            {menuDisplayData.length === 0 ? (
-              <Typography sx={{ color: "#888", textAlign: "center", mt: 4 }}>Loading...</Typography>
-            ) : (
-              (() => {
-                const seenDescriptions = new Set();
-                return menuDisplayData
-                  .filter(item => {
-                    if (seenDescriptions.has(item.price)) {
-                      return false;
-                    }
-                    seenDescriptions.add(item.price);
-                    return true;
-                  })
-                  .map((item, idx) => (
-                    <Box key={idx} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1, borderBottom: '1px solid #eee' }}>
-                      <Box>
-                        <Typography sx={{ fontWeight: 500, fontSize: 15, color: "#222", paddingBottom: 3 }}>
-                          {item.price}
-                        </Typography>
-                        {item.keyword && (
-                          <Typography sx={{ color: "#888", fontSize: 14 }}>{item.description}</Typography>
-                        )}
-                      </Box>
-                      <Typography sx={{ fontWeight: 600, fontSize: 17, color: "#222", paddingRight: 3, }}>
-                        ${parseFloat(item.keyword).toFixed(2)}
-                      </Typography>
-                    </Box>
-                  ));
-              })()
-            )}
+              justifyContent: 'center',
+              alignItems: 'center',
+              overflow: 'hidden', // Prevent scrolling
+              p: 2
+            }}>
+              {/* Container for both page images */}
+              <Box sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'center',
+                width: '100%',
+                height: '100%',
+                gap: 2 // Space between images
+              }}>
+                {/* First page image */}
+                <Box sx={{
+                  flex: 1,
+                  height: '100%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: 2,
+                  overflow: 'hidden',
+                  bgcolor: '#f9f9f9'
+                }}>
+                  <img
+                    src="/west-side-wok/menu1.png" // Replace with your actual image path
+                    alt="Menu Page 1"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain'
+                    }}
+                  />
+                </Box>
+
+                {/* Second page image */}
+                <Box sx={{
+                  flex: 1,
+                  height: '100%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: 2,
+                  overflow: 'hidden',
+                  bgcolor: '#f9f9f9'
+                }}>
+                  <img
+                    src="/west-side-wok/menu2.png" // Replace with your actual image path
+                    alt="Menu Page 2"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain'
+                    }}
+                  />
+                </Box>
+              </Box>
+            </Box>
           </Box>
         </Box>
-      </Box>
       ) : (
-        <Box sx={{ 
-          position: 'fixed', 
-          top: 0, 
-          left: 0, 
-          right: 0, 
+        <Box sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
           bottom: 0,
-          marginTop: '240px',
-          width: '73%', 
+          marginTop: '260px',
+          width: '73%',
           height: 'auto',
           bgcolor: 'white',
           display: 'flex',
@@ -1889,7 +1746,7 @@ const ChatWindow: React.FC = () => {
           overflow: 'auto'
         }}>
           {Object.entries(groupedData).map(([groupKey, groupItems]) => (
-            <Box key={groupKey} sx={{marginLeft: "20px", marginTop: "20px", height: "auto" }}>
+            <Box key={groupKey} sx={{ marginLeft: "20px", marginTop: "20px", height: "auto" }}>
               {(groupKey !== "undefined") && (nameListData.length > 1) ? (
                 <Typography
                   sx={{
@@ -1937,7 +1794,7 @@ const ChatWindow: React.FC = () => {
                           if (item.type === "name") {
                             setSelectedNameForOptions(item.value);
                             handleOptionsDialogOpen();
-                            fetchOptionsForDialog(item.name, item.value); // Use the correct type and name
+                            fetchOptionsForDialog(typeData, item.value); // Use the correct type and name
                           } else {
                             // For non-name items, keep the existing behavior
                             const userMessage: MessageInterface = {
@@ -1960,7 +1817,7 @@ const ChatWindow: React.FC = () => {
           ))}
         </Box>
       )}
-      
+
       <Dialog fullWidth open={detailDialog} onClose={handleDetailDialogClose}>
         <DialogTitle
           style={{
@@ -2003,7 +1860,7 @@ const ChatWindow: React.FC = () => {
         </DialogTitle>
         <DialogContent sx={{ minHeight: 300, position: "relative" }}>
           {loading ? (
-                <></>
+            <></>
           ) : (
             <Box sx={{ mt: 1 }}>
               {Object.entries(groupedOptionsData).map(([group, options]) => (
@@ -2228,250 +2085,6 @@ const ChatWindow: React.FC = () => {
     </div>
   );
 
-  
-  const addMessage = (message: any) => {
-    setMessagesBox([...messagesBox
-      , message])
-  }
-
-  const handleEmailSubmit = async (email: string) => {
-    setUserEmail(email);
-    setShowUserForm(false);
-  
-    // Generate a random userId and create a user object
-    const userId = generateRandomId();
-    const user = {
-      _id: userId,
-      name: email.split('@')[0], // Use the part before @ as a name, or just "User"
-      email,
-    };
-    localStorage.setItem("user", JSON.stringify(user));
-  
-    // Create group (no question, just email)
-    const new_group = await createGroup(business_id, company_id, userId, "");
-    setGroupId(new_group?.id);
-  
-    setUserId(userId);
-    // setMessagesBox((pre: any) => [
-    //   ...pre,
-    //   { text: "hi", sender_id: userId } // Start chat with a "hi" message
-    // ]);
-  };
-
-    //  Getting started Chat
-  const handleSendMessageViaInput = async (text: string, flag: string) => {
-    if (showUserForm) {
-      // Simple email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (emailRegex.test(text.trim())) {
-        // Call the new onboarding logic
-        await handleEmailSubmit(text.trim());
-      } else {
-        setMessages(prev => [
-          ...prev,
-          { content: text, role: "user" },
-          { content: "Invalid email address. Please try again.", role: "assistant" }
-        ]);
-      }
-      return;
-    }
-
-    const message: MessageInterface = {
-      content: text,
-      role: "user",
-    };
-    const _id = generateUUID();
-    const createdAt = new Date();
-    if (text.trim() !== "") {
-      if (group_id) {
-        const newMsg = await sendMessage(_id, createdAt, text, storedUser, group_id)
-        addMessage(newMsg)
-      }
-    }
-    setOneOrderData((prev) => prev + text);
-    const backMessage: MessageInterface = {
-      content: `I want to order ${oneOrderData}  ${text}`, //content: "I want to order" + typeData ? `type: ${typeData}` : "" + nameData ? `name: ${nameData}` : ""  + `, ${text}`,
-      role: "user",
-    };
-    // if (flag === KEY_ASK_AMOUNT)
-    // handleSendMessage(message, KEY_ANSWER_AMOUNT, true);
-    // else {
-    // setChunkData([]);
-    setOrderDetailDialogOpen(false);
-    setFlag(KEY_SELECT_PRODUCT);
-    // handleSendMessage(backMessage, KEY_SELECT_PRODUCT, false);
-    setFlag(KEY_SELECT_PRODUCT);
-    // }
-  };
-
-  // before getting started chat, input user information: name, email, question.
-  // In the backend we get these from frontend: message_id, created_at, text, user, group_id, company_id='', quick_replies=None, cipher=None
-  const handleUserFormSubmit = async (formData: { name: string; email: string; question: string }) => {
-    setUserFormData(formData);
-    setShowUserForm(false);
-    // Add user's question to the chat
-    const userMessage: MessageInterface = {
-      content: "hi",
-      role: "user",
-    };
-
-    const userId = generateRandomId();
-    const _id = generateUUID();
-    const createdAt = new Date();
-    const text = formData.question.trim() || "";
-
-    const user = {
-      _id: userId,
-      name: formData.name
-    }
-
-    localStorage.setItem("user", JSON.stringify(user))
-
-    if (userId === null) return;
-    // Create Group
-    const new_group = await createGroup(business_id, company_id, userId, formData.question);
-    setGroupId(new_group?.id);
-
-    const group_id = new_group?.id.toString();
-    // start chat by Group
-    await sendMessage(_id, createdAt, text, user, group_id);
-
-    // Reset form after sending userform
-    setUserFormData({ name: "", email: "", question: "" });
-
-    setUserId(userId)
-    setMessagesBox((pre: any) => [...pre, userMessage])
-    // setMessages((prevMessages) => [...prevMessages, userMessage]);
-  };
-
-  useEffect(() => {
-    // Only run this effect if we're not just showing options
-    if (nameListData.length > 0 && !optionsDialogOpen) {
-      setNameListDataHistory((prevHistory) => [...prevHistory, nameListData]);
-      setSelectedNameChip("ALL");
-      handleGetResponseFromDB("all_option_name", typeData, nameData);
-    }
-
-    if (nameListData.length === 1 && !optionsDialogOpen) {
-      const singleItemData = nameListData[0];
-      setSelectedNameChip(singleItemData.value);
-      handleGetResponseFromDB("all_option_name", typeData, nameData);
-    }
-  }, [nameListData, optionsDialogOpen]); // Add optionsDialogOpen to dependencies
-
-  useEffect(() => {
-    const userId = localStorage.getItem('user');
-    if (userId) {
-      setShowUserForm(false);
-    }
-  }, [userId, setShowUserForm])
-
-  useEffect(() => {
-    // Fetch initial options data when component mounts
-    const fetchInitialOptions = async () => {
-      try {
-        const response = await fetch(
-          `${BACKEND_API_URL}/get_options_by_ids?ids=${DEFAULT_DATA.join(',')}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log(data)
-        // Format the data for the frontend
-                //         "type": row[1],
-                // "name": row[2],
-                // "price": row[3],
-                // "description": row[4],
-                // "option_keyword": row[5],
-                // "option_name": row[6],
-                // "option_price": row[7]
-        const parsedData: ChunkOption[] = data.map((item: any) => {
-          return {
-            type: "name",
-            name: item.type,
-            value: item.name,
-            description: item.description,
-            price: item.price,
-          };
-        });
-        console.log(parsedData)
-        
-        // Set the chunk data with the fetched options
-        setChunkData(parsedData);
-        
-      } catch (error) {
-        console.error("Failed to fetch initial options:", error);
-      }
-    };
-
-    fetchInitialOptions();
-  }, []); // Empty dependency array means this runs once when component mounts
-
-  useEffect(() => {
-    scrollToBottom()
-  }, [messagesBox])
-
-  useEffect(() => {
-    // Calculate total price based on selected options
-    const total = chunkData
-      .filter((item) => selectedOptionListData.includes(getItemOptionName(item.value)))
-      .reduce((sum, item) => {
-        // Extract option_price from the item.value string
-        const optionPriceMatch = item.value.match(/'option_price':\s*['"]?([\d.]+)['"]?/);
-        const optionPrice = optionPriceMatch ? parseFloat(optionPriceMatch[1]) : 0;
-        return sum + optionPrice;
-      }, 0);
-
-    setChunkTotalPrice(total); // Update the total price
-  }, [selectedOptionListData, chunkData]);
-
-
-  useEffect(() => {
-    if (orderData.length > 0) {
-      const singlePrice = parseFloat(orderData[0].price);
-
-      if (!isNaN(singlePrice)) {
-        const totalPrice = singlePrice * currentAmount;
-        setTotalPrice(`$${totalPrice.toFixed(2)}`);
-      } else {
-        console.error("Failed to parse single_price from orderData");
-        setTotalPrice("");
-      }
-    }
-  }, [currentAmount, orderData]);
-
-  useEffect(() => {
-    if (!group_id) return;
-
-    const messagesRef = collection(firestore, "messages", group_id, "messages");
-    const q = query(messagesRef, orderBy("sent_at", "asc"));
-
-    const unsubscribe = onSnapshot(q, (snapshot: any) => {
-      const fetchedMessages = snapshot.docs.map((doc: any) => doc.data());
-      setMessagesBox(fetchedMessages);
-    });
-
-    return () => unsubscribe();
-  }, [group_id]);
-
-  // Get Group when have initial rendering
-  useEffect(() => {
-    const getGroup = async () => {
-      const group = await getGroupByCompany(company_id, storedUser?._id)
-      setGroupId(group?.id)
-    }
-    getGroup()
-  }, [storedUser])
-
   // Add this new function to handle options display
   const handleDisplayOptionsForName = async (name: string) => {
     setLoading(true);
@@ -2552,11 +2165,6 @@ const ChatWindow: React.FC = () => {
 
   // Add this function
   const fetchOptionsForDialog = async (type: string, name: string) => {
-    console.log(`Fetching options for type: ${type}, name: ${name}`);
-    
-    if (type == undefined)
-      type = typeData
-    type = type.toLowerCase();
     setLoading(true);
     try {
       const response = await fetch(
@@ -2630,6 +2238,231 @@ const ChatWindow: React.FC = () => {
     }
   };
 
+  const addMessage = (message: any) => {
+    setMessagesBox([...messagesBox
+      , message])
+  }
+
+  //  Getting started Chat
+  const handleSendMessageViaInput = async (text: string, flag: string) => {
+    const message: MessageInterface = {
+      content: text,
+      role: "user",
+    };
+    const _id = generateUUID();
+    const createdAt = new Date();
+    if (text.trim() !== "") {
+      if (group_id) {
+        const newMsg = await sendMessage(_id, createdAt, text, storedUser, group_id)
+        addMessage(newMsg)
+      }
+    }
+    setOneOrderData((prev) => prev + text);
+    const backMessage: MessageInterface = {
+      content: `I want to order ${oneOrderData}  ${text}`, //content: "I want to order" + typeData ? `type: ${typeData}` : "" + nameData ? `name: ${nameData}` : ""  + `, ${text}`,
+      role: "user",
+    };
+    // if (flag === KEY_ASK_AMOUNT)
+    // handleSendMessage(message, KEY_ANSWER_AMOUNT, true);
+    // else {
+    // setChunkData([]);
+    setOrderDetailDialogOpen(false);
+    setFlag(KEY_SELECT_PRODUCT);
+    // handleSendMessage(backMessage, KEY_SELECT_PRODUCT, false);
+    setFlag(KEY_SELECT_PRODUCT);
+    // }
+  };
+
+  // before getting started chat, input user information: name, email, question.
+  // In the backend we get these from frontend: message_id, created_at, text, user, group_id, company_id='', quick_replies=None, cipher=None
+  const handleUserFormSubmit = async (formData: { name: string; email: string; question: string }) => {
+    setUserFormData(formData);
+    setShowUserForm(false);
+    // Add user's question to the chat
+    const userMessage: MessageInterface = {
+      content: formData.question,
+      role: "user",
+    };
+
+    const userId = generateRandomId();
+    const _id = generateUUID();
+    const createdAt = new Date();
+    const text = formData.question.trim() || "";
+
+    const user = {
+      _id: userId,
+      name: formData.name
+    }
+
+    localStorage.setItem("user", JSON.stringify(user))
+
+    if (userId === null) return;
+    // Create Group
+    const new_group = await createGroup(business_id, company_id, userId, formData.question);
+    setGroupId(new_group?.id);
+
+    const group_id = new_group?.id.toString();
+    // start chat by Group
+    await sendMessage(_id, createdAt, text, user, group_id);
+
+    // Reset form after sending userform
+    setUserFormData({ name: "", email: "", question: "" });
+
+    setUserId(userId)
+    setMessagesBox((pre: any) => [...pre, userMessage])
+    // setMessages((prevMessages) => [...prevMessages, userMessage]);
+  };
+
+  useEffect(() => {
+    // Only run this effect if we're not just showing options
+    if (nameListData.length > 0 && !optionsDialogOpen) {
+      setNameListDataHistory((prevHistory) => [...prevHistory, nameListData]);
+      setSelectedNameChip("ALL");
+      handleGetResponseFromDB("all_option_name", typeData, nameData);
+    }
+
+    if (nameListData.length === 1 && !optionsDialogOpen) {
+      const singleItemData = nameListData[0];
+      setSelectedNameChip(singleItemData.value);
+      handleGetResponseFromDB("all_option_name", typeData, nameData);
+    }
+  }, [nameListData, optionsDialogOpen]); // Add optionsDialogOpen to dependencies
+
+  useEffect(() => {
+    const userId = localStorage.getItem('user');
+    if (userId) {
+      setShowUserForm(false);
+    }
+  }, [userId, setShowUserForm])
+
+  useEffect(() => {
+    // Fetch initial options data when component mounts
+    const fetchInitialOptions = async () => {
+      try {
+        const response = await fetch(
+          `${BACKEND_API_URL}/get_options_by_ids?ids=${DEFAULT_DATA.join(',')}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        // Format the data for the frontend
+        const parsedData: ChunkOption[] = data.map((item: any) => {
+          return {
+            type: "name",
+            name: item.name,
+            value: item.option_name,
+            description: item.description,
+            price: item.price,
+          };
+        });
+
+        // Set the chunk data with the fetched options
+        setChunkData(parsedData);
+
+      } catch (error) {
+        console.error("Failed to fetch initial options:", error);
+      }
+    };
+
+    fetchInitialOptions();
+  }, []); // Empty dependency array means this runs once when component mounts
+
+  // useEffect(() => {
+  //   if (containerRef.current) {
+  //     // Scroll to the bottom of the container
+  //     const scrollHeight = containerRef.current.scrollHeight;
+  //     const height = containerRef.current.clientHeight;
+  //     containerRef.current.scrollTop = scrollHeight - height;
+  //   }
+  // }, [messagesBox]);
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messagesBox])
+
+  useEffect(() => {
+    // Calculate total price based on selected options
+    const total = chunkData
+      .filter((item) => selectedOptionListData.includes(getItemOptionName(item.value)))
+      .reduce((sum, item) => {
+        // Extract option_price from the item.value string
+        const optionPriceMatch = item.value.match(/'option_price':\s*['"]?([\d.]+)['"]?/);
+        const optionPrice = optionPriceMatch ? parseFloat(optionPriceMatch[1]) : 0;
+        return sum + optionPrice;
+      }, 0);
+
+    setChunkTotalPrice(total); // Update the total price
+  }, [selectedOptionListData, chunkData]);
+
+
+  useEffect(() => {
+    if (orderData.length > 0) {
+      const singlePrice = parseFloat(orderData[0].price);
+
+      if (!isNaN(singlePrice)) {
+        const totalPrice = singlePrice * currentAmount;
+        setTotalPrice(`$${totalPrice.toFixed(2)}`);
+      } else {
+        console.error("Failed to parse single_price from orderData");
+        setTotalPrice("");
+      }
+    }
+  }, [currentAmount, orderData]);
+
+  // Get all messages by group_id when have initial rendering.
+  // useEffect(() => {
+  //   console.log("userEffect happened")
+  //   const fetchMsgs = async () => {
+  //     setIsFetchingMsg(true);
+  //     if (group_id) {
+  //       try {
+  //         const res = await getMessages(group_id);
+  //         setMessagesBox(res)
+  //       } catch (error) {
+  //         console.error('Failed to fetch messages!');
+  //       } finally {
+  //         setIsFetchingMsg(false)
+  //       }
+  //     } else {
+  //       setIsFetchingMsg(false);
+  //     }
+  //   }
+  //   fetchMsgs()
+  // }, [group_id])
+
+  useEffect(() => {
+    if (!group_id) return;
+
+    const messagesRef = collection(firestore, "messages", group_id, "messages");
+    const q = query(messagesRef, orderBy("sent_at", "asc"));
+
+    const unsubscribe = onSnapshot(q, (snapshot: any) => {
+      const fetchedMessages = snapshot.docs.map((doc: any) => doc.data());
+      setMessagesBox(fetchedMessages);
+    });
+
+    return () => unsubscribe();
+  }, [group_id]);
+
+  // Get Group when have initial rendering
+  useEffect(() => {
+    const getGroup = async () => {
+      const group = await getGroupByCompany(company_id, storedUser?._id)
+      setGroupId(group?.id)
+    }
+    getGroup()
+  }, [storedUser])
+
+
   return (
     <div style={{ overflow: "hidden" }}>
       {loading && (
@@ -2657,7 +2490,7 @@ const ChatWindow: React.FC = () => {
           style={{
             width: "100vw",
             height: "auto", // or set a fixed height if you want
-          }} 
+          }}
         />
       </Box>
       <Box sx={{ display: "flex", height: "auto", overflow: "hidden" }}>
@@ -2702,7 +2535,7 @@ const ChatWindow: React.FC = () => {
               flexDirection: "column", // Changed from column-reverse
               minHeight: "100%", // Ensure container takes full height
               position: "relative", // Add relative positioning
-              marginBottom: "65px"
+              marginBottom: "40px"
             }}
             ref={containerRef}
           >
@@ -2719,6 +2552,9 @@ const ChatWindow: React.FC = () => {
               </div>
             )}
 
+            {showUserForm && (
+              <UserForm onSubmit={handleUserFormSubmit} />
+            )}
 
             <div
               style={{
@@ -2726,49 +2562,42 @@ const ChatWindow: React.FC = () => {
                 flexDirection: "column",
                 flex: 1,
                 scrollbarWidth: 'none',
-                marginTop: "130px",
-                overflowY: "auto",
+                marginTop: "80px",
+                overflowY: "auto", // Allow scrolling for messages
               }}
             >
-              {showUserForm
-                ? messages.map((message, index) => (
-                    <ChatMessage
-                      key={index}
-                      text={message.content}
-                      sender={message.role}
-                      storedUserId={storedUser?._id || ""}
-                    />
-                  ))
-                : messagesBox.map((message: any, index: number) => (
-                    <ChatMessage
-                      key={index}
-                      text={message.text}
-                      sender={message.sender_id}
-                      storedUserId={storedUser?._id || ""}
-                    />
-                  ))
-              }
+              {messagesBox.map((message: any, index: number) => (
+                <ChatMessage
+                  key={index}
+                  text={message.text}
+                  // time={message.time}
+                  sender={message.sender_id}
+                  storedUserId={storedUser._id}
+                />
+              ))}
               <div ref={messagesEndRef} style={{ height: "20px" }}></div>
             </div>
 
-            <div
-              style={{
-                position: "fixed", // Fixed positioning for input
-                bottom: 0,
-                left: 0,
-                right: 0,
-                backgroundColor: "white", // Add background to prevent transparency
-                borderTop: "1px solid #e0e0e0", // Optional border
-                padding: "10px",
-                zIndex: 1000, // Ensure it stays on top
-              }}
-            >
-              <ChatInput
-                onSendMessage={(message) =>
-                  handleSendMessageViaInput(message.content, flag)
-                }
-              />
-            </div>
+            {!showUserForm && (
+              <div
+                style={{
+                  position: "fixed", // Fixed positioning for input
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  backgroundColor: "white", // Add background to prevent transparency
+                  borderTop: "1px solid #e0e0e0", // Optional border
+                  padding: "10px",
+                  zIndex: 1000, // Ensure it stays on top
+                }}
+              >
+                <ChatInput
+                  onSendMessage={(message) =>
+                    handleSendMessageViaInput(message.content, flag)
+                  }
+                />
+              </div>
+            )}
           </div>
           <Badge
             badgeContent={cartCount}
@@ -2790,15 +2619,8 @@ const ChatWindow: React.FC = () => {
                 paddingRight: '40px',
                 fontSize: '1.3rem',
                 borderRadius: '10px',
-                '&:hover': {
-                  backgroundColor: "#5e8e1e", // a darker green for hover
-                },
-                '&:active': {
-                  backgroundColor: "#388e3c", // even darker for active/click
-                },
-                // Optionally, keep the text color white on hover/active
-                color: "white",
               }}
+
               size="large"
               aria-label="add"
               onClick={handleCartOpen}
@@ -2912,10 +2734,10 @@ const ChatWindow: React.FC = () => {
             <Box component="form" sx={{ mt: 1, px: 1 }}>
               <FormControlLabel
                 control={
-                  <Switch 
+                  <Switch
                     checked={payInStore}
                     onChange={(e) => setPayInStore(e.target.checked)}
-                    color="success" 
+                    color="success"
                   />
                 }
                 label={<Typography sx={{ fontWeight: 700, fontSize: 20 }}>Pay In Store</Typography>}
@@ -3006,10 +2828,10 @@ const ChatWindow: React.FC = () => {
               />
               <FormControlLabel
                 control={
-                  <Switch 
+                  <Switch
                     checked={inStorePickup}
                     onChange={(e) => setInStorePickup(e.target.checked)}
-                    color="success" 
+                    color="success"
                   />
                 }
                 label={<Typography sx={{ fontWeight: 700, fontSize: 18 }}>In Store Pick Up Order</Typography>}
@@ -3039,7 +2861,7 @@ const ChatWindow: React.FC = () => {
               <Box sx={{ display: "flex", alignItems: "center", mb: 2, mt: 1 }}>
                 <span style={{ color: "#888" }}>
                   <svg width="18" height="18" style={{ marginRight: 4, verticalAlign: "middle" }}>
-                    <path fill="#888" d="M9 1.5A7.5 7.5 0 1 0 9 16.5 7.5 7.5 0 1 0 9 1.5zm0 13.5A6 6 0 1 1 9 3a6 6 0 0 1 0 12zm-.75-9h1.5v4.5h-1.5zm0 6h1.5v1.5h-1.5z"/>
+                    <path fill="#888" d="M9 1.5A7.5 7.5 0 1 0 9 16.5 7.5 7.5 0 1 0 9 1.5zm0 13.5A6 6 0 1 1 9 3a6 6 0 0 1 0 12zm-.75-9h1.5v4.5h-1.5zm0 6h1.5v1.5h-1.5z" />
                   </svg>
                 </span>
                 <Typography variant="caption" color="textSecondary">
@@ -3197,6 +3019,7 @@ const ChatWindow: React.FC = () => {
       </Snackbar>
     </div>
   );
+
 };
 
 export default ChatWindow;
